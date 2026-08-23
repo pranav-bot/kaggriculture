@@ -10,6 +10,7 @@ from kaggriculture.actions.actions import (
     get_animal,
 )
 from kaggriculture.env.items import Plants, Animals, Products, Structures, Quadrants
+from kaggriculture.actions.market_planning import plan_market_actions as build_market_actions
 
 
 class ActionController:
@@ -368,63 +369,19 @@ class ActionController:
         market: dict,
         current_day: int,
     ) -> List[List[Any]]:
-        """Generates market orders (BUY_SEED, SELL, BUY_LAND, HIRE, etc.)."""
-        orders: List[List[Any]] = []
-        money = farm.get("money", 0)
-        unlocked = farm.get("unlocked_quadrants", ["NW"])
-        seeds = private.get("seeds", {})
-        shed = private.get("shed", {})
-        prices = market.get("prices", {})
-
-        # 1. Land Expansion
-        if self.auto_expand_land and len(unlocked) < 4:
-            next_costs = {1: 1000, 2: 2000, 3: 4000}
-            cost = next_costs.get(len(unlocked), 999999)
-            if money >= cost:
-                orders.append(Actions.buy_land())
-                money -= cost
-
-        # 2. Farm Hand Hiring
-        if self.auto_hire_hands and farm.get("hires_today", 0) < self.max_hires_per_day:
-            hire_cost = 1  # 1st hire costs 1
-            if money >= hire_cost:
-                orders.append(Actions.hire())
-                money -= hire_cost
-
-        # 3. Sell Shed Produce
-        if self.auto_sell:
-            for item, count in shed.items():
-                if count > 0 and item not in ANIMALS:
-                    current_price = prices.get(item, 1)
-                    base_price = 25
-                    if item in CROPS:
-                        base_price = CROPS[item].base_market_price
-                    elif item in Products:
-                        if item == "EGG": base_price = 50
-                        elif item == "MILK": base_price = 160
-                        elif item == "WOOL": base_price = 200
-                        elif item == "FERTILIZER": base_price = 100
-
-                    if current_price >= base_price * self.min_sell_margin:
-                        orders.append(Actions.sell(item, count))
-
-        # 4. Seed Purchasing
-        target_crop_cfg = CROPS.get(self.target_crop, CROPS["WHEAT"])
-        seed_count = seeds.get(self.target_crop, 0)
-        if seed_count < 5 and money >= target_crop_cfg.seed_cost:
-            qty = min(5 - seed_count, int(money // target_crop_cfg.seed_cost))
-            if qty > 0:
-                orders.append(Actions.buy_seed(self.target_crop, qty))
-                money -= qty * target_crop_cfg.seed_cost
-
-        # 5. Animal Purchasing (if configured)
-        if self.target_animal and self.target_animal in ANIMALS:
-            anim_cfg = ANIMALS[self.target_animal]
-            if shed.get(self.target_animal, 0) == 0 and money >= anim_cfg.cost:
-                orders.append(Actions.buy_animal(self.target_animal, 1))
-                money -= anim_cfg.cost
-
-        return orders[:10]
+        """Generate BUY_SEED, SELL, BUY_LAND, and HIRE orders."""
+        return build_market_actions(
+            auto_expand_land=self.auto_expand_land,
+            auto_hire_hands=self.auto_hire_hands,
+            auto_sell=self.auto_sell,
+            target_animal=self.target_animal,
+            target_crop=self.target_crop,
+            max_hires_per_day=self.max_hires_per_day,
+            min_sell_margin=self.min_sell_margin,
+            farm=farm,
+            private=private,
+            market=market,
+        )
 
     # --------------------------------------------------------------------------
     # Master Step / Turn Action Builder

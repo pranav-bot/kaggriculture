@@ -80,7 +80,9 @@ class Observation:
     def opp_cash(self) -> float: return float(self.opp_farm.get("money", 0))
 
     @property
-    def step_index(self) -> int: return self.day * 24 + self.hour
+    def step_index(self) -> int:
+        """Return the engine-provided step, including custom day lengths."""
+        return self.step
 
     @classmethod
     def from_dict(cls, obs: Dict[str, Any]) -> "Observation":

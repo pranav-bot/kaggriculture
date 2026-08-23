@@ -61,6 +61,7 @@ def build_standalone_single_file(agent_path: Path, output_file: Path) -> Path:
     market_src = (SRC_DIR / "helpers" / "market_prediction.py").read_text()
     solver_src = (SRC_DIR / "helpers" / "solver.py").read_text()
     opponent_src = (SRC_DIR / "helpers" / "opponent.py").read_text()
+    market_planning_src = (SRC_DIR / "actions" / "market_planning.py").read_text()
     controller_src = (SRC_DIR / "actions" / "controller.py").read_text()
     agent_src = agent_path.read_text()
 
@@ -109,6 +110,9 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 # --- helpers/opponent.py ---
 {clean_imports(opponent_src)}
+
+# --- actions/market_planning.py ---
+{clean_imports(market_planning_src)}
 
 # --- controller.py ---
 {clean_imports(controller_src)}

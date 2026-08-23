@@ -128,3 +128,20 @@ def test_controller_multi_unit_seed_safety():
 
     # Must be at most 1 to avoid simultaneous over-planting failure
     assert plant_count <= 1
+
+
+def test_controller_hiring_uses_fibonacci_costs():
+    controller = ActionController(
+        auto_expand_land=False,
+        auto_hire_hands=True,
+        auto_sell=False,
+        max_hires_per_day=3,
+    )
+    orders = controller.plan_market_actions(
+        {"money": 4, "unlocked_quadrants": ["NW"], "hires_today": 1},
+        {"seeds": {"WHEAT": 5}, "shed": {}},
+        {"prices": {}},
+        0,
+    )
+
+    assert orders == [["HIRE"], ["HIRE"]]

@@ -46,6 +46,11 @@ def test_observation_model():
     assert obs.step_index == 53  # day*24 + hour
     assert obs.my_cash == 3500.0 and obs.opp_cash == 2800.0
 
+    custom_day_length_obs = Observation.from_dict(
+        {"day": 1, "hour": 2, "step": 26}
+    )
+    assert custom_day_length_obs.step_index == 26
+
 
 def test_tile_models():
     pt = PlantTile.from_dict({"kind": "PLANT", "crop": "WHEAT", "planted_day": 1,
