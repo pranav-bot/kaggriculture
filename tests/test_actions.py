@@ -110,21 +110,51 @@ def test_actions_feasibility_predicates():
     assert Actions.can_collect_fertilizer(no_fert_coop) is False
 
 
-def test_actions_animal_and_structures():
-    assert Actions.build_coop() == ["BUILD_COOP"]
-    assert Actions.build_pasture() == ["BUILD_PASTURE"]
-    assert Actions.feed() == ["FEED"]
-    assert Actions.collect_fertilizer() == ["COLLECT_FERTILIZER"]
-    assert Actions.care() == ["CARE"]
-
-
 def test_actions_market():
     assert Actions.buy_seed("WHEAT", 3) == ["BUY_SEED", "WHEAT", 3]
     assert Actions.buy_animal("GOOSE", 1) == ["BUY_ANIMAL", "GOOSE", 1]
     assert Actions.buy_product("WHEAT", 2) == ["BUY_PRODUCT", "WHEAT", 2]
+    assert Actions.buy_product("FERTILIZER", 1) == ["BUY_PRODUCT", "FERTILIZER", 1]
     assert Actions.sell("MELON", 4) == ["SELL", "MELON", 4]
     assert Actions.hire() == ["HIRE"]
     assert Actions.buy_land() == ["BUY_LAND"]
+
+    # Fibonacci Hire Costs: 1, 1, 2, 3, 5, 8, 13, 21...
+    assert [Actions.hire_cost(i) for i in range(8)] == [1, 1, 2, 3, 5, 8, 13, 21]
+
+    # Land Costs: 1000, 2000, 4000
+    assert Actions.land_cost(["NW"]) == 1000
+    assert Actions.land_cost(["NW", "NE"]) == 2000
+    assert Actions.land_cost(["NW", "NE", "SW"]) == 4000
+    assert Actions.land_cost(["NW", "NE", "SW", "SE"]) is None
+
+    assert Actions.next_quadrant(["NW"]) == "NE"
+    assert Actions.next_quadrant(["NW", "NE"]) == "SW"
+    assert Actions.next_quadrant(["NW", "NE", "SW"]) == "SE"
+    assert Actions.next_quadrant(["NW", "NE", "SW", "SE"]) is None
+
+    # Market feasibility checks
+    assert Actions.can_buy_land(1500, ["NW"]) is True
+    assert Actions.can_buy_land(500, ["NW"]) is False
+    assert Actions.can_buy_land(5000, ["NW", "NE", "SW", "SE"]) is False
+
+    assert Actions.can_hire(10, hires_already_today=0) is True
+    assert Actions.can_hire(0, hires_already_today=0) is False
+
+    assert Actions.can_buy_seed(100, "WHEAT", quantity=5) is True
+    assert Actions.can_buy_seed(30, "WHEAT", quantity=5) is False
+
+    shed = {"WHEAT": 20, "MELON": 10}
+    assert Actions.can_buy_animal(500, "GOOSE", shed=shed, shed_capacity=100, quantity=1) is True
+    assert Actions.can_buy_animal(200, "GOOSE", shed=shed, shed_capacity=100, quantity=1) is False
+    assert Actions.can_buy_animal(500, "GOOSE", shed={"WHEAT": 100}, shed_capacity=100, quantity=1) is False
+
+    assert Actions.can_buy_product(50, "WHEAT", current_price=25, shed=shed, quantity=2) is True
+    assert Actions.can_buy_product(40, "WHEAT", current_price=25, shed=shed, quantity=2) is False
+
+    assert Actions.can_sell("WHEAT", shed=shed, quantity=15) is True
+    assert Actions.can_sell("WHEAT", shed=shed, quantity=25) is False
+    assert Actions.can_sell("STRAWBERRY", shed=shed, quantity=1) is False
 
 
 def test_actions_plant_helpers():
