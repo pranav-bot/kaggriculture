@@ -1,0 +1,57 @@
+from .tracking import (
+    CropTileInfo,
+    AnimalTileInfo,
+    FlattenedBoard,
+    flatten_board_state,
+    cumulative_hire_cost,
+    max_affordable_hires,
+    CropProjection,
+    forecast_crop_yield_trajectory,
+)
+from .market_prediction import (
+    DemandTick,
+    predict_upcoming_consumption_ticks,
+    find_next_consumption_window,
+    estimate_market_drain_over_horizon,
+    SlippageResult,
+    simulate_sell_slippage,
+    simulate_buy_slippage,
+)
+from .solver import (
+    OptimizationProblem,
+    formulate_production_constraints,
+    DiscretePlan,
+    discretize_continuous_solution,
+)
+from .opponent import (
+    OpponentCropGroup,
+    SabotageOpportunity,
+    OpponentProfile,
+    analyze_opponent_farm,
+)
+
+__all__ = [
+    "CropTileInfo",
+    "AnimalTileInfo",
+    "FlattenedBoard",
+    "flatten_board_state",
+    "cumulative_hire_cost",
+    "max_affordable_hires",
+    "CropProjection",
+    "forecast_crop_yield_trajectory",
+    "DemandTick",
+    "predict_upcoming_consumption_ticks",
+    "find_next_consumption_window",
+    "estimate_market_drain_over_horizon",
+    "SlippageResult",
+    "simulate_sell_slippage",
+    "simulate_buy_slippage",
+    "OptimizationProblem",
+    "formulate_production_constraints",
+    "DiscretePlan",
+    "discretize_continuous_solution",
+    "OpponentCropGroup",
+    "SabotageOpportunity",
+    "OpponentProfile",
+    "analyze_opponent_farm",
+]

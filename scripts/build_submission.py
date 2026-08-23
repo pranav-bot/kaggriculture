@@ -57,6 +57,10 @@ def build_standalone_single_file(agent_path: Path, output_file: Path) -> Path:
     items_src = (SRC_DIR / "env" / "items.py").read_text()
     models_src = (SRC_DIR / "env" / "models.py").read_text()
     actions_src = (SRC_DIR / "actions" / "actions.py").read_text()
+    tracking_src = (SRC_DIR / "helpers" / "tracking.py").read_text()
+    market_src = (SRC_DIR / "helpers" / "market_prediction.py").read_text()
+    solver_src = (SRC_DIR / "helpers" / "solver.py").read_text()
+    opponent_src = (SRC_DIR / "helpers" / "opponent.py").read_text()
     controller_src = (SRC_DIR / "actions" / "controller.py").read_text()
     agent_src = agent_path.read_text()
 
@@ -93,6 +97,18 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 # --- actions.py ---
 {clean_imports(actions_src)}
+
+# --- helpers/tracking.py ---
+{clean_imports(tracking_src)}
+
+# --- helpers/market_prediction.py ---
+{clean_imports(market_src)}
+
+# --- helpers/solver.py ---
+{clean_imports(solver_src)}
+
+# --- helpers/opponent.py ---
+{clean_imports(opponent_src)}
 
 # --- controller.py ---
 {clean_imports(controller_src)}
@@ -206,9 +222,9 @@ def main():
     print("\nRun this command to submit to Kaggle:")
     
     if args.format == "tar":
-        cmd = f'uv run kaggle competitions submit kaggriculture -f "{built_artifact}" -m "{msg}"'
+        cmd = f'kaggle competitions submit kaggriculture -f "{built_artifact}" -m "{msg}"'
     else:
-        cmd = f'uv run kaggle competitions submit kaggriculture -f "{built_artifact}" -m "{msg}"'
+        cmd = f'kaggle competitions submit kaggriculture -f "{built_artifact}" -m "{msg}"'
         
     print(f"  \033[1;32m{cmd}\033[0m\n")
     
