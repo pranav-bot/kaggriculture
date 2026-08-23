@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import random
 from typing import Dict, List, Optional, Set, Tuple, Union, Any
 
 from kaggriculture.env.items import (
@@ -89,6 +90,13 @@ class CropConfig:
         """
         return tile.get("consecutive_unwatered", 0) >= 1 and not tile.get("watered_today", False)
 
+    def decay_start_step(self, planted_day: int, turns_per_day: int = 24) -> int:
+        """Returns the step at which yield decay begins."""
+        if not self.ongoing:
+            return (planted_day + self.max_yield_day + 1) * turns_per_day
+        last_prod_age = self.first_yield_day + (self.max_yield - 1) * self.interval
+        return (planted_day + last_prod_age + 2) * turns_per_day
+
     def is_decaying(self, tile: dict, current_step: int) -> bool:
         """Checks if the plant has entered its decay phase."""
         mls = tile.get("max_lifespan_step", -1)
@@ -100,6 +108,17 @@ class CropConfig:
         if mls < 0:
             return None
         return max(0, mls - current_step)
+
+    def simulate_decay(self, current_yield: int, max_lifespan_step: int, current_step: int) -> Tuple[int, bool]:
+        """
+        Simulates step decay: yield drops by 1 every other step once max_lifespan_step is reached.
+        Returns (remaining_yield, is_weed).
+        """
+        if max_lifespan_step < 0 or current_step < max_lifespan_step:
+            return (current_yield, False)
+        decay_ticks = (current_step - max_lifespan_step) // 2 + 1
+        remaining = max(0, current_yield - decay_ticks)
+        return (remaining, remaining <= 0)
 
     def accumulated_yield_units(
         self,
@@ -344,6 +363,11 @@ class AnimalConfig:
     def in_danger_of_escape(self, tile: dict) -> bool:
         """Returns True if the animal missed 1 day of feeding and hasn't been fed today."""
         return tile.get("consecutive_unfed", 0) >= 1 and not tile.get("fed_today", False)
+
+    def is_production_day(self, placed_day: int, current_day: int) -> bool:
+        """Checks if current_day is a scheduled production day for the animal."""
+        days_since_first = current_day - placed_day - self.first_yield_day
+        return days_since_first >= 0 and days_since_first % self.interval == 0
 
     def needs_care(self, tile: dict) -> bool:
         """Returns True if the animal has not been cared for today."""
@@ -670,49 +694,26 @@ class Actions:
 
     @staticmethod
     def buy_seed(crop_name: Union[str, Plants], quantity: int = 1) -> List[Any]:
-        """
-        Creates a BUY_SEED market order.
-        Example: ["BUY_SEED", "WHEAT", 1]
-        """
         return ["BUY_SEED", str(crop_name).upper(), int(quantity)]
 
     @staticmethod
     def buy_animal(animal_name: Union[str, Animals], quantity: int = 1) -> List[Any]:
-        """
-        Creates a BUY_ANIMAL market order.
-        Example: ["BUY_ANIMAL", "GOOSE", 1]
-        """
         return ["BUY_ANIMAL", str(animal_name).upper(), int(quantity)]
 
     @staticmethod
     def buy_product(item_name: Union[str, Products], quantity: int = 1) -> List[Any]:
-        """
-        Creates a BUY_PRODUCT market order (for WHEAT or FERTILIZER).
-        Example: ["BUY_PRODUCT", "WHEAT", 1]
-        """
         return ["BUY_PRODUCT", str(item_name).upper(), int(quantity)]
 
     @staticmethod
     def sell(item_name: Union[str, Products], quantity: int = 1) -> List[Any]:
-        """
-        Creates a SELL market order.
-        Example: ["SELL", "WHEAT", 1]
-        """
         return ["SELL", str(item_name).upper(), int(quantity)]
 
     @staticmethod
     def hire() -> List[str]:
-        """
-        Creates a HIRE market order to hire an additional farm hand for the day.
-        Cost follows the Fibonacci sequence: 1, 1, 2, 3, 5, 8, 13, 21...
-        """
         return ["HIRE"]
 
     @staticmethod
     def buy_land() -> List[str]:
-        """
-        Creates a BUY_LAND market order to unlock the next 5x5 quadrant (NE: $1k, SW: $2k, SE: $4k).
-        """
         return ["BUY_LAND"]
 
     # --------------------------------------------------------------------------
@@ -739,7 +740,6 @@ class Actions:
         - 1st expansion (NE): $1,000
         - 2nd expansion (SW): $2,000
         - 3rd expansion (SE): $4,000
-        Returns None if all 4 quadrants are already unlocked.
         """
         count = len(unlocked_quadrants) if isinstance(unlocked_quadrants, list) else int(unlocked_quadrants)
         extra_unlocked = count - 1  # NW is unlocked by default
@@ -756,19 +756,52 @@ class Actions:
         return None
 
     # --------------------------------------------------------------------------
-    # Action Feasibility & Rule Predicates
+    # Map & Quadrant Utilities
     # --------------------------------------------------------------------------
+
+    @staticmethod
+    def quadrant_of(x: int, y: int, board_size: int = 10) -> str:
+        """Determines which quadrant a grid coordinate belongs to ('NW', 'NE', 'SW', 'SE')."""
+        half = board_size // 2
+        return ("N" if y < half else "S") + ("W" if x < half else "E")
+
+    @staticmethod
+    def get_quadrant_bounds(quadrant: str, board_size: int = 10) -> Tuple[int, int, int, int]:
+        """Returns (x_min, x_max, y_min, y_max) for the specified quadrant."""
+        half = board_size // 2
+        q = quadrant.upper()
+        if q == "NW": return (0, half, 0, half)
+        if q == "NE": return (half, board_size, 0, half)
+        if q == "SW": return (0, half, half, board_size)
+        if q == "SE": return (half, board_size, half, board_size)
+        raise ValueError(f"Unknown quadrant: {quadrant}")
+
+    @staticmethod
+    def is_tile_unlocked(x: int, y: int, unlocked_quadrants: List[str], board_size: int = 10) -> bool:
+        """Checks whether the tile at (x, y) belongs to an unlocked quadrant."""
+        q = Actions.quadrant_of(x, y, board_size)
+        return q in unlocked_quadrants
+
+    @staticmethod
+    def shed_access_tiles(board_size: int = 10) -> List[Tuple[int, int]]:
+        """Four inner-corner tiles orthogonally adjacent to the central shed, in NWSE order."""
+        half = board_size // 2
+        return [(half - 1, half - 1), (half, half - 1), (half - 1, half), (half, half)]
 
     @staticmethod
     def is_shed_adjacent(pos: Tuple[int, int], board_size: int = 10) -> bool:
         """Returns True if pos is orthogonally adjacent to the central shed."""
+        return tuple(pos) in set(Actions.shed_access_tiles(board_size))
+
+    @staticmethod
+    def default_spawn(board_size: int = 10) -> Tuple[int, int]:
+        """First free shed-access tile in the NW quadrant (default: (4,4) for boardSize=10)."""
         half = board_size // 2
-        return tuple(pos) in {
-            (half - 1, half - 1),
-            (half, half - 1),
-            (half - 1, half),
-            (half, half),
-        }
+        return (half - 1, half - 1)
+
+    # --------------------------------------------------------------------------
+    # Action Feasibility & Rule Predicates
+    # --------------------------------------------------------------------------
 
     @staticmethod
     def can_move(from_pos: Tuple[int, int], direction: str, board_size: int = 10) -> bool:
@@ -931,6 +964,142 @@ class Actions:
         if quantity <= 0:
             return False
         return shed.get(item_name.upper(), 0) >= quantity
+
+    # --------------------------------------------------------------------------
+    # End-Of-Day Lifecycle Simulators
+    # --------------------------------------------------------------------------
+
+    @staticmethod
+    def simulate_shed_drop(
+        shed: Dict[str, int],
+        inventories: List[Dict[str, int]],
+        capacity: int = 100,
+    ) -> Tuple[Dict[str, int], List[Dict[str, int]], int]:
+        """
+        Simulates end-of-day automatic inventory drop into the shed.
+        Items beyond capacity are discarded. Seeds are not dropped.
+        Returns (new_shed, new_inventories, total_discarded).
+        """
+        new_shed = dict(shed)
+        new_inventories = [dict(inv) for inv in inventories]
+        total_discarded = 0
+
+        for inv in new_inventories:
+            for item, n in list(inv.items()):
+                if n <= 0:
+                    del inv[item]
+                    continue
+                current_total = sum(new_shed.values())
+                room = max(0, capacity - current_total)
+                take = min(n, room)
+                if take > 0:
+                    new_shed[item] = new_shed.get(item, 0) + take
+                discarded = n - take
+                total_discarded += discarded
+                del inv[item]
+
+        return (new_shed, new_inventories, total_discarded)
+
+    @staticmethod
+    def simulate_weed_spawns(
+        farm_tiles: List[List[Any]],
+        weed_chance: float = 0.005,
+        rng: Optional[random.Random] = None,
+    ) -> List[List[Any]]:
+        """Simulates random weed spawning on empty unlocked tiles (tile is None)."""
+        rng = rng or random.Random()
+        new_tiles = [list(row) for row in farm_tiles]
+        board_size = len(new_tiles)
+        for y in range(board_size):
+            for x in range(board_size):
+                if new_tiles[y][x] is None and rng.random() < weed_chance:
+                    new_tiles[y][x] = {"kind": "WEED"}
+        return new_tiles
+
+    @staticmethod
+    def simulate_end_of_day_plant(
+        tile: dict,
+        was_watered: bool,
+        current_day: int,
+        turns_per_day: int = 24,
+    ) -> dict:
+        """
+        Simulates the end-of-day refresh on a plant tile:
+        - consecutive_unwatered updates (2 missed refreshes -> WEED)
+        - ongoing crops scheduled yield increment (doubled if fertilized and watered)
+        """
+        next_tile = dict(tile)
+        if was_watered:
+            next_tile["consecutive_unwatered"] = 0
+        else:
+            next_tile["consecutive_unwatered"] = next_tile.get("consecutive_unwatered", 0) + 1
+
+        next_tile["watered_today"] = False
+
+        if next_tile["consecutive_unwatered"] >= 2:
+            return {"kind": "WEED"}
+
+        crop_name = next_tile.get("crop")
+        crop_cfg = CROPS.get(crop_name)
+        if not crop_cfg or not crop_cfg.ongoing:
+            return next_tile
+
+        next_day = current_day + 1
+        days_since_first = next_day - next_tile["planted_day"] - crop_cfg.first_yield_day
+        if days_since_first >= 0 and days_since_first % crop_cfg.interval == 0:
+            prod_count = days_since_first // crop_cfg.interval + 1
+            if prod_count <= crop_cfg.max_yield:
+                fertilized = was_watered and next_tile.get("fertilized_until_day", -1) >= current_day
+                add_units = 2 if fertilized else 1
+                next_tile["yield_units"] = min(crop_cfg.max_yield, next_tile.get("yield_units", 0) + add_units)
+                if prod_count == crop_cfg.max_yield:
+                    next_tile["max_lifespan_step"] = (next_day + 1) * turns_per_day
+
+        return next_tile
+
+    @staticmethod
+    def simulate_end_of_day_animal(
+        tile: dict,
+        was_fed: bool,
+        was_cared: bool,
+        current_day: int,
+    ) -> dict:
+        """
+        Simulates the end-of-day refresh on an animal tile:
+        - consecutive_unfed updates (2 missed refreshes -> animal escapes)
+        - scheduled yield and care bonus banking
+        - fertilizer production
+        """
+        next_tile = dict(tile)
+        anim_name = next_tile.get("animal")
+        anim_cfg = ANIMALS.get(anim_name)
+        if not anim_cfg:
+            return next_tile
+
+        if was_fed:
+            next_tile["consecutive_unfed"] = 0
+        else:
+            next_tile["consecutive_unfed"] = next_tile.get("consecutive_unfed", 0) + 1
+
+        if next_tile["consecutive_unfed"] >= 2:
+            # Animal escapes, structure remains
+            return {"kind": anim_cfg.structure}
+
+        next_day = current_day + 1
+        days_since_first = next_day - next_tile["placed_day"] - anim_cfg.first_yield_day
+        if days_since_first >= 0 and days_since_first % anim_cfg.interval == 0:
+            base = 1
+            care_bonus = next_tile.pop("pending_care_bonus", 0) if was_fed else 0
+            next_tile["yield_units"] = min(anim_cfg.max_held, next_tile.get("yield_units", 0) + base + care_bonus)
+            next_tile["pending_care_bonus"] = 0
+
+        if was_cared and was_fed:
+            next_tile["pending_care_bonus"] = next_tile.get("pending_care_bonus", 0) + 1
+
+        next_tile["fertilizer_available"] = True
+        next_tile["fed_today"] = False
+        next_tile["cared_today"] = False
+        return next_tile
 
     # --------------------------------------------------------------------------
     # Convenience Plant/Animal Lookup

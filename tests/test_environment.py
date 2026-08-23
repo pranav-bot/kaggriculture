@@ -32,9 +32,22 @@ def test_environment_state_helpers():
     assert "money" in farm
     assert "tiles" in farm
 
+    opp_farm = env.get_opponent_farm(obs, my_player_id=0)
+    assert "money" in opp_farm
+    assert "tiles" in opp_farm
+
     private = env.get_private(obs, player=0)
     assert "shed" in private
     assert "seeds" in private
+
+    item_count = env.get_shed_item_count(obs, player=0)
+    free_space = env.get_shed_free_space(obs, player=0, capacity=100)
+    assert item_count >= 0
+    assert free_space <= 100
+    assert item_count + free_space == 100
+
+    nw_tiles = env.get_quadrant_tiles(obs, player=0, quadrant="NW")
+    assert len(nw_tiles) == 25  # 5x5 = 25 tiles
 
     market = env.get_market(obs)
     assert "prices" in market

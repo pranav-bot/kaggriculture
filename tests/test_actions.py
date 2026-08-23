@@ -1,3 +1,4 @@
+import random
 import pytest
 from kaggriculture.actions import (
     Actions,
@@ -16,6 +17,62 @@ from kaggriculture.actions import (
     get_animal,
 )
 from kaggriculture.env.items import Plants, Animals, Products, Structures, YieldType
+
+
+def test_map_quadrants_and_geometry():
+    assert Actions.quadrant_of(0, 0, 10) == "NW"
+    assert Actions.quadrant_of(4, 4, 10) == "NW"
+    assert Actions.quadrant_of(5, 0, 10) == "NE"
+    assert Actions.quadrant_of(9, 4, 10) == "NE"
+    assert Actions.quadrant_of(0, 5, 10) == "SW"
+    assert Actions.quadrant_of(4, 9, 10) == "SW"
+    assert Actions.quadrant_of(5, 5, 10) == "SE"
+    assert Actions.quadrant_of(9, 9, 10) == "SE"
+
+    assert Actions.get_quadrant_bounds("NW", 10) == (0, 5, 0, 5)
+    assert Actions.get_quadrant_bounds("NE", 10) == (5, 10, 0, 5)
+    assert Actions.get_quadrant_bounds("SW", 10) == (0, 5, 5, 10)
+    assert Actions.get_quadrant_bounds("SE", 10) == (5, 10, 5, 10)
+
+    unlocked = ["NW", "NE"]
+    assert Actions.is_tile_unlocked(2, 2, unlocked, 10) is True   # in NW
+    assert Actions.is_tile_unlocked(7, 2, unlocked, 10) is True   # in NE
+    assert Actions.is_tile_unlocked(2, 7, unlocked, 10) is False  # in SW
+    assert Actions.is_tile_unlocked(7, 7, unlocked, 10) is False  # in SE
+
+    assert Actions.shed_access_tiles(10) == [(4, 4), (5, 4), (4, 5), (5, 5)]
+    assert Actions.default_spawn(10) == (4, 4)
+
+
+def test_shed_drop_and_capacity_discard():
+    # Shed has 90 items, inventories have 20 items total. Cap is 100.
+    shed = {"WHEAT": 90}
+    inventories = [{"MELON": 15}, {"CARROT": 5}]
+
+    new_shed, new_invs, discarded = Actions.simulate_shed_drop(shed, inventories, capacity=100)
+    # Room is 10. Takes 10 MELON, discards 5 MELON + 5 CARROT = 10 discarded
+    assert sum(new_shed.values()) == 100
+    assert new_shed["WHEAT"] == 90
+    assert new_shed["MELON"] == 10
+    assert discarded == 10
+    assert len(new_invs[0]) == 0
+    assert len(new_invs[1]) == 0
+
+
+def test_weed_spawning_simulation():
+    tiles = [
+        [None, None, "LOCKED"],
+        [None, {"kind": "PLANT"}, "LOCKED"],
+        ["LOCKED", "LOCKED", "LOCKED"],
+    ]
+    rng = random.Random(42)
+    # With 100% chance, all None tiles should become WEED
+    spawned = Actions.simulate_weed_spawns(tiles, weed_chance=1.0, rng=rng)
+    assert spawned[0][0] == {"kind": "WEED"}
+    assert spawned[0][1] == {"kind": "WEED"}
+    assert spawned[1][0] == {"kind": "WEED"}
+    assert spawned[1][1] == {"kind": "PLANT"}  # Plant not overwritten
+    assert spawned[0][2] == "LOCKED"          # Locked not overwritten
 
 
 def test_actions_movement():
@@ -157,13 +214,57 @@ def test_actions_market():
     assert Actions.can_sell("STRAWBERRY", shed=shed, quantity=1) is False
 
 
-def test_actions_plant_helpers():
-    assert Actions.plant("WHEAT") == ["PLANT", "WHEAT"]
-    assert Actions.plant_wheat() == ["PLANT", "WHEAT"]
-    assert Actions.plant_carrot() == ["PLANT", "CARROT"]
-    assert Actions.plant_tomato() == ["PLANT", "TOMATO"]
-    assert Actions.plant_strawberry() == ["PLANT", "STRAWBERRY"]
-    assert Actions.plant_melon() == ["PLANT", "MELON"]
+def test_end_of_day_plant_and_weed_danger():
+    new_plant = {
+        "kind": "PLANT",
+        "crop": "WHEAT",
+        "planted_day": 0,
+        "watered_today": False,
+        "consecutive_unwatered": 1,
+        "yield_units": 1,
+    }
+
+    t1 = Actions.simulate_end_of_day_plant(new_plant, was_watered=False, current_day=0)
+    assert t1 == {"kind": "WEED"}
+
+    t2 = Actions.simulate_end_of_day_plant(new_plant, was_watered=True, current_day=0)
+    assert t2["kind"] == "PLANT"
+    assert t2["consecutive_unwatered"] == 0
+
+
+def test_end_of_day_animal_and_escape():
+    new_animal = {
+        "kind": "COOP",
+        "animal": "GOOSE",
+        "placed_day": 0,
+        "yield_units": 0,
+        "consecutive_unfed": 0,
+        "fed_today": False,
+        "cared_today": False,
+        "fertilizer_available": False,
+        "pending_care_bonus": 0,
+    }
+
+    a1 = Actions.simulate_end_of_day_animal(new_animal, was_fed=False, was_cared=False, current_day=0)
+    assert a1["consecutive_unfed"] == 1
+    assert "animal" in a1
+
+    a2 = Actions.simulate_end_of_day_animal(a1, was_fed=False, was_cared=False, current_day=1)
+    assert a2 == {"kind": "COOP"}
+
+
+def test_plant_decay_simulation():
+    w = Wheat
+    mls = (0 + 4 + 1) * 24
+    res, is_weed = w.simulate_decay(current_yield=4, max_lifespan_step=mls, current_step=119)
+    assert res == 4 and not is_weed
+
+    res1, _ = w.simulate_decay(current_yield=4, max_lifespan_step=mls, current_step=120)
+    assert res1 == 3
+    res2, _ = w.simulate_decay(current_yield=4, max_lifespan_step=mls, current_step=122)
+    assert res2 == 2
+    res_final, is_weed_final = w.simulate_decay(current_yield=4, max_lifespan_step=mls, current_step=128)
+    assert is_weed_final is True
 
 
 def test_wheat_specifications():
@@ -182,11 +283,8 @@ def test_wheat_specifications():
     assert w.subsequent_yields == "none"
     assert w.bonus_window == (2, 4)
 
-    # Yield simulation
-    # Unfertilized: base 1 + 3 bonus days = 4
     watered_days = {2, 3, 4}
     assert w.calculate_yield(planted_day=0, current_day=4, watered_days=watered_days) == 4
-    # Fertilized: base 1 + 3 * 2 = 7 capped at 6
     assert w.calculate_yield(planted_day=0, current_day=4, watered_days=watered_days, fertilized_until_day=4) == 6
 
 
@@ -205,11 +303,8 @@ def test_carrot_specifications():
     assert c.yield_per_tile_per_day == 0.75
     assert c.bonus_window == (2, 3)
 
-    # Yield simulation
-    # Unfertilized: base 1 + 2 bonus days = 3
     watered_days = {2, 3}
     assert c.calculate_yield(planted_day=0, current_day=3, watered_days=watered_days) == 3
-    # Fertilized: base 1 + 2 * 2 = 5 capped at 4
     assert c.calculate_yield(planted_day=0, current_day=3, watered_days=watered_days, fertilized_until_day=3) == 4
 
 
@@ -256,13 +351,11 @@ def test_melon_specifications():
     assert m.yield_per_tile_per_day == 0.55
     assert m.bonus_window == (6, 12)
 
-    # Accumulated units during growth:
     watered_days = {6, 7, 8, 9, 10, 11, 12}
     assert m.accumulated_yield_units(planted_day=0, current_day=10, watered_days=watered_days) == 6
     assert m.calculate_yield(planted_day=0, current_day=10, watered_days=watered_days) == 6
     assert m.is_optimal_harvest_age(planted_day=0, current_day=10, fertilized=False) is True
 
-    # Fertilized reaches cap 6 at age 8 on tile:
     assert m.accumulated_yield_units(planted_day=0, current_day=8, watered_days=watered_days, fertilized_until_day=8) == 6
     assert m.calculate_yield(planted_day=0, current_day=10, watered_days=watered_days, fertilized_until_day=8) == 6
 

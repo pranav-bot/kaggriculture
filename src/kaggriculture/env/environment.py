@@ -3,6 +3,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from kaggle_environments import make
 import pandas as pd
 
+from kaggriculture.env.items import get_quadrant_bounds
+
 
 class Environment:
     """
@@ -68,11 +70,26 @@ class Environment:
             return farms[player_id]
         return {}
 
+    def get_opponent_farm(self, obs: Any, my_player_id: int = 0) -> Dict[str, Any]:
+        """Returns the public farm state of the opponent."""
+        opp_id = 1 - my_player_id
+        return self.get_farm(obs, opp_id)
+
     def get_private(self, obs: Any, player: Union[int, bool] = 0) -> Dict[str, Any]:
         """Returns private state (shed, seeds, inventories) for this player."""
         player_id = 0 if player is True else (1 if player is False else int(player))
         observation = obs if isinstance(obs, dict) else self.get_current_state(obs, player_id == 0)
         return observation.get("private", {})
+
+    def get_shed_item_count(self, obs: Any, player: Union[int, bool] = 0) -> int:
+        """Returns total non-seed items stored in the player's shed."""
+        private = self.get_private(obs, player)
+        shed = private.get("shed", {})
+        return sum(shed.values())
+
+    def get_shed_free_space(self, obs: Any, player: Union[int, bool] = 0, capacity: int = 100) -> int:
+        """Returns remaining capacity in the player's shed."""
+        return max(0, capacity - self.get_shed_item_count(obs, player))
 
     def get_market(self, obs: Any) -> Dict[str, Any]:
         """Returns market state (prices and inventory)."""
@@ -127,6 +144,17 @@ class Environment:
                 if tile is None:
                     empty.append((x, y))
         return empty
+
+    def get_quadrant_tiles(self, obs: Any, player: Union[int, bool] = 0, quadrant: str = "NW", board_size: int = 10) -> List[Tuple[int, int, Any]]:
+        """Returns list of (x, y, tile_content) belonging to the specified quadrant."""
+        farm = self.get_farm(obs, player)
+        tiles = farm.get("tiles", [])
+        xmin, xmax, ymin, ymax = get_quadrant_bounds(quadrant, board_size)
+        res = []
+        for y in range(ymin, ymax):
+            for x in range(xmin, xmax):
+                res.append((x, y, tiles[y][x]))
+        return res
 
     # --------------------------------------------------------------------------
     # Metrics & Observability

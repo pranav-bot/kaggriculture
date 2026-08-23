@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Dict, Any
+from typing import Dict, List, Tuple, Any
 
 
 class YieldType(StrEnum):
@@ -52,7 +52,42 @@ class TileKind(StrEnum):
     PASTURE = "PASTURE"
 
 
-# Raw environment definitions
+# --------------------------------------------------------------------------
+# Map & Quadrant Helpers
+# --------------------------------------------------------------------------
+
+def get_quadrant_bounds(quadrant: str, board_size: int = 10) -> Tuple[int, int, int, int]:
+    """Returns (x_min, x_max, y_min, y_max) for the specified quadrant."""
+    half = board_size // 2
+    q = quadrant.upper()
+    if q == "NW": return (0, half, 0, half)
+    if q == "NE": return (half, board_size, 0, half)
+    if q == "SW": return (0, half, half, board_size)
+    if q == "SE": return (half, board_size, half, board_size)
+    raise ValueError(f"Unknown quadrant: {quadrant}")
+
+
+def quadrant_of(x: int, y: int, board_size: int = 10) -> str:
+    """Determines which quadrant a grid coordinate belongs to ('NW', 'NE', 'SW', 'SE')."""
+    half = board_size // 2
+    return ("N" if y < half else "S") + ("W" if x < half else "E")
+
+
+def shed_access_tiles(board_size: int = 10) -> List[Tuple[int, int]]:
+    """Four inner-corner tiles orthogonally adjacent to the central shed, in NWSE order."""
+    half = board_size // 2
+    return [(half - 1, half - 1), (half, half - 1), (half - 1, half), (half, half)]
+
+
+def is_shed_adjacent(pos: Tuple[int, int], board_size: int = 10) -> bool:
+    """Returns True if pos is orthogonally adjacent to the central shed."""
+    return tuple(pos) in set(shed_access_tiles(board_size))
+
+
+# --------------------------------------------------------------------------
+# Raw Environment Data Definitions
+# --------------------------------------------------------------------------
+
 CROPS_DATA: Dict[str, Dict[str, Any]] = {
     "WHEAT": {
         "seed": 10,
