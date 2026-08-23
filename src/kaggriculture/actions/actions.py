@@ -13,6 +13,27 @@ from kaggriculture.env.items import (
     ANIMALS_DATA,
     FERTILIZER_DATA,
     LAND_EXPANSION_DATA,
+    SHOPS,
+    TOWN_CENTER_PRODUCTS,
+    PRODUCTS_LIST,
+    MAX_SHOP_INSTANCES,
+    TOWN_SHOP_UNLOCK_INTERVAL,
+    TOWN_SHOP_SELL_INTERVAL,
+    TOWN_CENTER_SELL_INTERVAL,
+    MARKET_I0,
+    PRICE_FLOOR,
+    HINGE_GAIN,
+    MARKET_PARAMS,
+    shape_func,
+    resolve_market_params,
+    market_price,
+    get_quadrant_bounds,
+    quadrant_of,
+    shed_access_tiles,
+    is_shed_adjacent,
+    spawn_hand_position,
+    calculate_shop_turn_consumption,
+    calculate_town_daily_consumption,
 )
 
 
@@ -575,6 +596,21 @@ class Actions:
     LAND_EXPANSION_ORDER = ["NE", "SW", "SE"]
     LAND_EXPANSION_PRICES = [1000, 2000, 4000]
 
+    # Town Shops & Demand
+    SHOPS = SHOPS
+    TOWN_CENTER_PRODUCTS = TOWN_CENTER_PRODUCTS
+    PRODUCTS_LIST = PRODUCTS_LIST
+    MAX_SHOP_INSTANCES = MAX_SHOP_INSTANCES
+    TOWN_SHOP_UNLOCK_INTERVAL = TOWN_SHOP_UNLOCK_INTERVAL
+    TOWN_SHOP_SELL_INTERVAL = TOWN_SHOP_SELL_INTERVAL
+    TOWN_CENTER_SELL_INTERVAL = TOWN_CENTER_SELL_INTERVAL
+
+    # Market Curve Parameters & Math
+    MARKET_I0 = MARKET_I0
+    PRICE_FLOOR = PRICE_FLOOR
+    HINGE_GAIN = HINGE_GAIN
+    MARKET_PARAMS = MARKET_PARAMS
+
     # Registered Crop & Animal Helpers
     CROPS = CROPS
     ANIMALS = ANIMALS
@@ -717,7 +753,38 @@ class Actions:
         return ["BUY_LAND"]
 
     # --------------------------------------------------------------------------
-    # Market Calculation & Cost Helpers
+    # Market & Pricing Mathematics
+    # --------------------------------------------------------------------------
+
+    @staticmethod
+    def market_price(item: Union[str, Products], inventory: int, params: Optional[Dict[str, Any]] = None) -> int:
+        """Evaluates the dynamic market price curve for an item given inventory."""
+        return market_price(item, inventory, params)
+
+    @staticmethod
+    def resolve_market_params(overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Dict[str, Any]]:
+        """Merges sparse user overrides onto default MARKET_PARAMS."""
+        return resolve_market_params(overrides)
+
+    @staticmethod
+    def shape_func(func: str, x: float, T: Optional[float] = None) -> float:
+        """Evaluates mathematical pricing shape function."""
+        return shape_func(func, x, T)
+
+    @staticmethod
+    def is_premium_resource(item: Union[str, Products]) -> bool:
+        """Returns True if the resource has base > $100 (Strawberry, Melon, Milk, Wool)."""
+        key = str(item).upper()
+        return MARKET_PARAMS.get(key, {}).get("base", 0) > 100
+
+    @staticmethod
+    def predict_price_impact(item: Union[str, Products], current_inv: int, units_sold: int, params: Optional[Dict[str, Any]] = None) -> int:
+        """Predicts the resulting market price if units_sold are sold to market."""
+        new_inv = current_inv + units_sold
+        return Actions.market_price(item, new_inv, params)
+
+    # --------------------------------------------------------------------------
+    # Market & Town Calculation Helpers
     # --------------------------------------------------------------------------
 
     @staticmethod
@@ -755,6 +822,21 @@ class Actions:
             return Actions.LAND_EXPANSION_ORDER[extra_unlocked]
         return None
 
+    @staticmethod
+    def calculate_shop_turn_consumption(shop_name: str) -> Dict[str, int]:
+        """Calculates product consumption for one instance of a shop per sell tick."""
+        return calculate_shop_turn_consumption(shop_name)
+
+    @staticmethod
+    def calculate_town_daily_consumption(unlocked_shops: List[str]) -> Dict[str, int]:
+        """Calculates total units consumed per day across all shops + town center."""
+        return calculate_town_daily_consumption(unlocked_shops)
+
+    @staticmethod
+    def get_shop_demands(shop_name: str) -> List[str]:
+        """Returns the list of demanded products for a given shop."""
+        return SHOPS.get(shop_name.upper(), [])
+
     # --------------------------------------------------------------------------
     # Map & Quadrant Utilities
     # --------------------------------------------------------------------------
@@ -762,19 +844,12 @@ class Actions:
     @staticmethod
     def quadrant_of(x: int, y: int, board_size: int = 10) -> str:
         """Determines which quadrant a grid coordinate belongs to ('NW', 'NE', 'SW', 'SE')."""
-        half = board_size // 2
-        return ("N" if y < half else "S") + ("W" if x < half else "E")
+        return quadrant_of(x, y, board_size)
 
     @staticmethod
     def get_quadrant_bounds(quadrant: str, board_size: int = 10) -> Tuple[int, int, int, int]:
         """Returns (x_min, x_max, y_min, y_max) for the specified quadrant."""
-        half = board_size // 2
-        q = quadrant.upper()
-        if q == "NW": return (0, half, 0, half)
-        if q == "NE": return (half, board_size, 0, half)
-        if q == "SW": return (0, half, half, board_size)
-        if q == "SE": return (half, board_size, half, board_size)
-        raise ValueError(f"Unknown quadrant: {quadrant}")
+        return get_quadrant_bounds(quadrant, board_size)
 
     @staticmethod
     def is_tile_unlocked(x: int, y: int, unlocked_quadrants: List[str], board_size: int = 10) -> bool:
@@ -785,19 +860,23 @@ class Actions:
     @staticmethod
     def shed_access_tiles(board_size: int = 10) -> List[Tuple[int, int]]:
         """Four inner-corner tiles orthogonally adjacent to the central shed, in NWSE order."""
-        half = board_size // 2
-        return [(half - 1, half - 1), (half, half - 1), (half - 1, half), (half, half)]
+        return shed_access_tiles(board_size)
 
     @staticmethod
     def is_shed_adjacent(pos: Tuple[int, int], board_size: int = 10) -> bool:
         """Returns True if pos is orthogonally adjacent to the central shed."""
-        return tuple(pos) in set(Actions.shed_access_tiles(board_size))
+        return is_shed_adjacent(pos, board_size)
 
     @staticmethod
     def default_spawn(board_size: int = 10) -> Tuple[int, int]:
         """First free shed-access tile in the NW quadrant (default: (4,4) for boardSize=10)."""
         half = board_size // 2
         return (half - 1, half - 1)
+
+    @staticmethod
+    def spawn_hand(farm: Dict[str, Any], board_size: int = 10) -> List[int]:
+        """Determines spawn position for a newly hired hand using the NWSE least-occupied rule."""
+        return spawn_hand_position(farm, board_size)
 
     # --------------------------------------------------------------------------
     # Action Feasibility & Rule Predicates

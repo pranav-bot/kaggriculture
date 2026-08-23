@@ -16,7 +16,137 @@ from kaggriculture.actions import (
     get_crop,
     get_animal,
 )
-from kaggriculture.env.items import Plants, Animals, Products, Structures, YieldType
+from kaggriculture.env.items import (
+    Plants,
+    Animals,
+    Products,
+    Structures,
+    YieldType,
+    SHOPS,
+    MARKET_PARAMS,
+    market_price,
+    resolve_market_params,
+)
+
+
+def test_market_price_curve_table():
+    I0 = 10000
+
+    # Wheat: Base 25, T 400
+    assert Actions.market_price("WHEAT", I0) == 25
+    assert Actions.market_price("WHEAT", I0 - 400) == 45
+    assert Actions.market_price("WHEAT", I0 + 400) == 20
+    assert Actions.market_price("WHEAT", I0 + 800) == 19
+
+    # Carrot: Base 35, T 450
+    assert Actions.market_price("CARROT", I0) == 35
+    assert Actions.market_price("CARROT", I0 - 450) == 70
+    assert Actions.market_price("CARROT", I0 + 450) in (10, 11)  # 35 - 24.5 = 10.5
+    assert Actions.market_price("CARROT", I0 + 900) == 1
+
+    # Tomato: Base 60, T 200
+    assert Actions.market_price("TOMATO", I0) == 60
+    assert Actions.market_price("TOMATO", I0 - 200) == 84
+    assert Actions.market_price("TOMATO", I0 + 200) == 24
+    assert Actions.market_price("TOMATO", I0 + 400) == 9
+
+    # Strawberry: Base 120, T 100
+    assert Actions.market_price("STRAWBERRY", I0) == 120
+    assert Actions.market_price("STRAWBERRY", I0 - 100) == 204
+    assert Actions.market_price("STRAWBERRY", I0 + 100) == 1
+    assert Actions.market_price("STRAWBERRY", I0 + 200) == 1
+
+    # Melon: Base 250, T 300
+    assert Actions.market_price("MELON", I0) == 250
+    assert Actions.market_price("MELON", I0 - 300) == 300
+    assert Actions.market_price("MELON", I0 + 300) == 1
+    assert Actions.market_price("MELON", I0 + 600) == 1
+
+    # Egg: Base 50, T 332
+    assert Actions.market_price("EGG", I0) == 50
+    assert Actions.market_price("EGG", I0 - 332) == 70
+    assert Actions.market_price("EGG", I0 + 332) == 40
+    assert Actions.market_price("EGG", I0 + 664) == 39
+
+    # Milk: Base 160, T 122
+    assert Actions.market_price("MILK", I0) == 160
+    assert Actions.market_price("MILK", I0 - 122) == 256
+    assert Actions.market_price("MILK", I0 + 122) == 1
+    assert Actions.market_price("MILK", I0 + 244) == 1
+
+    # Wool: Base 200, T 105
+    assert Actions.market_price("WOOL", I0) == 200
+    assert Actions.market_price("WOOL", I0 - 105) == 240
+    assert Actions.market_price("WOOL", I0 + 105) == 1
+    assert Actions.market_price("WOOL", I0 + 210) == 1
+
+    # Fertilizer: Base 100, T 200
+    assert Actions.market_price("FERTILIZER", I0) == 100
+    assert Actions.market_price("FERTILIZER", I0 - 200) == 140
+    assert Actions.market_price("FERTILIZER", I0 + 200) == 60
+    assert Actions.market_price("FERTILIZER", I0 + 400) == 20
+
+
+def test_market_price_overrides_and_helpers():
+    # Premium resource check
+    assert Actions.is_premium_resource("STRAWBERRY") is True
+    assert Actions.is_premium_resource("MELON") is True
+    assert Actions.is_premium_resource("MILK") is True
+    assert Actions.is_premium_resource("WOOL") is True
+    assert Actions.is_premium_resource("WHEAT") is False
+    assert Actions.is_premium_resource("CARROT") is False
+
+    # Overrides
+    overrides = {"WOOL": {"above_target": 0.95}}
+    resolved = Actions.resolve_market_params(overrides)
+    assert resolved["WOOL"]["above_target"] == 0.95
+    assert resolved["WHEAT"]["above_target"] == 0.20
+
+    # Price impact prediction
+    p_curr = Actions.market_price("WHEAT", 10000)
+    p_after = Actions.predict_price_impact("WHEAT", current_inv=10000, units_sold=400)
+    assert p_curr == 25
+    assert p_after == 20
+
+
+def test_hand_spawn_placement():
+    farm = {"farmer": [4, 4], "hands": []}
+
+    pos1 = Actions.spawn_hand(farm, board_size=10)
+    assert pos1 == [5, 4]
+    farm["hands"].append(pos1)
+
+    pos2 = Actions.spawn_hand(farm, board_size=10)
+    assert pos2 == [4, 5]
+    farm["hands"].append(pos2)
+
+    pos3 = Actions.spawn_hand(farm, board_size=10)
+    assert pos3 == [5, 5]
+    farm["hands"].append(pos3)
+
+    pos4 = Actions.spawn_hand(farm, board_size=10)
+    assert pos4 == [4, 4]
+
+
+def test_town_shop_demands_and_consumption():
+    assert Actions.get_shop_demands("BAKERY") == ["EGG", "WHEAT"]
+    assert Actions.get_shop_demands("PIZZA_SHOP") == ["MILK", "TOMATO", "WHEAT"]
+    assert Actions.get_shop_demands("YARN_STORE") == ["WOOL"]
+    assert Actions.get_shop_demands("PET_CAFE") == ["CARROT"]
+
+    assert Actions.calculate_shop_turn_consumption("BAKERY") == {"EGG": 1, "WHEAT": 1}
+    assert Actions.calculate_shop_turn_consumption("YARN_STORE") == {"WOOL": 2}
+    assert Actions.calculate_shop_turn_consumption("PET_CAFE") == {"CARROT": 2}
+    assert Actions.calculate_shop_turn_consumption("PIZZA_SHOP") == {"MILK": 1, "TOMATO": 1, "WHEAT": 1}
+
+    unlocked = ["BAKERY", "YARN_STORE"]
+    daily = Actions.calculate_town_daily_consumption(unlocked)
+    assert daily["WHEAT"] == 7
+    assert daily["EGG"] == 7
+    assert daily["WOOL"] == 13
+    assert daily["CARROT"] == 1
+    assert daily["MELON"] == 1
+    assert daily["FERTILIZER"] == 0
 
 
 def test_map_quadrants_and_geometry():
@@ -35,22 +165,20 @@ def test_map_quadrants_and_geometry():
     assert Actions.get_quadrant_bounds("SE", 10) == (5, 10, 5, 10)
 
     unlocked = ["NW", "NE"]
-    assert Actions.is_tile_unlocked(2, 2, unlocked, 10) is True   # in NW
-    assert Actions.is_tile_unlocked(7, 2, unlocked, 10) is True   # in NE
-    assert Actions.is_tile_unlocked(2, 7, unlocked, 10) is False  # in SW
-    assert Actions.is_tile_unlocked(7, 7, unlocked, 10) is False  # in SE
+    assert Actions.is_tile_unlocked(2, 2, unlocked, 10) is True
+    assert Actions.is_tile_unlocked(7, 2, unlocked, 10) is True
+    assert Actions.is_tile_unlocked(2, 7, unlocked, 10) is False
+    assert Actions.is_tile_unlocked(7, 7, unlocked, 10) is False
 
     assert Actions.shed_access_tiles(10) == [(4, 4), (5, 4), (4, 5), (5, 5)]
     assert Actions.default_spawn(10) == (4, 4)
 
 
 def test_shed_drop_and_capacity_discard():
-    # Shed has 90 items, inventories have 20 items total. Cap is 100.
     shed = {"WHEAT": 90}
     inventories = [{"MELON": 15}, {"CARROT": 5}]
 
     new_shed, new_invs, discarded = Actions.simulate_shed_drop(shed, inventories, capacity=100)
-    # Room is 10. Takes 10 MELON, discards 5 MELON + 5 CARROT = 10 discarded
     assert sum(new_shed.values()) == 100
     assert new_shed["WHEAT"] == 90
     assert new_shed["MELON"] == 10
@@ -66,13 +194,12 @@ def test_weed_spawning_simulation():
         ["LOCKED", "LOCKED", "LOCKED"],
     ]
     rng = random.Random(42)
-    # With 100% chance, all None tiles should become WEED
     spawned = Actions.simulate_weed_spawns(tiles, weed_chance=1.0, rng=rng)
     assert spawned[0][0] == {"kind": "WEED"}
     assert spawned[0][1] == {"kind": "WEED"}
     assert spawned[1][0] == {"kind": "WEED"}
-    assert spawned[1][1] == {"kind": "PLANT"}  # Plant not overwritten
-    assert spawned[0][2] == "LOCKED"          # Locked not overwritten
+    assert spawned[1][1] == {"kind": "PLANT"}
+    assert spawned[0][2] == "LOCKED"
 
 
 def test_actions_movement():
@@ -83,7 +210,6 @@ def test_actions_movement():
     assert Actions.pass_action() == ["PASS"]
     assert Actions.move("north") == ["NORTH"]
 
-    # Bounds checking
     assert Actions.can_move((0, 0), "NORTH", board_size=10) is False
     assert Actions.can_move((0, 0), "WEST", board_size=10) is False
     assert Actions.can_move((0, 0), "SOUTH", board_size=10) is True
@@ -101,7 +227,6 @@ def test_actions_tile_and_shed():
     assert Actions.pickup("WHEAT", 5) == ["PICKUP", "WHEAT", 5]
     assert Actions.place("WHEAT", 2) == ["PLACE", "WHEAT", 2]
 
-    # Shed adjacency
     assert Actions.is_shed_adjacent((4, 4)) is True
     assert Actions.is_shed_adjacent((5, 4)) is True
     assert Actions.is_shed_adjacent((4, 5)) is True
@@ -118,13 +243,11 @@ def test_actions_tile_and_shed():
 
 
 def test_actions_feasibility_predicates():
-    # Planting
     assert Actions.can_plant(None, "WHEAT", {"WHEAT": 2}) is True
     assert Actions.can_plant(None, "WHEAT", {"WHEAT": 0}) is False
     assert Actions.can_plant("LOCKED", "WHEAT", {"WHEAT": 2}) is False
     assert Actions.can_plant({"kind": "WEED"}, "WHEAT", {"WHEAT": 2}) is False
 
-    # Watering
     plant_tile = {"kind": "PLANT", "crop": "WHEAT", "watered_today": False}
     watered_tile = {"kind": "PLANT", "crop": "WHEAT", "watered_today": True}
     assert Actions.can_water(plant_tile) is True
@@ -132,17 +255,14 @@ def test_actions_feasibility_predicates():
     assert Actions.can_water(None) is False
     assert Actions.can_water("LOCKED") is False
 
-    # Harvesting
     ripe_plant = {"kind": "PLANT", "crop": "WHEAT", "planted_day": 0, "yield_units": 4}
     immature_plant = {"kind": "PLANT", "crop": "WHEAT", "planted_day": 3, "yield_units": 0}
     assert Actions.can_harvest(ripe_plant, current_day=4) is True
     assert Actions.can_harvest(immature_plant, current_day=3) is False
 
-    # Fertilizing
     assert Actions.can_fertilize(plant_tile, {"FERTILIZER": 1}) is True
     assert Actions.can_fertilize(plant_tile, {"FERTILIZER": 0}) is False
 
-    # Digging
     weed_tile = {"kind": "WEED"}
     empty_coop = {"kind": "COOP"}
     occupied_coop = {"kind": "COOP", "animal": "GOOSE"}
@@ -152,10 +272,9 @@ def test_actions_feasibility_predicates():
     assert Actions.can_dig(None) is False
     assert Actions.can_dig("LOCKED") is False
 
-    # Animal operations
     assert Actions.can_place_animal(empty_coop, "GOOSE", {"GOOSE": 1}) is True
     assert Actions.can_place_animal(empty_coop, "GOOSE", {"GOOSE": 0}) is False
-    assert Actions.can_place_animal(empty_coop, "COW", {"COW": 1}) is False  # Cow needs PASTURE
+    assert Actions.can_place_animal(empty_coop, "COW", {"COW": 1}) is False
 
     assert Actions.can_feed(occupied_coop, {"WHEAT": 1}) is True
     assert Actions.can_feed(occupied_coop, {"WHEAT": 0}) is False
@@ -176,10 +295,8 @@ def test_actions_market():
     assert Actions.hire() == ["HIRE"]
     assert Actions.buy_land() == ["BUY_LAND"]
 
-    # Fibonacci Hire Costs: 1, 1, 2, 3, 5, 8, 13, 21...
     assert [Actions.hire_cost(i) for i in range(8)] == [1, 1, 2, 3, 5, 8, 13, 21]
 
-    # Land Costs: 1000, 2000, 4000
     assert Actions.land_cost(["NW"]) == 1000
     assert Actions.land_cost(["NW", "NE"]) == 2000
     assert Actions.land_cost(["NW", "NE", "SW"]) == 4000
@@ -190,7 +307,6 @@ def test_actions_market():
     assert Actions.next_quadrant(["NW", "NE", "SW"]) == "SE"
     assert Actions.next_quadrant(["NW", "NE", "SW", "SE"]) is None
 
-    # Market feasibility checks
     assert Actions.can_buy_land(1500, ["NW"]) is True
     assert Actions.can_buy_land(500, ["NW"]) is False
     assert Actions.can_buy_land(5000, ["NW", "NE", "SW", "SE"]) is False
