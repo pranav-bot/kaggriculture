@@ -68,12 +68,19 @@ def build_standalone_single_file(agent_path: Path, output_file: Path) -> Path:
     # Clean local package imports
     def clean_imports(code: str) -> str:
         lines = []
+        skipping_import = False
         for line in code.splitlines():
+            if skipping_import:
+                if ")" in line:
+                    skipping_import = False
+                continue
             if (
                 line.startswith("from kaggriculture")
                 or line.startswith("import kaggriculture")
                 or "sys.path.insert" in line
             ):
+                if "(" in line and ")" not in line:
+                    skipping_import = True
                 continue
             lines.append(line)
         return "\n".join(lines)
@@ -125,7 +132,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
     return output_file
 
 
-def validate_submission(target_file: Path, episode_steps: int = 48) -> bool:
+def validate_submission(target_file: Path, episode_steps: int = 720) -> bool:
     """
     Validates that the built submission executes cleanly in kaggle_environments without errors.
     """

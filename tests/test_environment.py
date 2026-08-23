@@ -6,7 +6,7 @@ from kaggriculture.env.items import Plants
 
 
 def test_environment_run():
-    env = Environment(configuration={"episodeSteps": 48})
+    env = Environment(configuration={"episodeSteps": 720})
     final = env.run_env(ActionController(target_crop=Plants.WHEAT), "random")
     assert final is not None and len(final) == 2
 
