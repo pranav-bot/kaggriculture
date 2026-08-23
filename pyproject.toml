@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "ipynb>=0.5.1",
+    "kaggle>=2.2.4",
     "kaggle-environments>=1.32.7",
 ]
 
