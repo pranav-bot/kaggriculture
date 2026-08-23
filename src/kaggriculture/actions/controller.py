@@ -156,7 +156,7 @@ class ActionController:
                         continue
 
                     # 1b. Ripe / Optimal Harvest
-                    if crop_cfg.is_optimal_harvest_age(tile["planted_day"], current_day, tile.get("fertilized_until_day", -1) >= current_day) and tile.get("yield_units", 0) > 0:
+                    if crop_cfg.is_optimal_harvest_age(tile["planted_day"], current_day) and tile.get("yield_units", 0) > 0:
                         candidates.append((1, dist, x, y, "harvest"))
                         continue
 
