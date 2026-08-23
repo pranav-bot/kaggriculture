@@ -26,6 +26,14 @@ def test_actions_movement():
     assert Actions.pass_action() == ["PASS"]
     assert Actions.move("north") == ["NORTH"]
 
+    # Bounds checking
+    assert Actions.can_move((0, 0), "NORTH", board_size=10) is False
+    assert Actions.can_move((0, 0), "WEST", board_size=10) is False
+    assert Actions.can_move((0, 0), "SOUTH", board_size=10) is True
+    assert Actions.can_move((0, 0), "EAST", board_size=10) is True
+    assert Actions.can_move((9, 9), "SOUTH", board_size=10) is False
+    assert Actions.can_move((9, 9), "EAST", board_size=10) is False
+
 
 def test_actions_tile_and_shed():
     assert Actions.water() == ["WATER"]
@@ -35,6 +43,71 @@ def test_actions_tile_and_shed():
     assert Actions.drop() == ["DROP"]
     assert Actions.pickup("WHEAT", 5) == ["PICKUP", "WHEAT", 5]
     assert Actions.place("WHEAT", 2) == ["PLACE", "WHEAT", 2]
+
+    # Shed adjacency
+    assert Actions.is_shed_adjacent((4, 4)) is True
+    assert Actions.is_shed_adjacent((5, 4)) is True
+    assert Actions.is_shed_adjacent((4, 5)) is True
+    assert Actions.is_shed_adjacent((5, 5)) is True
+    assert Actions.is_shed_adjacent((0, 0)) is False
+
+    assert Actions.can_drop((4, 4)) is True
+    assert Actions.can_drop((0, 0)) is False
+
+    shed = {"WHEAT": 10, "FERTILIZER": 0}
+    assert Actions.can_pickup((4, 4), "WHEAT", shed) is True
+    assert Actions.can_pickup((4, 4), "FERTILIZER", shed) is False
+    assert Actions.can_pickup((0, 0), "WHEAT", shed) is False
+
+
+def test_actions_feasibility_predicates():
+    # Planting
+    assert Actions.can_plant(None, "WHEAT", {"WHEAT": 2}) is True
+    assert Actions.can_plant(None, "WHEAT", {"WHEAT": 0}) is False
+    assert Actions.can_plant("LOCKED", "WHEAT", {"WHEAT": 2}) is False
+    assert Actions.can_plant({"kind": "WEED"}, "WHEAT", {"WHEAT": 2}) is False
+
+    # Watering
+    plant_tile = {"kind": "PLANT", "crop": "WHEAT", "watered_today": False}
+    watered_tile = {"kind": "PLANT", "crop": "WHEAT", "watered_today": True}
+    assert Actions.can_water(plant_tile) is True
+    assert Actions.can_water(watered_tile) is False
+    assert Actions.can_water(None) is False
+    assert Actions.can_water("LOCKED") is False
+
+    # Harvesting
+    ripe_plant = {"kind": "PLANT", "crop": "WHEAT", "planted_day": 0, "yield_units": 4}
+    immature_plant = {"kind": "PLANT", "crop": "WHEAT", "planted_day": 3, "yield_units": 0}
+    assert Actions.can_harvest(ripe_plant, current_day=4) is True
+    assert Actions.can_harvest(immature_plant, current_day=3) is False
+
+    # Fertilizing
+    assert Actions.can_fertilize(plant_tile, {"FERTILIZER": 1}) is True
+    assert Actions.can_fertilize(plant_tile, {"FERTILIZER": 0}) is False
+
+    # Digging
+    weed_tile = {"kind": "WEED"}
+    empty_coop = {"kind": "COOP"}
+    occupied_coop = {"kind": "COOP", "animal": "GOOSE"}
+    assert Actions.can_dig(weed_tile) is True
+    assert Actions.can_dig(empty_coop) is True
+    assert Actions.can_dig(occupied_coop) is False
+    assert Actions.can_dig(None) is False
+    assert Actions.can_dig("LOCKED") is False
+
+    # Animal operations
+    assert Actions.can_place_animal(empty_coop, "GOOSE", {"GOOSE": 1}) is True
+    assert Actions.can_place_animal(empty_coop, "GOOSE", {"GOOSE": 0}) is False
+    assert Actions.can_place_animal(empty_coop, "COW", {"COW": 1}) is False  # Cow needs PASTURE
+
+    assert Actions.can_feed(occupied_coop, {"WHEAT": 1}) is True
+    assert Actions.can_feed(occupied_coop, {"WHEAT": 0}) is False
+    assert Actions.can_care(occupied_coop) is True
+
+    fertilizer_coop = {"kind": "COOP", "animal": "GOOSE", "fertilizer_available": True}
+    no_fert_coop = {"kind": "COOP", "animal": "GOOSE", "fertilizer_available": False}
+    assert Actions.can_collect_fertilizer(fertilizer_coop) is True
+    assert Actions.can_collect_fertilizer(no_fert_coop) is False
 
 
 def test_actions_animal_and_structures():
@@ -155,14 +228,12 @@ def test_melon_specifications():
 
     # Accumulated units during growth:
     watered_days = {6, 7, 8, 9, 10, 11, 12}
-    # Unfertilized reaches cap 6 at age 10:
     assert m.accumulated_yield_units(planted_day=0, current_day=10, watered_days=watered_days) == 6
     assert m.calculate_yield(planted_day=0, current_day=10, watered_days=watered_days) == 6
     assert m.is_optimal_harvest_age(planted_day=0, current_day=10, fertilized=False) is True
 
     # Fertilized reaches cap 6 at age 8 on tile:
     assert m.accumulated_yield_units(planted_day=0, current_day=8, watered_days=watered_days, fertilized_until_day=8) == 6
-    # But harvestable at first_yield_day (day 10):
     assert m.calculate_yield(planted_day=0, current_day=10, watered_days=watered_days, fertilized_until_day=8) == 6
 
 

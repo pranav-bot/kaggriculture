@@ -15,15 +15,20 @@ from kaggriculture.env.items import Plants, Animals, Products, Structures, Quadr
 class ActionController:
     """
     Intelligent high-level action controller and tactical coordinator for Kaggriculture.
-    Coordinates farmer movements, hired hands, field maintenance, and market trading.
+    Coordinates farmer movements, hired hands, field maintenance, livestock, and market trading.
     """
 
     def __init__(
         self,
         target_crop: Union[str, Plants] = Plants.WHEAT,
+        target_animal: Optional[Union[str, Animals]] = None,
         auto_water: bool = True,
         auto_harvest: bool = True,
         auto_fertilize: bool = False,
+        auto_feed_animals: bool = True,
+        auto_care_animals: bool = True,
+        auto_collect_fertilizer: bool = True,
+        auto_dig_weeds: bool = True,
         auto_sell: bool = True,
         auto_expand_land: bool = True,
         auto_hire_hands: bool = False,
@@ -32,16 +37,20 @@ class ActionController:
         board_size: int = 10,
     ):
         self.target_crop = str(target_crop).upper()
+        self.target_animal = str(target_animal).upper() if target_animal else None
         self.auto_water = auto_water
         self.auto_harvest = auto_harvest
         self.auto_fertilize = auto_fertilize
+        self.auto_feed_animals = auto_feed_animals
+        self.auto_care_animals = auto_care_animals
+        self.auto_collect_fertilizer = auto_collect_fertilizer
+        self.auto_dig_weeds = auto_dig_weeds
         self.auto_sell = auto_sell
         self.auto_expand_land = auto_expand_land
         self.auto_hire_hands = auto_hire_hands
         self.max_hires_per_day = max_hires_per_day
         self.min_sell_margin = min_sell_margin
         self.board_size = board_size
-        self._assigned_targets: Set[Tuple[int, int]] = set()
 
     # --------------------------------------------------------------------------
     # Grid & Navigation Utilities
@@ -63,7 +72,7 @@ class ActionController:
 
     @staticmethod
     def is_shed_adjacent(pos: Tuple[int, int], board_size: int = 10) -> bool:
-        return tuple(pos) in set(ActionController.get_shed_adjacent_tiles(board_size))
+        return Actions.is_shed_adjacent(pos, board_size)
 
     @staticmethod
     def nearest_shed_tile(pos: Tuple[int, int], board_size: int = 10) -> Tuple[int, int]:
@@ -99,26 +108,28 @@ class ActionController:
     def find_best_tile_for_unit(
         self,
         unit_pos: Tuple[int, int],
+        unit_inv: dict,
         farm: dict,
         private: dict,
+        available_seeds: Dict[str, int],
         current_day: int,
         current_step: int,
-        has_seeds: bool,
         claimed_tiles: Set[Tuple[int, int]],
     ) -> Optional[Tuple[int, int, str]]:
         """
         Finds the highest priority tile and task for a given farmer/hand unit.
         Prioritization:
-          1. Critical watering (in danger of becoming weed)
-          2. Optimal harvesting (reached max yield / ready)
-          3. Regular watering (needs water today)
-          4. Emergency animal feeding / care
-          5. Planting empty tiles
-          6. Clearing weeds
+          0. Emergency watering (in danger of becoming weed) / Emergency feeding (danger of escape)
+          1. Optimal harvesting (reached max yield / ready)
+          2. Regular watering (needs water today)
+          3. Livestock care, feeding, fertilizer collection
+          4. Planting empty tiles (respecting available_seeds quota)
+          5. Clearing weeds
         """
         ux, uy = unit_pos
         board_size = len(farm["tiles"])
         candidates = []
+        has_seeds = available_seeds.get(self.target_crop, 0) > 0 or any(v > 0 for v in available_seeds.values())
 
         for y in range(board_size):
             for x in range(board_size):
@@ -139,7 +150,7 @@ class ActionController:
                     if not crop_cfg:
                         continue
 
-                    # 1a. Critical water danger
+                    # 1a. Critical water danger (missed yesterday, not watered today)
                     if crop_cfg.in_danger_of_weed(tile):
                         candidates.append((0, dist, x, y, "water"))
                         continue
@@ -150,12 +161,17 @@ class ActionController:
                         continue
 
                     # 1c. Regular watering
-                    if crop_cfg.needs_watering(tile):
+                    if self.auto_water and crop_cfg.needs_watering(tile):
                         candidates.append((2, dist, x, y, "water"))
                         continue
 
-                    # 1d. Non-optimal but harvestable
-                    if crop_cfg.is_harvestable(tile["planted_day"], current_day, tile.get("yield_units", 0)):
+                    # 1d. Fertilizing (if unit carries fertilizer)
+                    if self.auto_fertilize and unit_inv.get("FERTILIZER", 0) > 0 and tile.get("fertilized_until_day", -1) < current_day:
+                        candidates.append((2, dist, x, y, "fertilize"))
+                        continue
+
+                    # 1e. Non-optimal but harvestable
+                    if self.auto_harvest and crop_cfg.is_harvestable(tile["planted_day"], current_day, tile.get("yield_units", 0)):
                         candidates.append((3, dist, x, y, "harvest"))
                         continue
 
@@ -166,32 +182,40 @@ class ActionController:
                     if not animal_cfg:
                         continue
 
-                    # Emergency feed
+                    # Emergency feed (missed yesterday, not fed today)
                     if animal_cfg.in_danger_of_escape(tile):
                         candidates.append((0, dist, x, y, "feed"))
                         continue
 
-                    # Harvest produce
-                    if animal_cfg.is_harvestable(tile):
+                    # Harvest produce (eggs, milk, wool)
+                    if self.auto_harvest and animal_cfg.is_harvestable(tile):
                         candidates.append((1, dist, x, y, "harvest"))
                         continue
 
                     # Feed & Care
-                    if animal_cfg.needs_feed(tile):
+                    if self.auto_feed_animals and animal_cfg.needs_feed(tile):
                         candidates.append((2, dist, x, y, "feed"))
                         continue
-                    if animal_cfg.needs_care(tile):
+                    if self.auto_care_animals and animal_cfg.needs_care(tile):
                         candidates.append((3, dist, x, y, "care"))
                         continue
-                    if animal_cfg.has_fertilizer(tile):
+                    if self.auto_collect_fertilizer and animal_cfg.has_fertilizer(tile):
                         candidates.append((4, dist, x, y, "collect_fertilizer"))
                         continue
 
-                # Case 3: Weed Tile
-                elif isinstance(tile, dict) and tile.get("kind") == "WEED":
-                    candidates.append((5, dist, x, y, "dig"))
+                # Case 3: Empty structure waiting for animal placement
+                elif isinstance(tile, dict) and tile.get("kind") in (Structures.COOP, Structures.PASTURE) and "animal" not in tile:
+                    for anim in ("GOOSE", "COW", "SHEEP"):
+                        if unit_inv.get(anim, 0) > 0 and ANIMALS[anim].structure == tile.get("kind"):
+                            candidates.append((2, dist, x, y, f"place_{anim}"))
+                            break
 
-                # Case 4: Empty Tile for Planting
+                # Case 4: Weed Tile
+                elif isinstance(tile, dict) and tile.get("kind") == "WEED":
+                    if self.auto_dig_weeds:
+                        candidates.append((5, dist, x, y, "dig"))
+
+                # Case 5: Empty Tile for Planting
                 elif tile is None and has_seeds:
                     candidates.append((4, dist, x, y, "plant"))
 
@@ -212,6 +236,7 @@ class ActionController:
         unit_idx: int,
         farm: dict,
         private: dict,
+        available_seeds: Dict[str, int],
         obs: dict,
         claimed_tiles: Set[Tuple[int, int]],
     ) -> List[Any]:
@@ -228,10 +253,10 @@ class ActionController:
         tile = farm["tiles"][uy][ux]
         current_day = obs.get("day", 0)
         current_step = obs.get("step", 0)
-        seeds = private.get("seeds", {})
-        has_seeds = seeds.get(self.target_crop, 0) > 0 or any(v > 0 for v in seeds.values())
+        inventories = private.get("inventories", [])
+        inv = inventories[unit_idx] if unit_idx < len(inventories) else {}
 
-        # If on current tile and actionable task exists
+        # 1. Action on current tile if applicable
         if isinstance(tile, dict) and tile.get("kind") == "PLANT":
             crop_cfg = CROPS.get(tile["crop"])
             if crop_cfg:
@@ -243,7 +268,11 @@ class ActionController:
                 if crop_cfg.needs_watering(tile):
                     claimed_tiles.add((ux, uy))
                     return Actions.water()
-                # Harvest if ongoing and has units
+                # Fertilize if carrying fertilizer and not active
+                if self.auto_fertilize and inv.get("FERTILIZER", 0) > 0 and tile.get("fertilized_until_day", -1) < current_day:
+                    claimed_tiles.add((ux, uy))
+                    return Actions.fertilize()
+                # Harvest if harvestable
                 if crop_cfg.is_harvestable(tile["planted_day"], current_day, tile.get("yield_units", 0)):
                     claimed_tiles.add((ux, uy))
                     return Actions.harvest()
@@ -252,33 +281,44 @@ class ActionController:
             animal_cfg = ANIMALS.get(tile["animal"])
             if animal_cfg:
                 if animal_cfg.is_harvestable(tile):
+                    claimed_tiles.add((ux, uy))
                     return Actions.harvest()
-                inv = private["inventories"][unit_idx] if unit_idx < len(private["inventories"]) else {}
                 if animal_cfg.needs_feed(tile) and inv.get("WHEAT", 0) > 0:
+                    claimed_tiles.add((ux, uy))
                     return Actions.feed()
                 if animal_cfg.needs_care(tile):
+                    claimed_tiles.add((ux, uy))
                     return Actions.care()
                 if animal_cfg.has_fertilizer(tile):
+                    claimed_tiles.add((ux, uy))
                     return Actions.collect_fertilizer()
 
+        elif isinstance(tile, dict) and tile.get("kind") in (Structures.COOP, Structures.PASTURE) and "animal" not in tile:
+            for anim in ("GOOSE", "COW", "SHEEP"):
+                if inv.get(anim, 0) > 0 and ANIMALS[anim].structure == tile.get("kind"):
+                    return Actions.place(anim, 1)
+
         elif isinstance(tile, dict) and tile.get("kind") == "WEED":
+            claimed_tiles.add((ux, uy))
             return Actions.dig()
 
         elif tile is None:
             # Check if we have seeds to plant
-            chosen_crop = self.target_crop if seeds.get(self.target_crop, 0) > 0 else next((c for c, v in seeds.items() if v > 0), None)
-            if chosen_crop:
+            chosen_crop = self.target_crop if available_seeds.get(self.target_crop, 0) > 0 else next((c for c, v in available_seeds.items() if v > 0), None)
+            if chosen_crop and available_seeds.get(chosen_crop, 0) > 0:
+                available_seeds[chosen_crop] -= 1
                 claimed_tiles.add((ux, uy))
                 return Actions.plant(chosen_crop)
 
-        # Find best tile to navigate towards
+        # 2. Find best target tile to navigate towards
         best_target = self.find_best_tile_for_unit(
             (ux, uy),
+            inv,
             farm,
             private,
+            available_seeds,
             current_day,
             current_step,
-            has_seeds,
             claimed_tiles,
         )
 
@@ -290,19 +330,30 @@ class ActionController:
                     return Actions.water()
                 elif action_type == "harvest":
                     return Actions.harvest()
+                elif action_type == "fertilize":
+                    return Actions.fertilize()
                 elif action_type == "plant":
-                    chosen_crop = self.target_crop if seeds.get(self.target_crop, 0) > 0 else next((c for c, v in seeds.items() if v > 0), self.target_crop)
-                    return Actions.plant(chosen_crop)
+                    chosen_crop = self.target_crop if available_seeds.get(self.target_crop, 0) > 0 else next((c for c, v in available_seeds.items() if v > 0), None)
+                    if chosen_crop and available_seeds.get(chosen_crop, 0) > 0:
+                        available_seeds[chosen_crop] -= 1
+                        return Actions.plant(chosen_crop)
                 elif action_type == "feed":
                     return Actions.feed()
                 elif action_type == "care":
                     return Actions.care()
                 elif action_type == "collect_fertilizer":
                     return Actions.collect_fertilizer()
+                elif action_type.startswith("place_"):
+                    anim_name = action_type.replace("place_", "")
+                    return Actions.place(anim_name, 1)
                 elif action_type == "dig":
                     return Actions.dig()
             else:
                 return self.move_to((ux, uy), (tx, ty))
+
+        # 3. Shed drop if unit carries harvested goods/fertilizer and is near shed
+        if sum(inv.values()) > 0 and Actions.is_shed_adjacent((ux, uy), self.board_size):
+            return Actions.drop()
 
         return Actions.pass_action()
 
@@ -343,14 +394,16 @@ class ActionController:
         # 3. Sell Shed Produce
         if self.auto_sell:
             for item, count in shed.items():
-                if count > 0:
+                if count > 0 and item not in ANIMALS:
                     current_price = prices.get(item, 1)
-                    # Look up base price
                     base_price = 25
                     if item in CROPS:
                         base_price = CROPS[item].base_market_price
-                    elif item in ANIMALS:
-                        base_price = ANIMALS[item].base_market_price
+                    elif item in Products:
+                        if item == "EGG": base_price = 50
+                        elif item == "MILK": base_price = 160
+                        elif item == "WOOL": base_price = 200
+                        elif item == "FERTILIZER": base_price = 100
 
                     if current_price >= base_price * self.min_sell_margin:
                         orders.append(Actions.sell(item, count))
@@ -364,6 +417,13 @@ class ActionController:
                 orders.append(Actions.buy_seed(self.target_crop, qty))
                 money -= qty * target_crop_cfg.seed_cost
 
+        # 5. Animal Purchasing (if configured)
+        if self.target_animal and self.target_animal in ANIMALS:
+            anim_cfg = ANIMALS[self.target_animal]
+            if shed.get(self.target_animal, 0) == 0 and money >= anim_cfg.cost:
+                orders.append(Actions.buy_animal(self.target_animal, 1))
+                money -= anim_cfg.cost
+
         return orders[:10]
 
     # --------------------------------------------------------------------------
@@ -374,6 +434,7 @@ class ActionController:
         """
         Executes one step of decision making for the given observation,
         returning the complete action dictionary for the agent.
+        Ensures multi-unit seed safety to avoid simultaneous over-planting penalties.
         """
         player = obs["player"]
         me = obs["farms"][player]
@@ -381,16 +442,18 @@ class ActionController:
         market = obs.get("market", {})
         current_day = obs.get("day", 0)
 
+        # Virtual seed tracker for this turn to prevent simultaneous over-planting
+        available_seeds = dict(private.get("seeds", {}))
         claimed_tiles: Set[Tuple[int, int]] = set()
 
         # 1. Farmer Action
-        farmer_act = self.plan_unit_action(0, me, private, obs, claimed_tiles)
+        farmer_act = self.plan_unit_action(0, me, private, available_seeds, obs, claimed_tiles)
 
         # 2. Hands Actions
         hands_act = []
         num_hands = len(me.get("hands", []))
         for h_idx in range(num_hands):
-            h_act = self.plan_unit_action(h_idx + 1, me, private, obs, claimed_tiles)
+            h_act = self.plan_unit_action(h_idx + 1, me, private, available_seeds, obs, claimed_tiles)
             hands_act.append(h_act)
 
         # 3. Market Actions

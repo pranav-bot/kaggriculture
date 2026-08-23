@@ -6,10 +6,12 @@ from kaggriculture.env.items import (
     Animals,
     Products,
     Structures,
+    Quadrants,
     YieldType,
     CROPS_DATA,
     ANIMALS_DATA,
     FERTILIZER_DATA,
+    LAND_EXPANSION_DATA,
 )
 
 
@@ -544,6 +546,11 @@ class Actions:
     HIRE = "HIRE"
     BUY_LAND = "BUY_LAND"
 
+    # Engine Constants
+    MAX_MARKET_ORDERS_PER_TURN = 10
+    LAND_EXPANSION_ORDER = ["NE", "SW", "SE"]
+    LAND_EXPANSION_PRICES = [1000, 2000, 4000]
+
     # Registered Crop & Animal Helpers
     CROPS = CROPS
     ANIMALS = ANIMALS
@@ -663,27 +670,90 @@ class Actions:
 
     @staticmethod
     def buy_seed(crop_name: Union[str, Plants], quantity: int = 1) -> List[Any]:
+        """
+        Creates a BUY_SEED market order.
+        Example: ["BUY_SEED", "WHEAT", 1]
+        """
         return ["BUY_SEED", str(crop_name).upper(), int(quantity)]
 
     @staticmethod
     def buy_animal(animal_name: Union[str, Animals], quantity: int = 1) -> List[Any]:
+        """
+        Creates a BUY_ANIMAL market order.
+        Example: ["BUY_ANIMAL", "GOOSE", 1]
+        """
         return ["BUY_ANIMAL", str(animal_name).upper(), int(quantity)]
 
     @staticmethod
     def buy_product(item_name: Union[str, Products], quantity: int = 1) -> List[Any]:
+        """
+        Creates a BUY_PRODUCT market order (for WHEAT or FERTILIZER).
+        Example: ["BUY_PRODUCT", "WHEAT", 1]
+        """
         return ["BUY_PRODUCT", str(item_name).upper(), int(quantity)]
 
     @staticmethod
     def sell(item_name: Union[str, Products], quantity: int = 1) -> List[Any]:
+        """
+        Creates a SELL market order.
+        Example: ["SELL", "WHEAT", 1]
+        """
         return ["SELL", str(item_name).upper(), int(quantity)]
 
     @staticmethod
     def hire() -> List[str]:
+        """
+        Creates a HIRE market order to hire an additional farm hand for the day.
+        Cost follows the Fibonacci sequence: 1, 1, 2, 3, 5, 8, 13, 21...
+        """
         return ["HIRE"]
 
     @staticmethod
     def buy_land() -> List[str]:
+        """
+        Creates a BUY_LAND market order to unlock the next 5x5 quadrant (NE: $1k, SW: $2k, SE: $4k).
+        """
         return ["BUY_LAND"]
+
+    # --------------------------------------------------------------------------
+    # Market Calculation & Cost Helpers
+    # --------------------------------------------------------------------------
+
+    @staticmethod
+    def fib(n: int) -> int:
+        """Indexed so fib(0)=1, fib(1)=1, fib(2)=2, fib(3)=3, fib(4)=5, fib(5)=8, fib(6)=13..."""
+        a, b = 1, 1
+        for _ in range(n):
+            a, b = b, a + b
+        return a
+
+    @staticmethod
+    def hire_cost(hires_already_today: int, mult: int = 1) -> int:
+        """Returns the cost to hire the next farm hand today."""
+        return mult * Actions.fib(hires_already_today)
+
+    @staticmethod
+    def land_cost(unlocked_quadrants: Union[List[str], int]) -> Optional[int]:
+        """
+        Returns the cost to purchase the next 5x5 land quadrant:
+        - 1st expansion (NE): $1,000
+        - 2nd expansion (SW): $2,000
+        - 3rd expansion (SE): $4,000
+        Returns None if all 4 quadrants are already unlocked.
+        """
+        count = len(unlocked_quadrants) if isinstance(unlocked_quadrants, list) else int(unlocked_quadrants)
+        extra_unlocked = count - 1  # NW is unlocked by default
+        if 0 <= extra_unlocked < len(Actions.LAND_EXPANSION_PRICES):
+            return Actions.LAND_EXPANSION_PRICES[extra_unlocked]
+        return None
+
+    @staticmethod
+    def next_quadrant(unlocked_quadrants: List[str]) -> Optional[str]:
+        """Returns the next quadrant that will be unlocked (NE -> SW -> SE)."""
+        extra_unlocked = len(unlocked_quadrants) - 1
+        if 0 <= extra_unlocked < len(Actions.LAND_EXPANSION_ORDER):
+            return Actions.LAND_EXPANSION_ORDER[extra_unlocked]
+        return None
 
     # --------------------------------------------------------------------------
     # Action Feasibility & Rule Predicates
@@ -813,6 +883,54 @@ class Actions:
         if not Actions.is_shed_adjacent(pos, board_size):
             return False
         return shed.get(item_name.upper(), 0) > 0
+
+    @staticmethod
+    def can_buy_land(money: float, unlocked_quadrants: List[str]) -> bool:
+        """Checks if the player has enough money to buy the next land quadrant."""
+        cost = Actions.land_cost(unlocked_quadrants)
+        return cost is not None and money >= cost
+
+    @staticmethod
+    def can_hire(money: float, hires_already_today: int, mult: int = 1) -> bool:
+        """Checks if the player has enough money to hire another farm hand today."""
+        cost = Actions.hire_cost(hires_already_today, mult)
+        return money >= cost
+
+    @staticmethod
+    def can_buy_seed(money: float, crop_name: str, quantity: int = 1) -> bool:
+        """Checks if the player has enough money to buy seeds."""
+        crop_cfg = CROPS.get(crop_name.upper())
+        if not crop_cfg or quantity <= 0:
+            return False
+        return money >= crop_cfg.seed_cost * quantity
+
+    @staticmethod
+    def can_buy_animal(money: float, animal_name: str, shed: Dict[str, int], shed_capacity: int = 100, quantity: int = 1) -> bool:
+        """Checks if the player can purchase an animal (money + shed capacity)."""
+        animal_cfg = ANIMALS.get(animal_name.upper())
+        if not animal_cfg or quantity <= 0:
+            return False
+        if money < animal_cfg.cost * quantity:
+            return False
+        current_shed_items = sum(shed.values())
+        return current_shed_items + quantity <= shed_capacity
+
+    @staticmethod
+    def can_buy_product(money: float, item_name: str, current_price: int, shed: Dict[str, int], shed_capacity: int = 100, quantity: int = 1) -> bool:
+        """Checks if the player can buy WHEAT or FERTILIZER from market."""
+        if item_name.upper() not in ("WHEAT", "FERTILIZER") or quantity <= 0:
+            return False
+        if money < current_price * quantity:
+            return False
+        current_shed_items = sum(shed.values())
+        return current_shed_items + quantity <= shed_capacity
+
+    @staticmethod
+    def can_sell(item_name: str, shed: Dict[str, int], quantity: int = 1) -> bool:
+        """Checks if the player has enough product in shed to sell."""
+        if quantity <= 0:
+            return False
+        return shed.get(item_name.upper(), 0) >= quantity
 
     # --------------------------------------------------------------------------
     # Convenience Plant/Animal Lookup
