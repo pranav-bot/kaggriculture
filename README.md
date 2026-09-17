@@ -238,15 +238,96 @@ During development the agent imports from `kaggriculture` normally. The build sc
 
 ---
 
-## Related tooling
+## Standoff (`standoff/run_standoff.py`)
 
-**`standoff/run_standoff.py`** — round-robin benchmark runner. Plays one agent against every other template for a full 720-turn season (both starting positions unless `--no-swap`), tracks per-turn latency against a 1 s turn budget with a 60 s overage bank, and writes results to `standoff/results.json`.
+The standoff runner is the primary **round-robin benchmark** for comparing a candidate agent against every other template in `submissions/`. Use it after local smoke tests (`test_submission.py`) and before packaging for Kaggle.
+
+### What it does
+
+1. Discovers all agents under `submissions/*/main.py`.
+2. Runs your selected agent against every other template for a **full 720-turn season** (30 days).
+3. By default, **swaps starting positions** — each pairing is played twice so neither side has a map-order advantage.
+4. Wraps each agent in a `TimedAgent` that measures per-turn latency and enforces Kaggle-style time limits locally.
+5. Writes structured JSON results to `standoff/results.json` (or a custom path).
+
+With 21 templates, a full standoff runs **40 matches** (20 opponents × 2 sides) and takes several minutes.
+
+### Time budget model
+
+The standoff mirrors competition constraints:
+
+| Rule | Value |
+|------|-------|
+| Per-turn soft limit | 1.0 s |
+| Episode overage bank | 60.0 s total |
+| Season length | 720 turns |
+
+Each turn that exceeds 1 s consumes from the 60 s overage bank. If cumulative overage exceeds 60 s, the agent raises `TimeoutError` and the match is recorded as `failed`. Timing metrics (mean ms, max ms, overage seconds) are saved per side for every match.
+
+### Usage
 
 ```bash
-python standoff/run_standoff.py --agent market_velocity
-python standoff/run_standoff.py -a shop_opportunist --output detailed
+python standoff/run_standoff.py [options]
 ```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--agent`, `-a` | `compound_expansion` | Agent template name or path to `main.py` |
+| `--output`, `--mode` | `summary` | `summary` (human-readable) or `detailed` (full JSON to stdout) |
+| `--results`, `-o` | `standoff/results.json` | Where to write the JSON report |
+| `--no-swap` | off | Play each opponent once (selected agent always player 1) |
+
+### Examples
+
+```bash
+# Quick summary against all opponents (default output)
+python standoff/run_standoff.py --agent market_velocity
+
+# Save results under a custom filename
+python standoff/run_standoff.py -a shop_opportunist -o standoff/shop_opportunist_results.json
+
+# Dump full per-match JSON to the terminal
+python standoff/run_standoff.py -a melon_flood --output detailed
+
+# Single-sided matches only (faster, less fair)
+python standoff/run_standoff.py -a wheat_loop --no-swap
+```
+
+### Reading the output
+
+**Summary mode** prints one line per opponent:
+
+```
+Standoff: market_velocity vs 20 agents (40 full 720-turn matches)
+market_velocity vs shop_opportunist: 1W/1L/0T, cash 36665-82000, max 10.6ms, overage 0.000s
+...
+Results saved to standoff/results.json
+```
+
+Each line shows wins/losses/ties, mean final cash for both sides, peak turn latency, and max overage consumed.
+
+**JSON results** (`standoff/results.json`) contain:
+
+- `selected_agent` — the agent under test
+- `configuration` — episode steps, timeout, overage bank, whether sides were swapped
+- `summary` — per-opponent aggregates (wins, losses, mean cash, timing peaks)
+- `matches` — full records for every individual game (cash, winner, status, per-side timing)
+
+Past benchmark runs are archived in `standoff/*_results.json` for comparison across strategy iterations. See `strategy_learnings.md` for interpreted findings.
+
+### When to use standoff vs `test_submission.py`
+
+| Tool | Best for |
+|------|----------|
+| `test_submission.py` | Fast head-to-head checks, HTML replays, testing built tarballs |
+| `standoff/run_standoff.py` | Ranking a candidate against the full field, latency profiling, regression tracking |
+
+---
+
+## Other tooling
 
 **`tests/`** — unit tests for the library (`pytest`).
 
 **`src/kaggriculture/examples/`** — example match runners for interactive development.
+
+**`kaggriculture.helpers.check_max_yield_met`** — utility to determine whether a crop tile has reached peak yield and is ready to harvest (see `src/kaggriculture/helpers/yield_check.py`).

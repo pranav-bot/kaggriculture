@@ -29,6 +29,12 @@ from .opponent import (
     OpponentProfile,
     analyze_opponent_farm,
 )
+from .yield_check import (
+    PlantState,
+    check_max_yield_met,
+    compute_one_time_yield,
+    max_achievable_one_time_yield,
+)
 
 __all__ = [
     "CropTileInfo",
@@ -54,4 +60,8 @@ __all__ = [
     "SabotageOpportunity",
     "OpponentProfile",
     "analyze_opponent_farm",
+    "PlantState",
+    "check_max_yield_met",
+    "compute_one_time_yield",
+    "max_achievable_one_time_yield",
 ]
