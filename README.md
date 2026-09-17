@@ -23,7 +23,7 @@ kaggle competitions download -c kaggriculture   # confirms credentials work
 
 Built artifacts are written to `build/` (gitignored).
 
-**New to agent development?** Start with `examples/README.md` — six worked examples from a basic wheat loop to helper-driven harvest timing.
+**New to agent development?** Read **[`docs/creating-agents.md`](docs/creating-agents.md)** — full guide from game mechanics to advanced agents. Runnable tutorials live in [`examples/agents/`](examples/agents/).
 
 ---
 
@@ -330,6 +330,8 @@ Past benchmark runs are archived in `standoff/*_results.json` for comparison acr
 
 **`tests/`** — unit tests for the library (`pytest`).
 
-**`examples/`** — agent tutorials (basic → advanced) and local match runners. See `examples/README.md`.
+**[`docs/creating-agents.md`](docs/creating-agents.md)** — complete agent development guide (mechanics → submission).
+
+**[`examples/`](examples/)** — runnable tutorial agents and local match runners.
 
 **`kaggriculture.helpers.check_max_yield_met`** — utility to determine whether a crop tile has reached peak yield and is ready to harvest (see `src/kaggriculture/helpers/yield_check.py`).
