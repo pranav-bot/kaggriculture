@@ -43,6 +43,8 @@ from kaggriculture.helpers import (
     SabotageOpportunity,
     OpponentProfile,
     analyze_opponent_farm,
+    PlantState,
+    check_max_yield_met,
 )
 
 __all__ = [
@@ -86,4 +88,5 @@ __all__ = [
     "SabotageOpportunity",
     "OpponentProfile",
     "analyze_opponent_farm",
+    "check_max_yield_met",
 ]

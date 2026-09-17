@@ -17,8 +17,13 @@ BUILD_DIR = ROOT_DIR / "build"
 
 
 def resolve_agent_target(name_or_path: str) -> str:
-    if Path(name_or_path).exists():
-        return str(Path(name_or_path).resolve())
+    path = Path(name_or_path)
+    if path.is_dir() and (path / "main.py").is_file():
+        return str((path / "main.py").resolve())
+    if path.is_file():
+        return str(path.resolve())
+    if path.exists():
+        return str(path.resolve())
     if (SUBMISSIONS_DIR / name_or_path / "main.py").exists():
         return str(SUBMISSIONS_DIR / name_or_path / "main.py")
     if name_or_path in ("random", "pass", "starter"):

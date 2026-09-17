@@ -1,34 +1,30 @@
 """
-Example: Run the Feed Squeeze agent against other agents.
+Run the Feed Squeeze adversarial agent against other agents locally.
 
-Demonstrates two patterns:
-  1. Using the ActionController subclass directly with Environment.run_env()
-  2. Using the raw agent() function
+Demonstrates two integration patterns:
+  1. ActionController subclass instance → Environment.run_env()
+  2. Raw agent() callable → Environment.run_env()
+
+Usage (from repo root):
+    python examples/run_feed_squeeze.py
 """
 import sys
-sys.path.insert(0, "src")
+from pathlib import Path
 
-from kaggriculture import Environment, ActionController, Plants
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "submissions" / "feed_squeeze"))
 
-# Import the Feed Squeeze agent
-sys.path.insert(0, "submissions/feed_squeeze")
+from kaggriculture import ActionController, Environment, Plants
 from main import FeedSqueezeController, agent as feed_squeeze_agent
 
 
-def main():
-    # =========================================================================
-    # Pattern 1: ActionController instance → Environment.run_env()
-    # =========================================================================
+def main() -> None:
     print("=" * 60)
     print("Match 1: Feed Squeeze vs Wheat Loop")
     print("=" * 60)
 
     env = Environment(debug=True)
-
-    # Feed Squeeze agent (adversarial)
     attacker = FeedSqueezeController()
-
-    # Simple Wheat Loop defender
     defender = ActionController(
         target_crop=Plants.WHEAT,
         auto_water=True,
@@ -41,14 +37,11 @@ def main():
     p1_cash = final[0].observation["farms"][0]["money"]
     p2_cash = final[1].observation["farms"][1]["money"]
 
-    print(f"\nFinal Scores:")
+    print("\nFinal Scores:")
     print(f"  Feed Squeeze (P1): ${p1_cash:,.0f}")
     print(f"  Wheat Loop   (P2): ${p2_cash:,.0f}")
     print(f"  Winner: {'Feed Squeeze' if p1_cash > p2_cash else 'Wheat Loop'}")
 
-    # =========================================================================
-    # Pattern 2: Using the raw agent() function
-    # =========================================================================
     print("\n" + "=" * 60)
     print("Match 2: Feed Squeeze vs Random Agent")
     print("=" * 60)
@@ -58,13 +51,10 @@ def main():
     p1_cash2 = final2[0].observation["farms"][0]["money"]
     p2_cash2 = final2[1].observation["farms"][1]["money"]
 
-    print(f"\nFinal Scores:")
+    print("\nFinal Scores:")
     print(f"  Feed Squeeze (P1): ${p1_cash2:,.0f}")
     print(f"  Random       (P2): ${p2_cash2:,.0f}")
 
-    # =========================================================================
-    # Bonus: Extract metrics for analysis
-    # =========================================================================
     df = env.extract_time_series_metrics()
     print(f"\nMetrics: {len(df)} turns logged")
     print(f"Wheat price range: ${df['wheat_price'].min()} — ${df['wheat_price'].max()}")
