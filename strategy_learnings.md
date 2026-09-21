@@ -181,6 +181,20 @@ hybrid ~15.5k vs shop ~34.2k (`standoff/alpha_shop_hybrid_vs_shop.json`).
 Collision gating and sell ranking are wired; hybrid policy still loses badly
 to the incumbent in shared-market play.
 
+### Innovation 4 — `regime_counter`
+
+`helpers/regime_counter.py` classifies `OpponentProfile` into
+`melon_rush` / `yarn_sheep` / `aggressive_expander` / `mixed_inactive` and
+maps to `RegimeKnobs` (mix weights, plant priority, sell-delay flags,
+`collision_aggressive`, expander hire pacing). `submissions/regime_counter/main.py`
+extends the shop hybrid stack and overrides planting mix, sell filtering,
+collision gating, and hire boost.
+
+**20×720 vs `shop_opportunist` (10 rounds, both seats):** 0W/20L, mean cash
+regime_counter ~11.2k vs shop ~34.1k (`standoff/regime_counter_vs_shop.json`).
+Regime counters did not close the gap vs shop; classifier + delays may be
+over-holding inventory against an active shop planner.
+
 ## Latest Benchmark
 
 `market_velocity` is currently the best verified new strategy. Its main
