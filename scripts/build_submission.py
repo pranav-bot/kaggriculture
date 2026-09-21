@@ -31,13 +31,21 @@ def build_multifile_tar(agent_path: Path, output_tar: Path) -> Path:
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
         
+        agent_dir = agent_path.parent
+
         # 1. Copy main.py to root of staging dir
         shutil.copy2(agent_path, tmp_path / "main.py")
-        
-        # 2. Copy kaggriculture package into staging dir
+
+        # 2. Copy sibling agent modules (e.g. submissions/alpha_modular/*.py)
+        for py_file in sorted(agent_dir.glob("*.py")):
+            if py_file.name == "main.py":
+                continue
+            shutil.copy2(py_file, tmp_path / py_file.name)
+
+        # 3. Copy kaggriculture package into staging dir
         shutil.copytree(SRC_DIR, tmp_path / "kaggriculture", dirs_exist_ok=True)
         
-        # 3. Create tar.gz archive
+        # 4. Create tar.gz archive
         with tarfile.open(output_tar, "w:gz") as tar:
             for item in tmp_path.iterdir():
                 tar.add(item, arcname=item.name)

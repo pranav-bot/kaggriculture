@@ -121,7 +121,8 @@ Creates `build/submission.tar.gz` containing:
 
 ```
 submission.tar.gz
-├── main.py          # your agent
+├── main.py          # your agent entrypoint
+├── *.py             # sibling modules from the same submission folder (if any)
 └── kaggriculture/   # full library copy
 ```
 
