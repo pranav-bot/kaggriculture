@@ -2,12 +2,12 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from .config import BASELINE_CONFIG, CHAMPION_CONFIG
-from .market_orders import make_market_orders
-from .routing import assign_actions
-from .state import GameState
-from .tasks import materialize_tasks
-from .validator import safe_fallback, validate_joint_action
+from config import BASELINE_CONFIG, CHAMPION_CONFIG
+from market_orders import make_market_orders
+from routing import assign_actions
+from state import GameState
+from tasks import materialize_tasks
+from validator import safe_fallback, validate_joint_action
 
 
 def decide(observation: Any, config: dict[str, Any]) -> dict[str, Any]:

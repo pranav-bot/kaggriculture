@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-from .mechanics import CROPS, expected_unfertilized_yield, harvest_age
+from mechanics import CROPS, expected_unfertilized_yield, harvest_age
 
 
 @dataclass(frozen=True)

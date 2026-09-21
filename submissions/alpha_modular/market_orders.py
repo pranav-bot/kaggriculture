@@ -1,10 +1,10 @@
 from __future__ import annotations
 from typing import Any
 
-from .mechanics import CROPS, LAND_PRICES, MAX_MARKET_ORDERS, PRODUCTS, hire_cost
-from .production import seed_deficits
-from .sale_sim import simulate_sale
-from .state import GameState
+from mechanics import CROPS, LAND_PRICES, MAX_MARKET_ORDERS, PRODUCTS, hire_cost
+from production import seed_deficits
+from sale_sim import simulate_sale
+from state import GameState
 
 PREMIUM_PRODUCTS = {"STRAWBERRY", "MELON", "MILK", "WOOL"}
 

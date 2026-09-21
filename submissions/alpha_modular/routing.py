@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Any
 
-from .mechanics import is_shed_adjacent, shed_access_tiles
-from .state import GameState, Unit
-from .tasks import Task
+from mechanics import is_shed_adjacent, shed_access_tiles
+from state import GameState, Unit
+from tasks import Task
 
 
 def distance(a: tuple[int, int], b: tuple[int, int]) -> int:

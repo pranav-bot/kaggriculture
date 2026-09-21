@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import Any
 
-from .mechanics import MAX_MARKET_ORDERS, read
-from .state import GameState
+from mechanics import MAX_MARKET_ORDERS, read
+from state import GameState
 
 VALID_UNIT_OPS = {
     "NORTH", "SOUTH", "EAST", "WEST", "PASS", "DROP", "PICKUP", "PLACE",

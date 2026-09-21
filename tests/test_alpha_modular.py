@@ -8,14 +8,15 @@ from pathlib import Path
 import pytest
 
 _REPO = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(_REPO / "submissions"))
+_ALPHA = _REPO / "submissions" / "alpha_modular"
+sys.path.insert(0, str(_ALPHA))
 
-from alpha_modular.config import CHAMPION_CONFIG, cloned
-from alpha_modular.market_orders import _sale_quantity, make_market_orders
-from alpha_modular.mechanics import hire_cost
-from alpha_modular.orchestrator import decide
-from alpha_modular.state import GameState
-from alpha_modular.validator import validate_joint_action
+from config import CHAMPION_CONFIG, cloned
+from market_orders import _sale_quantity, make_market_orders
+from mechanics import hire_cost
+from orchestrator import decide
+from state import GameState
+from validator import validate_joint_action
 
 
 def _base_obs(**overrides):
@@ -157,10 +158,9 @@ def test_decide_returns_valid_action_shape():
 def test_full_episode_terminal_cash():
     from kaggriculture.env import Environment
 
-    submissions_dir = str(_REPO / "submissions")
-    if submissions_dir not in sys.path:
-        sys.path.insert(0, submissions_dir)
-    from alpha_modular.main import agent
+    if str(_ALPHA) not in sys.path:
+        sys.path.insert(0, str(_ALPHA))
+    from main import agent
 
     env = Environment(configuration={"episodeSteps": 720})
     final = env.run_env(agent, "random")

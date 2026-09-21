@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import Any
 
-from .mechanics import SHOPS, last_profitable_start_day, read
-from .state import GameState
+from mechanics import SHOPS, last_profitable_start_day, read
+from state import GameState
 
 
 def desired_mix(state: GameState, config: dict[str, Any]) -> dict[str, int]:

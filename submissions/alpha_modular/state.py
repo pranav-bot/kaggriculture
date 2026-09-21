@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Iterator, Mapping
 
-from .mechanics import BOARD_SIZE, TURNS_PER_DAY, read
+from mechanics import BOARD_SIZE, TURNS_PER_DAY, read
 
 
 @dataclass(frozen=True)

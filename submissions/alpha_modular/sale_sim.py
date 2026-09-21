@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-from .mechanics import PRICE_FLOOR, market_price
+from mechanics import PRICE_FLOOR, market_price
 
 
 @dataclass(frozen=True)

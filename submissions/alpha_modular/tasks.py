@@ -2,9 +2,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from .mechanics import ANIMALS, CROPS, expected_unfertilized_yield, harvest_age, read
-from .production import plant_assignments
-from .state import GameState
+from mechanics import ANIMALS, CROPS, expected_unfertilized_yield, harvest_age, read
+from production import plant_assignments
+from state import GameState
 
 
 @dataclass(frozen=True)
