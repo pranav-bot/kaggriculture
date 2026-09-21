@@ -78,6 +78,35 @@ it won 18 of 20 matches, losing only to `shop_opportunist`; peak measured
 latency was 10.6 ms with zero overage usage. This is the strongest new
 candidate, but it remains below the 80,000 target.
 
+### Library Phase P0 (capacity + slot economy)
+
+Implemented in `ActionController` per research/04 P0:
+
+- `helpers/capacity_guard.py`: `projected_shed` / `projected_shed_from_action`,
+  `clamp_sells`, `room_guard_99` (target occupancy 99 at hour 23),
+  `planned_drop_inventory`, `dead_stock_sells` (not wired in controller yet).
+- `market_planning.py`: `OPERATING_RESERVE=100` on `BUY_LAND`, `HIRE`,
+  `BUY_SEED`, `BUY_ANIMAL`; SELL availability uses `shed + planned_drop`.
+- `act()` pipeline: unit actions → overplant PASS cap → `planned_drop` → market
+  plan → project shed → clamp sells → room guard on day-close turns.
+
+Submission `alpha_velocity_p0` is `market_velocity` policy on the enhanced
+controller (no extra strategy logic).
+
+**720-turn benchmark (2026-09-22, solo vs `random`, one seed):**
+
+| Agent | Terminal cash (player 0) |
+|-------|-------------------------|
+| `alpha_velocity_p0` | $33,317 |
+| `market_velocity` | $34,947 |
+
+Head-to-head on the same episode: `alpha_velocity_p0` $20,392 vs
+`market_velocity` $19,585 (seat 0 vs 1). Policies are nearly identical; small
+gaps are seat/opponent-interaction noise. P0 plumbing is validated by
+`tests/test_controller.py` and `tests/test_capacity_guard.py` (18 tests).
+Next ROI is P1 mix/hire/sell policy (Alpha production skeleton), not more P0
+guards.
+
 ## Latest Benchmark
 
 `market_velocity` is currently the best verified new strategy. Its main

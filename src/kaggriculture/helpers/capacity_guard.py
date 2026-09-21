@@ -88,6 +88,10 @@ def projected_shed_from_action(
     return proj
 
 
+# Improvement-plan name for the same projection used before clamp_sells.
+projected_shed = projected_shed_from_action
+
+
 def clamp_sells(projected_shed: Mapping[str, int], orders: Sequence[Sequence[Any]]) -> list[list[Any]]:
     """Drop or shrink SELL orders that exceed projected on-hand quantity."""
     avail = {str(item): max(0, int(quantity)) for item, quantity in projected_shed.items()}
