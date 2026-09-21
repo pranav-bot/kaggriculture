@@ -1,0 +1,6 @@
+Compare: market_velocity vs alpha_velocity_p0 (10 seeds)
+  market_velocity cash: mean=29,958 median=30,982
+  alpha_velocity_p0 cash: mean=33,473 median=31,629
+  Δ mean cash (market_velocity − alpha_velocity_p0): -3,515
+  market_velocity higher cash on 4/10 seeds
+Wrote standoff/p0_metrics_compare.csv

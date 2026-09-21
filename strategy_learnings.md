@@ -107,6 +107,22 @@ gaps are seat/opponent-interaction noise. P0 plumbing is validated by
 Next ROI is P1 mix/hire/sell policy (Alpha production skeleton), not more P0
 guards.
 
+#### P0 metrics
+
+`scripts/compare_agents.py` + `docs/metrics-playbook.md` (2026-09-22): 10 seeds,
+solo vs `random`, 720 steps, CSV `standoff/p0_metrics_compare.csv`.
+
+| Agent | Mean cash | Median cash |
+|-------|-----------|-------------|
+| `market_velocity` | $29,958 | $30,982 |
+| `alpha_velocity_p0` | $33,473 | $31,629 |
+
+`alpha_velocity_p0` higher terminal cash on 6/10 seeds; mean Δ ≈ +$3.5k for
+P0 vs MV (high variance on individual seeds). Telemetry: `overflow` and
+`slots_burned` were 0 for both on this panel; `decide_ms_p95` &lt; 1 ms for
+both. Treat as “P0 does not hurt safety on solo random”; cash edge is seed-noisy
+— confirm with more seeds or head-to-head before claiming a win over MV.
+
 ### Library Phase P1 + `alpha_velocity_p1`
 
 `helpers/phase_brain.py` adds champion mix (`EARLY_MIX` / `LATE_MIX`,
