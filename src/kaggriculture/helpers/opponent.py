@@ -167,3 +167,10 @@ def analyze_opponent_farm(
         crop_groups=crop_groups,
         sabotage_opportunities=sabotage_opps,
     )
+
+
+def clone_like(obs: Dict[str, Any]) -> bool:
+    """True when the opponent's public farm closely mirrors ours (P2 collision gate)."""
+    from kaggriculture.helpers.market_overlays import clone_like as _clone_like
+
+    return _clone_like(obs)

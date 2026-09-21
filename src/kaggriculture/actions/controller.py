@@ -17,7 +17,10 @@ from kaggriculture.actions.actions import (
 )
 from kaggriculture.env.items import Plants, Animals, Products, Structures, Quadrants
 from kaggriculture.actions.market_planning import plan_market_actions as build_market_actions
+from kaggriculture.helpers.market_overlays import collision_guard
+from kaggriculture.helpers.opponent import clone_like
 from kaggriculture.helpers.phase_brain import pick_plant_crop, terminal_return_active
+from kaggriculture.helpers.sell_ranking import rank_sell_slots
 
 
 class ActionController:
@@ -47,6 +50,7 @@ class ActionController:
         market_policy: str = "default",
         enable_terminal_return: bool = False,
         enable_alpha_planting: bool = False,
+        enable_market_microstructure: bool = False,
     ):
         self.target_crop = str(target_crop).upper()
         self.target_animal = str(target_animal).upper() if target_animal else None
@@ -67,6 +71,28 @@ class ActionController:
         self.market_policy = market_policy
         self.enable_terminal_return = enable_terminal_return
         self.enable_alpha_planting = enable_alpha_planting
+        self.enable_market_microstructure = enable_market_microstructure
+
+    def _postprocess_market(
+        self,
+        obs: dict,
+        market_act: List[List[Any]],
+        unit_actions: List[List[Any]],
+        farmer_act: List[Any],
+        hands_act: List[List[Any]],
+        town_shops: List[str],
+    ) -> List[List[Any]]:
+        if not self.enable_market_microstructure:
+            return market_act
+        market_info = obs.get("market", {})
+        market_act = rank_sell_slots(market_act, market_info, town_shops)
+        if not clone_like(obs):
+            return market_act
+        action = collision_guard(
+            obs,
+            {"farmer": farmer_act, "hands": hands_act, "market": market_act},
+        )
+        return action.get("market", market_act)
 
     def choose_plant_crop(
         self,
@@ -509,6 +535,14 @@ class ActionController:
         )
         market_act = clamp_sells(projected, market_act)
         market_act = room_guard_99(obs, market_act, unit_actions)
+        market_act = self._postprocess_market(
+            obs,
+            market_act,
+            unit_actions,
+            farmer_act,
+            hands_act,
+            town_shops,
+        )
 
         return {
             "farmer": farmer_act,

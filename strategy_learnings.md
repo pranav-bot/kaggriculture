@@ -132,6 +132,20 @@ day≥26 land/hire cutoff (same as `market_velocity`).
 translate to head-to-head yet). Tuning mix planting throughput and sell
 timing under opponent pressure is the next iteration.
 
+### Phase P2 + `alpha_shop_hybrid`
+
+`ActionController` P2 path (when `enable_market_microstructure=True`):
+after P0 guards → `rank_sell_slots` → `collision_guard` only if
+`opponent.clone_like(obs)`.
+
+`alpha_shop_hybrid`: P0+P1 (`alpha_p1` market policy), hybrid MV+shop crop
+scores for planting, `auto_feed_animals=False`.
+
+**20×720 vs `shop_opportunist` (10 rounds, both seats):** 0W/20L, mean cash
+hybrid ~15.5k vs shop ~34.2k (`standoff/alpha_shop_hybrid_vs_shop.json`).
+Collision gating and sell ranking are wired; hybrid policy still loses badly
+to the incumbent in shared-market play.
+
 ## Latest Benchmark
 
 `market_velocity` is currently the best verified new strategy. Its main

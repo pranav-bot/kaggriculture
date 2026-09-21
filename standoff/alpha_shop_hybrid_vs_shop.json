@@ -1,0 +1,557 @@
+{
+  "summary": {
+    "shop_opportunist": {
+      "matches": 20,
+      "wins": 0,
+      "losses": 20,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 66.55,
+      "selected_cash_mean": 15544.9,
+      "opponent_cash_mean": 34183.2
+    }
+  },
+  "matches": [
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 23897.0,
+      "second_cash": 25494.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.268949,
+        "mean_ms": 0.374,
+        "max_ms": 1.148,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.0783,
+        "mean_ms": 0.109,
+        "max_ms": 0.299,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 44508.0,
+      "second_cash": 13498.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.095629,
+        "mean_ms": 0.133,
+        "max_ms": 0.441,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.264419,
+        "mean_ms": 0.368,
+        "max_ms": 1.596,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 21793.0,
+      "second_cash": 30626.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.264292,
+        "mean_ms": 0.368,
+        "max_ms": 1.08,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.077881,
+        "mean_ms": 0.108,
+        "max_ms": 0.378,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 44358.0,
+      "second_cash": 8909.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.15641,
+        "mean_ms": 0.218,
+        "max_ms": 66.55,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.259164,
+        "mean_ms": 0.36,
+        "max_ms": 1.025,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 11393.0,
+      "second_cash": 39950.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.269303,
+        "mean_ms": 0.375,
+        "max_ms": 0.977,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.07996,
+        "mean_ms": 0.111,
+        "max_ms": 0.278,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 27673.0,
+      "second_cash": 16726.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.088575,
+        "mean_ms": 0.123,
+        "max_ms": 0.439,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.249774,
+        "mean_ms": 0.347,
+        "max_ms": 1.155,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 11371.0,
+      "second_cash": 36130.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.232363,
+        "mean_ms": 0.323,
+        "max_ms": 0.813,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.078604,
+        "mean_ms": 0.109,
+        "max_ms": 0.371,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 23685.0,
+      "second_cash": 21201.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.083341,
+        "mean_ms": 0.116,
+        "max_ms": 0.275,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.25661,
+        "mean_ms": 0.357,
+        "max_ms": 0.925,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 15907.0,
+      "second_cash": 21356.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.270761,
+        "mean_ms": 0.377,
+        "max_ms": 2.581,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.073458,
+        "mean_ms": 0.102,
+        "max_ms": 0.732,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 26535.0,
+      "second_cash": 23352.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.090165,
+        "mean_ms": 0.125,
+        "max_ms": 0.317,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.258893,
+        "mean_ms": 0.36,
+        "max_ms": 2.426,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 20405.0,
+      "second_cash": 30351.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.331141,
+        "mean_ms": 0.461,
+        "max_ms": 58.379,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.079411,
+        "mean_ms": 0.11,
+        "max_ms": 0.296,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 33135.0,
+      "second_cash": 11808.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.090614,
+        "mean_ms": 0.126,
+        "max_ms": 0.465,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.358924,
+        "mean_ms": 0.499,
+        "max_ms": 54.315,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 16665.0,
+      "second_cash": 27551.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.263992,
+        "mean_ms": 0.367,
+        "max_ms": 0.911,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.080852,
+        "mean_ms": 0.112,
+        "max_ms": 0.281,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 42746.0,
+      "second_cash": 11401.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.094938,
+        "mean_ms": 0.132,
+        "max_ms": 0.458,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.276913,
+        "mean_ms": 0.385,
+        "max_ms": 1.046,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 16787.0,
+      "second_cash": 32727.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.281438,
+        "mean_ms": 0.391,
+        "max_ms": 1.621,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.08704,
+        "mean_ms": 0.121,
+        "max_ms": 0.378,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 36721.0,
+      "second_cash": 11858.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.094501,
+        "mean_ms": 0.131,
+        "max_ms": 0.404,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.279377,
+        "mean_ms": 0.389,
+        "max_ms": 0.825,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 17193.0,
+      "second_cash": 37436.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.28404,
+        "mean_ms": 0.395,
+        "max_ms": 0.958,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.086882,
+        "mean_ms": 0.121,
+        "max_ms": 0.407,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 41238.0,
+      "second_cash": 9734.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.098285,
+        "mean_ms": 0.137,
+        "max_ms": 0.542,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.277358,
+        "mean_ms": 0.386,
+        "max_ms": 0.983,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "alpha_shop_hybrid",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 13318.0,
+      "second_cash": 40792.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.271811,
+        "mean_ms": 0.378,
+        "max_ms": 0.939,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.087208,
+        "mean_ms": 0.121,
+        "max_ms": 0.274,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "alpha_shop_hybrid",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 40652.0,
+      "second_cash": 13682.0,
+      "winner": "shop_opportunist",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.103326,
+        "mean_ms": 0.144,
+        "max_ms": 0.536,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.276005,
+        "mean_ms": 0.384,
+        "max_ms": 0.972,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    }
+  ]
+}
