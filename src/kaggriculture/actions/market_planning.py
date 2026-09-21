@@ -5,6 +5,8 @@ from typing import Any, Dict, List
 from kaggriculture.actions.actions import ANIMALS, CROPS, Actions
 from kaggriculture.env.items import MARKET_PARAMS
 
+OPERATING_RESERVE = 100
+
 
 def plan_market_actions(
     *,
@@ -18,6 +20,8 @@ def plan_market_actions(
     farm: Dict[str, Any],
     private: Dict[str, Any],
     market: Dict[str, Any],
+    operating_reserve: int = OPERATING_RESERVE,
+    planned_drop: Dict[str, int] | None = None,
 ) -> List[List[Any]]:
     """Build legal market orders using a conservative cash projection."""
     orders: List[List[Any]] = []
@@ -25,11 +29,12 @@ def plan_market_actions(
     unlocked = farm.get("unlocked_quadrants", ["NW"])
     seeds = private.get("seeds", {})
     shed = private.get("shed", {})
+    drop = planned_drop or {}
     prices = market.get("prices", {})
 
     if auto_expand_land and len(unlocked) < 4:
         cost = Actions.land_cost(unlocked)
-        if cost is not None and money >= cost:
+        if cost is not None and money >= cost + operating_reserve:
             orders.append(Actions.buy_land())
             money -= cost
 
@@ -38,13 +43,15 @@ def plan_market_actions(
         remaining_hires = max(0, max_hires_per_day - hires_today)
         for offset in range(remaining_hires):
             cost = Actions.hire_cost(hires_today + offset)
-            if money < cost:
+            if money < cost + operating_reserve:
                 break
             orders.append(Actions.hire())
             money -= cost
 
     if auto_sell:
-        for item, count in shed.items():
+        sell_items = set(shed.keys()) | set(drop.keys())
+        for item in sell_items:
+            count = int(shed.get(item, 0)) + int(drop.get(item, 0))
             if count <= 0 or item in ANIMALS:
                 continue
             base_price = MARKET_PARAMS.get(item, {}).get("base", 0)
@@ -54,15 +61,16 @@ def plan_market_actions(
 
     target_crop_cfg = CROPS.get(target_crop, CROPS["WHEAT"])
     seed_count = seeds.get(target_crop, 0)
-    if seed_count < 5 and money >= target_crop_cfg.seed_cost:
-        quantity = min(5 - seed_count, int(money // target_crop_cfg.seed_cost))
+    if seed_count < 5 and money >= target_crop_cfg.seed_cost + operating_reserve:
+        affordable = max(0, int((money - operating_reserve) // target_crop_cfg.seed_cost))
+        quantity = min(5 - seed_count, affordable)
         if quantity > 0:
             orders.append(Actions.buy_seed(target_crop, quantity))
             money -= quantity * target_crop_cfg.seed_cost
 
     if target_animal and target_animal in ANIMALS:
         animal_cfg = ANIMALS[target_animal]
-        if shed.get(target_animal, 0) == 0 and money >= animal_cfg.cost:
+        if shed.get(target_animal, 0) == 0 and money >= animal_cfg.cost + operating_reserve:
             orders.append(Actions.buy_animal(target_animal, 1))
             money -= animal_cfg.cost
 

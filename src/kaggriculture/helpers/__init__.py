@@ -35,6 +35,12 @@ from .yield_check import (
     compute_one_time_yield,
     max_achievable_one_time_yield,
 )
+from .capacity_guard import (
+    clamp_sells as clamp_sells_to_projected,
+    planned_drop_inventory,
+    projected_shed_from_action,
+    room_guard_99 as room_guard_99_at_day_close,
+)
 from .sell_ranking import (
     impact_score,
     demand_per_day,
@@ -80,4 +86,8 @@ __all__ = [
     "projected_shed",
     "clamp_sells",
     "room_guard_99",
+    "planned_drop_inventory",
+    "projected_shed_from_action",
+    "clamp_sells_to_projected",
+    "room_guard_99_at_day_close",
 ]

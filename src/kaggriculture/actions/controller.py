@@ -1,5 +1,11 @@
 from typing import Dict, List, Optional, Set, Tuple, Any, Union
 
+from kaggriculture.helpers.capacity_guard import (
+    clamp_sells,
+    planned_drop_inventory,
+    projected_shed_from_action,
+    room_guard_99,
+)
 from kaggriculture.actions.actions import (
     Actions,
     CropConfig,
@@ -36,6 +42,7 @@ class ActionController:
         max_hires_per_day: int = 1,
         min_sell_margin: float = 0.8,
         board_size: int = 10,
+        operating_reserve: int = 100,
     ):
         self.target_crop = str(target_crop).upper()
         self.target_animal = str(target_animal).upper() if target_animal else None
@@ -52,6 +59,7 @@ class ActionController:
         self.max_hires_per_day = max_hires_per_day
         self.min_sell_margin = min_sell_margin
         self.board_size = board_size
+        self.operating_reserve = operating_reserve
 
     # --------------------------------------------------------------------------
     # Grid & Navigation Utilities
@@ -368,6 +376,7 @@ class ActionController:
         private: dict,
         market: dict,
         current_day: int,
+        planned_drop: Optional[Dict[str, int]] = None,
     ) -> List[List[Any]]:
         """Generate BUY_SEED, SELL, BUY_LAND, and HIRE orders."""
         return build_market_actions(
@@ -381,7 +390,30 @@ class ActionController:
             farm=farm,
             private=private,
             market=market,
+            operating_reserve=self.operating_reserve,
+            planned_drop=planned_drop,
         )
+
+    @staticmethod
+    def _cap_overplant_unit_actions(
+        farmer_act: List[Any],
+        hands_act: List[List[Any]],
+        seeds: Dict[str, int],
+    ) -> Tuple[List[Any], List[List[Any]]]:
+        seeds_left = {str(crop): int(amount) for crop, amount in seeds.items()}
+        unit_actions = [farmer_act, *hands_act]
+        capped: List[List[Any]] = []
+        for action in unit_actions:
+            if len(action) >= 2 and action[0] == "PLANT":
+                crop = str(action[1])
+                if seeds_left.get(crop, 0) <= 0:
+                    capped.append(Actions.pass_action())
+                else:
+                    capped.append(action)
+                    seeds_left[crop] = seeds_left.get(crop, 0) - 1
+            else:
+                capped.append(action)
+        return capped[0], capped[1:]
 
     # --------------------------------------------------------------------------
     # Master Step / Turn Action Builder
@@ -413,8 +445,29 @@ class ActionController:
             h_act = self.plan_unit_action(h_idx + 1, me, private, available_seeds, obs, claimed_tiles)
             hands_act.append(h_act)
 
+        farmer_act, hands_act = self._cap_overplant_unit_actions(
+            farmer_act,
+            hands_act,
+            private.get("seeds", {}),
+        )
+
+        unit_actions = [farmer_act, *hands_act]
+        planned_drop = planned_drop_inventory(me, private, unit_actions, self.board_size)
+
         # 3. Market Actions
-        market_act = self.plan_market_actions(me, private, market, current_day)
+        market_act = self.plan_market_actions(me, private, market, current_day, planned_drop=planned_drop)
+
+        positions = [me.get("farmer", [0, 0]), *(me.get("hands") or [])]
+        inventories = private.get("inventories", [])
+        projected = projected_shed_from_action(
+            private.get("shed", {}),
+            unit_actions,
+            positions,
+            inventories,
+            self.board_size,
+        )
+        market_act = clamp_sells(projected, market_act)
+        market_act = room_guard_99(obs, market_act, unit_actions)
 
         return {
             "farmer": farmer_act,

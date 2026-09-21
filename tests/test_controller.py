@@ -136,6 +136,7 @@ def test_controller_hiring_uses_fibonacci_costs():
         auto_hire_hands=True,
         auto_sell=False,
         max_hires_per_day=3,
+        operating_reserve=0,
     )
     orders = controller.plan_market_actions(
         {"money": 4, "unlocked_quadrants": ["NW"], "hires_today": 1},
@@ -145,3 +146,66 @@ def test_controller_hiring_uses_fibonacci_costs():
     )
 
     assert orders == [["HIRE"], ["HIRE"]]
+
+
+def test_plan_market_actions_operating_reserve_blocks_buys():
+    controller = ActionController(
+        auto_expand_land=True,
+        auto_hire_hands=True,
+        auto_sell=False,
+        operating_reserve=100,
+    )
+    orders = controller.plan_market_actions(
+        {"money": 100, "unlocked_quadrants": ["NW"], "hires_today": 0},
+        {"seeds": {"WHEAT": 0}, "shed": {}},
+        {"prices": {}},
+        0,
+    )
+    assert not any(order[0] in ("BUY_LAND", "HIRE", "BUY_SEED") for order in orders)
+
+
+def test_act_clamps_unfillable_sells():
+    controller = ActionController(
+        target_crop=Plants.WHEAT,
+        auto_sell=True,
+        auto_expand_land=False,
+        auto_hire_hands=False,
+        min_sell_margin=0.0,
+    )
+    obs = {
+        "player": 0,
+        "step": 1,
+        "day": 0,
+        "hour": 1,
+        "farms": [
+            {
+                "money": 3000.0,
+                "tiles": [[None for _ in range(10)] for _ in range(10)],
+                "farmer": [4, 4],
+                "hands": [],
+                "unlocked_quadrants": ["NW"],
+                "hires_today": 0,
+            },
+            {
+                "money": 3000.0,
+                "tiles": [[None for _ in range(10)] for _ in range(10)],
+                "farmer": [4, 4],
+                "hands": [],
+                "unlocked_quadrants": ["NW"],
+                "hires_today": 0,
+            },
+        ],
+        "private": {
+            "shed": {"WHEAT": 2},
+            "seeds": {"WHEAT": 0},
+            "inventories": [{}],
+        },
+        "market": {
+            "inventory": {"WHEAT": 10000},
+            "prices": {"WHEAT": 25},
+        },
+        "town": {"unlocked_shops": []},
+    }
+    action = controller.act(obs)
+    wheat_sells = [o for o in action["market"] if o[0] == "SELL" and o[1] == "WHEAT"]
+    assert wheat_sells and wheat_sells[0][2] <= 2
