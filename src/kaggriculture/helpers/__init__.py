@@ -42,6 +42,13 @@ from .capacity_guard import (
     projected_shed_from_action,
     room_guard_99 as room_guard_99_at_day_close,
 )
+from .market_overlays import (
+    clone_like,
+    collision_guard,
+    premium_phase_shift,
+    public_farm_counts,
+    reset_market_overlay_state,
+)
 from .sell_ranking import (
     impact_score,
     demand_per_day,
@@ -92,4 +99,9 @@ __all__ = [
     "clamp_sells_to_projected",
     "room_guard_99_at_day_close",
     "dead_stock_sells",
+    "premium_phase_shift",
+    "collision_guard",
+    "clone_like",
+    "public_farm_counts",
+    "reset_market_overlay_state",
 ]
