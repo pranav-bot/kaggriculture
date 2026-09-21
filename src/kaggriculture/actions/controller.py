@@ -17,6 +17,7 @@ from kaggriculture.actions.actions import (
 )
 from kaggriculture.env.items import Plants, Animals, Products, Structures, Quadrants
 from kaggriculture.actions.market_planning import plan_market_actions as build_market_actions
+from kaggriculture.helpers.phase_brain import pick_plant_crop, terminal_return_active
 
 
 class ActionController:
@@ -43,6 +44,9 @@ class ActionController:
         min_sell_margin: float = 0.8,
         board_size: int = 10,
         operating_reserve: int = 100,
+        market_policy: str = "default",
+        enable_terminal_return: bool = False,
+        enable_alpha_planting: bool = False,
     ):
         self.target_crop = str(target_crop).upper()
         self.target_animal = str(target_animal).upper() if target_animal else None
@@ -60,6 +64,23 @@ class ActionController:
         self.min_sell_margin = min_sell_margin
         self.board_size = board_size
         self.operating_reserve = operating_reserve
+        self.market_policy = market_policy
+        self.enable_terminal_return = enable_terminal_return
+        self.enable_alpha_planting = enable_alpha_planting
+
+    def choose_plant_crop(
+        self,
+        available_seeds: Dict[str, int],
+        obs: dict,
+        farm: dict,
+        private: dict,
+    ) -> Optional[str]:
+        if self.enable_alpha_planting:
+            shops = (obs.get("town") or {}).get("unlocked_shops", [])
+            return pick_plant_crop(available_seeds, int(obs.get("day", 0)), farm, shops)
+        if available_seeds.get(self.target_crop, 0) > 0:
+            return self.target_crop
+        return next((crop for crop, qty in available_seeds.items() if qty > 0), None)
 
     # --------------------------------------------------------------------------
     # Grid & Navigation Utilities
@@ -265,10 +286,19 @@ class ActionController:
         inventories = private.get("inventories", [])
         inv = inventories[unit_idx] if unit_idx < len(inventories) else {}
 
+        if self.enable_terminal_return and terminal_return_active(obs) and sum(inv.values()) > 0:
+            if Actions.is_shed_adjacent((ux, uy), self.board_size):
+                return Actions.drop()
+            shed_tile = self.nearest_shed_tile((ux, uy), self.board_size)
+            return self.move_to((ux, uy), shed_tile)
+
         # 1. Action on current tile if applicable
         if isinstance(tile, dict) and tile.get("kind") == "PLANT":
             crop_cfg = CROPS.get(tile["crop"])
             if crop_cfg:
+                if current_day >= 29 and int(tile.get("yield_units", 0) or 0) > 0:
+                    claimed_tiles.add((ux, uy))
+                    return Actions.harvest()
                 # Harvest if optimal or harvestable
                 if crop_cfg.is_optimal_harvest_age(tile["planted_day"], current_day) and tile.get("yield_units", 0) > 0:
                     claimed_tiles.add((ux, uy))
@@ -312,8 +342,7 @@ class ActionController:
             return Actions.dig()
 
         elif tile is None:
-            # Check if we have seeds to plant
-            chosen_crop = self.target_crop if available_seeds.get(self.target_crop, 0) > 0 else next((c for c, v in available_seeds.items() if v > 0), None)
+            chosen_crop = self.choose_plant_crop(available_seeds, obs, farm, private)
             if chosen_crop and available_seeds.get(chosen_crop, 0) > 0:
                 available_seeds[chosen_crop] -= 1
                 claimed_tiles.add((ux, uy))
@@ -342,7 +371,7 @@ class ActionController:
                 elif action_type == "fertilize":
                     return Actions.fertilize()
                 elif action_type == "plant":
-                    chosen_crop = self.target_crop if available_seeds.get(self.target_crop, 0) > 0 else next((c for c, v in available_seeds.items() if v > 0), None)
+                    chosen_crop = self.choose_plant_crop(available_seeds, obs, farm, private)
                     if chosen_crop and available_seeds.get(chosen_crop, 0) > 0:
                         available_seeds[chosen_crop] -= 1
                         return Actions.plant(chosen_crop)
@@ -377,6 +406,7 @@ class ActionController:
         market: dict,
         current_day: int,
         planned_drop: Optional[Dict[str, int]] = None,
+        town_shops: Optional[List[str]] = None,
     ) -> List[List[Any]]:
         """Generate BUY_SEED, SELL, BUY_LAND, and HIRE orders."""
         return build_market_actions(
@@ -392,6 +422,9 @@ class ActionController:
             market=market,
             operating_reserve=self.operating_reserve,
             planned_drop=planned_drop,
+            current_day=current_day,
+            town_shops=town_shops,
+            alpha_p1=self.market_policy == "alpha_p1",
         )
 
     @staticmethod
@@ -455,7 +488,15 @@ class ActionController:
         planned_drop = planned_drop_inventory(me, private, unit_actions, self.board_size)
 
         # 3. Market Actions
-        market_act = self.plan_market_actions(me, private, market, current_day, planned_drop=planned_drop)
+        town_shops = (obs.get("town") or {}).get("unlocked_shops", [])
+        market_act = self.plan_market_actions(
+            me,
+            private,
+            market,
+            current_day,
+            planned_drop=planned_drop,
+            town_shops=town_shops,
+        )
 
         positions = [me.get("farmer", [0, 0]), *(me.get("hands") or [])]
         inventories = private.get("inventories", [])

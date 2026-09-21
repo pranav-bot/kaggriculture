@@ -48,11 +48,18 @@ class AlphaVelocityP0Controller(ActionController):
             scores[name] = price * crop.yield_per_tile_per_day * demand_bonus * repeat_bonus - crop.seed_cost
         return max(scores, key=scores.get, default=Plants.MELON)
 
-    def plan_market_actions(self, farm, private, market, current_day, planned_drop=None):
+    def plan_market_actions(self, farm, private, market, current_day, planned_drop=None, town_shops=None):
         if current_day >= 26:
             self.auto_expand_land = False
             self.auto_hire_hands = False
-        return super().plan_market_actions(farm, private, market, current_day, planned_drop=planned_drop)
+        return super().plan_market_actions(
+            farm,
+            private,
+            market,
+            current_day,
+            planned_drop=planned_drop,
+            town_shops=town_shops,
+        )
 
     def act(self, obs: Dict[str, Any]) -> Dict[str, Any]:
         if int(obs.get("day", 0)) < 26:

@@ -107,6 +107,31 @@ gaps are seat/opponent-interaction noise. P0 plumbing is validated by
 Next ROI is P1 mix/hire/sell policy (Alpha production skeleton), not more P0
 guards.
 
+### Library Phase P1 + `alpha_velocity_p1`
+
+`helpers/phase_brain.py` adds champion mix (`EARLY_MIX` / `LATE_MIX`,
+`MIX_SWITCH_DAY=13`), `MAX_ACTIVE=40`, shop `adaptive_shift` ±3,
+`HANDS_BY_UNLOCKED` {1:6, 2:9}, `PREMIUM_BATCH=8`, terminal return
+(day≥29, hour≥13) and day-29 forced harvest in `ActionController` when
+`enable_terminal_return` / `enable_alpha_planting` are set.
+
+`market_planning.py` `alpha_p1` mode: bulk seed buys to mix deficits,
+hire-by-unlocked, batched premium sells, full sells when `shed_total≥82`,
+day≥26 land/hire cutoff (same as `market_velocity`).
+
+**720-turn benchmark (2026-09-22, one random seed per solo run):**
+
+| Agent | Solo vs random |
+|-------|----------------|
+| `alpha_velocity_p1` | $32,596 |
+| `market_velocity` | $28,798 |
+| `shop_opportunist` | $23,968 |
+
+**Mini standoff (4 matches: P1 vs MV and vs shop, both seats):** P1 won
+0/4 on this seed (shared-market seat interaction; solo cash lead does not
+translate to head-to-head yet). Tuning mix planting throughput and sell
+timing under opponent pressure is the next iteration.
+
 ## Latest Benchmark
 
 `market_velocity` is currently the best verified new strategy. Its main

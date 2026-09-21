@@ -42,6 +42,20 @@ from .capacity_guard import (
     projected_shed_from_action,
     room_guard_99 as room_guard_99_at_day_close,
 )
+from .phase_brain import (
+    EARLY_MIX,
+    LATE_MIX,
+    MIX_SWITCH_DAY,
+    MAX_ACTIVE,
+    HANDS_BY_UNLOCKED,
+    PREMIUM_BATCH,
+    PREMIUM_ITEMS,
+    alpha_sale_quantity,
+    desired_mix,
+    pick_plant_crop,
+    seed_deficits,
+    terminal_return_active,
+)
 from .market_overlays import (
     clone_like,
     collision_guard,
@@ -104,4 +118,16 @@ __all__ = [
     "clone_like",
     "public_farm_counts",
     "reset_market_overlay_state",
+    "EARLY_MIX",
+    "LATE_MIX",
+    "MIX_SWITCH_DAY",
+    "MAX_ACTIVE",
+    "HANDS_BY_UNLOCKED",
+    "PREMIUM_BATCH",
+    "PREMIUM_ITEMS",
+    "alpha_sale_quantity",
+    "desired_mix",
+    "pick_plant_crop",
+    "seed_deficits",
+    "terminal_return_active",
 ]
