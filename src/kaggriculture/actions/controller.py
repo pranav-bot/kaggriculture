@@ -21,6 +21,7 @@ from kaggriculture.helpers.market_overlays import collision_guard
 from kaggriculture.helpers.opponent import clone_like
 from kaggriculture.helpers.phase_brain import pick_plant_crop, terminal_return_active
 from kaggriculture.helpers.sell_ranking import rank_sell_slots
+from kaggriculture.helpers.water_rescue import WaterRescueTracker, apply_idle_water_rescue
 
 
 class ActionController:
@@ -51,6 +52,7 @@ class ActionController:
         enable_terminal_return: bool = False,
         enable_alpha_planting: bool = False,
         enable_market_microstructure: bool = False,
+        enable_idle_water_rescue: bool = False,
     ):
         self.target_crop = str(target_crop).upper()
         self.target_animal = str(target_animal).upper() if target_animal else None
@@ -72,6 +74,45 @@ class ActionController:
         self.enable_terminal_return = enable_terminal_return
         self.enable_alpha_planting = enable_alpha_planting
         self.enable_market_microstructure = enable_market_microstructure
+        self.enable_idle_water_rescue = enable_idle_water_rescue
+        self._water_rescue = WaterRescueTracker()
+
+    def _loss_if_omitted(
+        self,
+        action_type: str,
+        tile: Any,
+        market_prices: Dict[str, float],
+        current_day: int,
+    ) -> float:
+        if action_type == "water" and isinstance(tile, dict) and tile.get("kind") == "PLANT":
+            crop_name = str(tile.get("crop", "WHEAT"))
+            crop_cfg = CROPS.get(crop_name)
+            price = float(market_prices.get(crop_name, crop_cfg.base_market_price if crop_cfg else 1))
+            held = int(tile.get("yield_units", 0) or 0)
+            seed = float(crop_cfg.seed_cost if crop_cfg else 10)
+            if crop_cfg and crop_cfg.in_danger_of_weed(tile):
+                return seed + max(1, held + 2) * price
+            return seed + max(1, held + 1) * price
+        if action_type == "harvest" and isinstance(tile, dict):
+            if tile.get("kind") == "PLANT":
+                crop_name = str(tile.get("crop", "WHEAT"))
+                price = float(market_prices.get(crop_name, 1))
+                return max(1.0, int(tile.get("yield_units", 0) or 0) * price)
+            if "animal" in tile:
+                return 100.0
+        if action_type == "feed" and isinstance(tile, dict) and "animal" in tile:
+            animal_cfg = ANIMALS.get(str(tile.get("animal")))
+            return float(animal_cfg.cost if animal_cfg else 300)
+        if action_type == "plant":
+            crop_cfg = CROPS.get(self.target_crop)
+            return float(crop_cfg.seed_cost if crop_cfg else 20)
+        if action_type == "dig":
+            return 10.0
+        if action_type in ("care", "collect_fertilizer"):
+            return 25.0
+        if action_type.startswith("place_"):
+            return 50.0
+        return 1.0
 
     def _postprocess_market(
         self,
@@ -136,8 +177,8 @@ class ActionController:
         return min(tiles, key=lambda t: ActionController.manhattan_distance(pos, t))
 
     @staticmethod
-    def direction_towards(src: Tuple[int, int], target: Tuple[int, int]) -> str:
-        """Determines the single best cardinal move direction from src to target."""
+    def direction_towards(src: Tuple[int, int], target: Tuple[int, int], unit_index: int = 0) -> str:
+        """Cardinal step toward target; even units move horizontally first."""
         sx, sy = src
         tx, ty = target
         dx = tx - sx
@@ -146,16 +187,18 @@ class ActionController:
         if dx == 0 and dy == 0:
             return Actions.PASS
 
-        # Prioritize axis with largest distance
-        if abs(dx) >= abs(dy):
+        horizontal_first = unit_index % 2 == 0
+        if horizontal_first and dx:
             return Actions.EAST if dx > 0 else Actions.WEST
-        else:
+        if dy:
             return Actions.SOUTH if dy > 0 else Actions.NORTH
+        if dx:
+            return Actions.EAST if dx > 0 else Actions.WEST
+        return Actions.PASS
 
-    def move_to(self, src: Tuple[int, int], target: Tuple[int, int]) -> List[str]:
+    def move_to(self, src: Tuple[int, int], target: Tuple[int, int], unit_index: int = 0) -> List[str]:
         """Returns the movement action to advance from src towards target."""
-        direction = self.direction_towards(src, target)
-        return [direction]
+        return [self.direction_towards(src, target, unit_index)]
 
     # --------------------------------------------------------------------------
     # Target Finding & Task Planning
@@ -171,6 +214,7 @@ class ActionController:
         current_day: int,
         current_step: int,
         claimed_tiles: Set[Tuple[int, int]],
+        market_prices: Optional[Dict[str, float]] = None,
     ) -> Optional[Tuple[int, int, str]]:
         """
         Finds the highest priority tile and task for a given farmer/hand unit.
@@ -184,8 +228,13 @@ class ActionController:
         """
         ux, uy = unit_pos
         board_size = len(farm["tiles"])
-        candidates = []
+        candidates: List[Tuple[int, float, int, int, int, str]] = []
+        prices = market_prices or {}
         has_seeds = available_seeds.get(self.target_crop, 0) > 0 or any(v > 0 for v in available_seeds.values())
+
+        def add_candidate(priority: int, dist: int, x: int, y: int, action_type: str, tile: Any = None) -> None:
+            loss = self._loss_if_omitted(action_type, tile, prices, current_day)
+            candidates.append((priority, loss, dist, x, y, action_type))
 
         for y in range(board_size):
             for x in range(board_size):
@@ -208,27 +257,27 @@ class ActionController:
 
                     # 1a. Critical water danger (missed yesterday, not watered today)
                     if crop_cfg.in_danger_of_weed(tile):
-                        candidates.append((0, dist, x, y, "water"))
+                        add_candidate(0, dist, x, y, "water", tile)
                         continue
 
                     # 1b. Ripe / Optimal Harvest
                     if crop_cfg.is_optimal_harvest_age(tile["planted_day"], current_day) and tile.get("yield_units", 0) > 0:
-                        candidates.append((1, dist, x, y, "harvest"))
+                        add_candidate(1, dist, x, y, "harvest", tile)
                         continue
 
                     # 1c. Regular watering
                     if self.auto_water and crop_cfg.needs_watering(tile):
-                        candidates.append((2, dist, x, y, "water"))
+                        add_candidate(2, dist, x, y, "water", tile)
                         continue
 
                     # 1d. Fertilizing (if unit carries fertilizer)
                     if self.auto_fertilize and unit_inv.get("FERTILIZER", 0) > 0 and tile.get("fertilized_until_day", -1) < current_day:
-                        candidates.append((2, dist, x, y, "fertilize"))
+                        add_candidate(2, dist, x, y, "fertilize", tile)
                         continue
 
                     # 1e. Non-optimal but harvestable
                     if self.auto_harvest and crop_cfg.is_harvestable(tile["planted_day"], current_day, tile.get("yield_units", 0)):
-                        candidates.append((3, dist, x, y, "harvest"))
+                        add_candidate(3, dist, x, y, "harvest", tile)
                         continue
 
                 # Case 2: Animal Tile
@@ -240,47 +289,46 @@ class ActionController:
 
                     # Emergency feed (missed yesterday, not fed today)
                     if animal_cfg.in_danger_of_escape(tile):
-                        candidates.append((0, dist, x, y, "feed"))
+                        add_candidate(0, dist, x, y, "feed", tile)
                         continue
 
                     # Harvest produce (eggs, milk, wool)
                     if self.auto_harvest and animal_cfg.is_harvestable(tile):
-                        candidates.append((1, dist, x, y, "harvest"))
+                        add_candidate(1, dist, x, y, "harvest", tile)
                         continue
 
                     # Feed & Care
                     if self.auto_feed_animals and animal_cfg.needs_feed(tile):
-                        candidates.append((2, dist, x, y, "feed"))
+                        add_candidate(2, dist, x, y, "feed", tile)
                         continue
                     if self.auto_care_animals and animal_cfg.needs_care(tile):
-                        candidates.append((3, dist, x, y, "care"))
+                        add_candidate(3, dist, x, y, "care", tile)
                         continue
                     if self.auto_collect_fertilizer and animal_cfg.has_fertilizer(tile):
-                        candidates.append((4, dist, x, y, "collect_fertilizer"))
+                        add_candidate(4, dist, x, y, "collect_fertilizer", tile)
                         continue
 
                 # Case 3: Empty structure waiting for animal placement
                 elif isinstance(tile, dict) and tile.get("kind") in (Structures.COOP, Structures.PASTURE) and "animal" not in tile:
                     for anim in ("GOOSE", "COW", "SHEEP"):
                         if unit_inv.get(anim, 0) > 0 and ANIMALS[anim].structure == tile.get("kind"):
-                            candidates.append((2, dist, x, y, f"place_{anim}"))
+                            add_candidate(2, dist, x, y, f"place_{anim}", tile)
                             break
 
                 # Case 4: Weed Tile
                 elif isinstance(tile, dict) and tile.get("kind") == "WEED":
                     if self.auto_dig_weeds:
-                        candidates.append((5, dist, x, y, "dig"))
+                        add_candidate(5, dist, x, y, "dig", tile)
 
                 # Case 5: Empty Tile for Planting
                 elif tile is None and has_seeds:
-                    candidates.append((4, dist, x, y, "plant"))
+                    add_candidate(4, dist, x, y, "plant", None)
 
         if not candidates:
             return None
 
-        # Sort by: priority asc, distance asc
-        candidates.sort(key=lambda item: (item[0], item[1]))
-        _, _, best_x, best_y, action_type = candidates[0]
+        candidates.sort(key=lambda item: (item[0], -item[1], item[2]))
+        _, _, _, best_x, best_y, action_type = candidates[0]
         return (best_x, best_y, action_type)
 
     # --------------------------------------------------------------------------
@@ -316,7 +364,7 @@ class ActionController:
             if Actions.is_shed_adjacent((ux, uy), self.board_size):
                 return Actions.drop()
             shed_tile = self.nearest_shed_tile((ux, uy), self.board_size)
-            return self.move_to((ux, uy), shed_tile)
+            return self.move_to((ux, uy), shed_tile, unit_idx)
 
         # 1. Action on current tile if applicable
         if isinstance(tile, dict) and tile.get("kind") == "PLANT":
@@ -375,6 +423,7 @@ class ActionController:
                 return Actions.plant(chosen_crop)
 
         # 2. Find best target tile to navigate towards
+        market_prices = obs.get("market", {}).get("prices", {})
         best_target = self.find_best_tile_for_unit(
             (ux, uy),
             inv,
@@ -384,6 +433,7 @@ class ActionController:
             current_day,
             current_step,
             claimed_tiles,
+            market_prices,
         )
 
         if best_target:
@@ -413,7 +463,7 @@ class ActionController:
                 elif action_type == "dig":
                     return Actions.dig()
             else:
-                return self.move_to((ux, uy), (tx, ty))
+                return self.move_to((ux, uy), (tx, ty), unit_idx)
 
         # 3. Shed drop if unit carries harvested goods/fertilizer and is near shed
         if sum(inv.values()) > 0 and Actions.is_shed_adjacent((ux, uy), self.board_size):
@@ -509,6 +559,16 @@ class ActionController:
             hands_act,
             private.get("seeds", {}),
         )
+
+        if self.enable_idle_water_rescue:
+            farmer_act, hands_act = apply_idle_water_rescue(
+                obs,
+                farmer_act,
+                hands_act,
+                self._water_rescue,
+                me,
+                private,
+            )
 
         unit_actions = [farmer_act, *hands_act]
         planned_drop = planned_drop_inventory(me, private, unit_actions, self.board_size)
