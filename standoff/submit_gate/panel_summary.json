@@ -1,0 +1,189 @@
+{
+  "configuration": {
+    "agents": [
+      "market_velocity",
+      "alpha_velocity_p1",
+      "delta_ranked_velocity",
+      "shop_opportunist"
+    ],
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19
+    ],
+    "steps": 720,
+    "opponent": "random",
+    "baseline": "shop_opportunist",
+    "head_to_head": "shop_opportunist",
+    "wall_seconds": 193.734
+  },
+  "load_failures": [],
+  "leaderboard": [
+    {
+      "agent": "alpha_velocity_p1",
+      "mean_cash": 31576.0,
+      "median_cash": 31894.0,
+      "std_cash": 2466.015754207584,
+      "win_vs_baseline": 1.0,
+      "overflow_mean": 0.0,
+      "slots_mean": 0.0,
+      "p95_ms_mean": 0.7180181282456034,
+      "episodes": 20,
+      "is_baseline": false,
+      "rank": 1
+    },
+    {
+      "agent": "delta_ranked_velocity",
+      "mean_cash": 29927.35,
+      "median_cash": 31065.5,
+      "std_cash": 5573.911555407029,
+      "win_vs_baseline": 1.0,
+      "overflow_mean": 0.0,
+      "slots_mean": 0.0,
+      "p95_ms_mean": 0.7096703333081679,
+      "episodes": 20,
+      "is_baseline": false,
+      "rank": 2
+    },
+    {
+      "agent": "market_velocity",
+      "mean_cash": 29518.3,
+      "median_cash": 28948.0,
+      "std_cash": 6346.006965801409,
+      "win_vs_baseline": 1.0,
+      "overflow_mean": 0.0,
+      "slots_mean": 0.0,
+      "p95_ms_mean": 0.6981575630197768,
+      "episodes": 20,
+      "is_baseline": false,
+      "rank": 3
+    },
+    {
+      "agent": "shop_opportunist",
+      "mean_cash": 3000.0,
+      "median_cash": 3000.0,
+      "std_cash": 0.0,
+      "win_vs_baseline": 0.0,
+      "overflow_mean": 0.0,
+      "slots_mean": 0.0,
+      "p95_ms_mean": 0.0,
+      "episodes": 20,
+      "is_baseline": true,
+      "rank": 4
+    }
+  ],
+  "aggregates": {
+    "market_velocity": {
+      "episodes": 20,
+      "episodes_ok": 20,
+      "mean_cash": 29518.3,
+      "median_cash": 28948.0,
+      "std_cash": 6346.006965801409,
+      "overflow_mean": 0.0,
+      "slots_mean": 0.0,
+      "p95_ms_mean": 0.6981575630197768,
+      "overflow_sum": 0,
+      "slots_sum": 0
+    },
+    "alpha_velocity_p1": {
+      "episodes": 20,
+      "episodes_ok": 20,
+      "mean_cash": 31576.0,
+      "median_cash": 31894.0,
+      "std_cash": 2466.015754207584,
+      "overflow_mean": 0.0,
+      "slots_mean": 0.0,
+      "p95_ms_mean": 0.7180181282456034,
+      "overflow_sum": 0,
+      "slots_sum": 0
+    },
+    "delta_ranked_velocity": {
+      "episodes": 20,
+      "episodes_ok": 20,
+      "mean_cash": 29927.35,
+      "median_cash": 31065.5,
+      "std_cash": 5573.911555407029,
+      "overflow_mean": 0.0,
+      "slots_mean": 0.0,
+      "p95_ms_mean": 0.7096703333081679,
+      "overflow_sum": 0,
+      "slots_sum": 0
+    },
+    "shop_opportunist": {
+      "episodes": 20,
+      "episodes_ok": 20,
+      "mean_cash": 3000.0,
+      "median_cash": 3000.0,
+      "std_cash": 0.0,
+      "overflow_mean": 0.0,
+      "slots_mean": 0.0,
+      "p95_ms_mean": 0.0,
+      "overflow_sum": 0,
+      "slots_sum": 0
+    }
+  },
+  "head_to_head": {
+    "market_velocity": {
+      "wins": 0,
+      "losses": 2,
+      "ties": 0,
+      "candidate_cash": [
+        8261.0,
+        7594.0
+      ],
+      "opponent_cash": [
+        34177.0,
+        31934.0
+      ],
+      "mean_candidate_cash": 7927.5,
+      "mean_opp_cash": 33055.5
+    },
+    "alpha_velocity_p1": {
+      "wins": 0,
+      "losses": 2,
+      "ties": 0,
+      "candidate_cash": [
+        9815.0,
+        11689.0
+      ],
+      "opponent_cash": [
+        29808.0,
+        29839.0
+      ],
+      "mean_candidate_cash": 10752.0,
+      "mean_opp_cash": 29823.5
+    },
+    "delta_ranked_velocity": {
+      "wins": 0,
+      "losses": 2,
+      "ties": 0,
+      "candidate_cash": [
+        11084.0,
+        16495.0
+      ],
+      "opponent_cash": [
+        20373.0,
+        26738.0
+      ],
+      "mean_candidate_cash": 13789.5,
+      "mean_opp_cash": 23555.5
+    }
+  }
+}

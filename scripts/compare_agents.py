@@ -8,68 +8,13 @@ import csv
 import statistics
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from agent_utils import load_agent
-from kaggriculture.env import Environment
-from kaggriculture.helpers.episode_metrics import EpisodeMetricsRecorder, MetricsWrapper
-from kaggriculture.helpers.market_overlays import reset_market_overlay_state
-
-CSV_FIELDS = [
-    "seed",
-    "agent",
-    "terminal_cash",
-    "overflow",
-    "slots_burned",
-    "mean_impact",
-    "decide_ms_p50",
-    "decide_ms_p95",
-]
-
-
-def run_solo(
-    agent_spec: str,
-    seed: int,
-    steps: int,
-    opponent: str,
-    load_suffix: str,
-) -> Dict[str, Any]:
-    reset_market_overlay_state()
-    agent = load_agent(agent_spec, module_suffix=load_suffix)
-    recorder = EpisodeMetricsRecorder()
-    wrapped = MetricsWrapper(agent, recorder)
-    env = Environment(
-        configuration={"episodeSteps": steps, "seed": seed},
-        debug=False,
-    )
-    final = env.run_env(wrapped, opponent)
-    obs = env.get_current_state(final, agent1=True)
-    if not isinstance(obs, dict):
-        obs = dict(obs) if hasattr(obs, "items") else {"farms": [{}]}
-    return recorder.finalize(obs, steps=steps)
-
-
-def row_from_summary(seed: int, agent_label: str, summary: Dict[str, Any]) -> Dict[str, Any]:
-    scores = summary.get("sell_impact_scores") or []
-    mean_impact = summary.get("mean_impact_score_of_sells")
-    if mean_impact is None and scores:
-        mean_impact = float(sum(scores) / len(scores))
-    if mean_impact is None:
-        mean_impact = ""
-    return {
-        "seed": seed,
-        "agent": agent_label,
-        "terminal_cash": summary.get("final_cash", ""),
-        "overflow": summary.get("shed_overflow_units_lost", ""),
-        "slots_burned": summary.get("unfillable_sell_slots_burned", ""),
-        "mean_impact": mean_impact,
-        "decide_ms_p50": summary.get("decide_ms_p50", ""),
-        "decide_ms_p95": summary.get("decide_ms_p95", ""),
-    }
+from benchmark_core import COMPARE_CSV_FIELDS, compare_row_from_summary, run_solo
 
 
 def print_summary(agent_a: str, agent_b: str, rows: List[Dict[str, Any]]) -> str:
@@ -122,21 +67,21 @@ def main() -> None:
         seed = args.start_seed + i
         suffix = f"_s{seed}"
         summary_a = run_solo(args.agent_a, seed, args.steps, args.opponent, suffix + "a")
-        rows.append(row_from_summary(seed, args.agent_a, summary_a))
+        rows.append(compare_row_from_summary(seed, args.agent_a, summary_a))
         summary_b = run_solo(args.agent_b, seed, args.steps, args.opponent, suffix + "b")
-        rows.append(row_from_summary(seed, args.agent_b, summary_b))
+        rows.append(compare_row_from_summary(seed, args.agent_b, summary_b))
 
     print_summary(args.agent_a, args.agent_b, rows)
 
     out = args.output
     if out is None:
-        writer = csv.DictWriter(sys.stdout, fieldnames=CSV_FIELDS)
+        writer = csv.DictWriter(sys.stdout, fieldnames=COMPARE_CSV_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
     else:
         out.parent.mkdir(parents=True, exist_ok=True)
         with out.open("w", newline="") as fh:
-            writer = csv.DictWriter(fh, fieldnames=CSV_FIELDS)
+            writer = csv.DictWriter(fh, fieldnames=COMPARE_CSV_FIELDS)
             writer.writeheader()
             writer.writerows(rows)
         print(f"Wrote {out}", file=sys.stderr)

@@ -67,8 +67,48 @@ benchmark panel:
 Reject or rework if cash gains come only from 1–2 lucky seeds, or if safety
 metrics worsen without a matching cash win.
 
+## Panel analysis
+
+Run many submissions in one pass with stderr progress, a ranked leaderboard on
+stdout, and artifacts under `--output-dir`:
+
+```bash
+# Quick 5-seed smoke (all submissions)
+.venv/bin/python scripts/run_agent_analysis.py \
+  --agents all --seeds 5 --steps 720 --output-dir standoff/smoke
+
+# Candidate stack vs shop baseline (solo + head-to-head)
+.venv/bin/python scripts/run_agent_analysis.py \
+  --agents market_velocity,alpha_velocity_p0,alpha_velocity_p1,alpha_shop_hybrid,demand_mpc,regime_counter,shop_opportunist \
+  --seeds 30 \
+  --baseline shop_opportunist \
+  --head-to-head shop_opportunist \
+  --output-dir standoff/panel_main
+```
+
+**Artifacts:** `panel_summary.json`, `panel_leaderboard.csv`, and
+`<agent>_seeds.csv` per agent.
+
+**Leaderboard table (stdout):** sorted by `mean_cash`. With `--baseline`, the
+baseline row is marked `*` and `win_vs_baseline` is the fraction of seeds where
+that agent beat the baseline on solo cash (paired by seed).
+
+**Head-to-head table:** when `--head-to-head` is set, each candidate (except the
+named opponent) plays two full 720-turn matches vs that opponent (seat 0 and seat
+1). Use this for shared-market behavior; solo random panels can rank higher than
+head-to-head vs `shop_opportunist` because shop timing exploits interaction.
+
+**How to read:**
+
+1. Trust **mean/median cash** on ≥20 seeds before promoting a candidate.
+2. Compare **overflow_mean** and **slots_mean** to the baseline row — regressions
+   need an explanation.
+3. If solo wins but **H2H wins** stay at 0, prioritize opponent-aware sells/plant
+   mix (regime counter, duel MPC) rather than more solo tuning.
+
 ## Related commands
 
+- Pairwise CSV: `scripts/compare_agents.py`
 - Full season bench: `scripts/test_submission.py`
-- Multi-agent panel: `standoff/run_standoff.py`
-- Tests: `pytest tests/test_episode_metrics.py`
+- Multi-agent standoff (all pairs): `standoff/run_standoff.py`
+- Tests: `pytest tests/test_episode_metrics.py tests/test_run_agent_analysis.py`
