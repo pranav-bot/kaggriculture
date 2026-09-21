@@ -20,6 +20,7 @@ Key fields:
 | `shed_overflow_units_lost` | Estimated shed units lost to capacity pressure |
 | `unfillable_sell_slots_burned` | SELL slots dropped by clamp / room guard |
 | `mean_impact_score_of_sells` | Average sell `impact_score` for the turn’s final market |
+| `mean_revenue_per_sold_unit` | Slippage-model revenue per unit across final SELL orders |
 | `decide_ms_p50` / `decide_ms_p95` | `ActionController.act()` latency per step |
 | `collision_holds` / `collision_releases` | Premium sell overlay diffs (microstructure on) |
 | `hires_by_day` | HIRE orders per day |

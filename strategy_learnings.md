@@ -148,6 +148,25 @@ day≥26 land/hire cutoff (same as `market_velocity`).
 translate to head-to-head yet). Tuning mix planting throughput and sell
 timing under opponent pressure is the next iteration.
 
+### Innovation 2 — `demand_mpc` (sell MPC)
+
+`helpers/sell_mpc.py`: `plan_sell_horizon()` uses
+`predict_upcoming_consumption_ticks` + `simulate_sell_slippage` to choose
+sell-now vs wait (next drain within 2 turns when `shed_total < 85`).
+`submissions/demand_mpc/main.py` runs P1 buys/hire/seed but replaces alpha_p1
+SELLs with MPC orders.
+
+**Solo vs `random`, 5 seeds (2026-09-22), `episode_metrics`:**
+
+| Agent | Mean cash | Mean est. revenue / sold unit |
+|-------|-----------|-------------------------------|
+| `alpha_velocity_p1` | $33,470 | $61.50 |
+| `demand_mpc` | $31,046 | $58.73 |
+
+MPC improved sell timing on some ticks but reduced volume sold; net cash
+regressed on this panel. Keep helper for calendar-aware overlays; tune
+wait threshold or blend with batched premium sells before submission.
+
 ### Phase P2 + `alpha_shop_hybrid`
 
 `ActionController` P2 path (when `enable_market_microstructure=True`):

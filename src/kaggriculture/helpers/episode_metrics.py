@@ -7,6 +7,8 @@ from collections import Counter
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from kaggriculture.env.items import MARKET_I0
+from kaggriculture.helpers.market_prediction import simulate_sell_slippage
 from kaggriculture.helpers.sell_ranking import impact_score
 
 SHED_CAPACITY = 100
@@ -106,12 +108,20 @@ class EpisodeMetrics:
     decide_ms_samples: List[float] = field(default_factory=list)
     decide_ms_p50: float = 0.0
     decide_ms_p95: float = 0.0
+    estimated_sell_units: int = 0
+    estimated_sell_revenue: float = 0.0
 
     @property
     def mean_impact_score_of_sells(self) -> float:
         if not self.sell_impact_scores:
             return 0.0
         return float(sum(self.sell_impact_scores) / len(self.sell_impact_scores))
+
+    @property
+    def mean_revenue_per_sold_unit(self) -> float:
+        if self.estimated_sell_units <= 0:
+            return 0.0
+        return float(self.estimated_sell_revenue / self.estimated_sell_units)
 
     def finalize_latencies(self) -> None:
         self.decide_ms_p50 = percentile_ms(self.decide_ms_samples, 50.0)
@@ -121,6 +131,7 @@ class EpisodeMetrics:
         self.finalize_latencies()
         payload = asdict(self)
         payload["mean_impact_score_of_sells"] = self.mean_impact_score_of_sells
+        payload["mean_revenue_per_sold_unit"] = self.mean_revenue_per_sold_unit
         payload.pop("decide_ms_samples", None)
         payload["hires_by_day"] = {str(k): v for k, v in sorted(self.hires_by_day.items())}
         return payload
@@ -181,10 +192,22 @@ class EpisodeMetricsRecorder:
         market_info: Mapping[str, Any] | None,
         town_shops: Sequence[str] | None,
     ) -> None:
+        inv_state: dict[str, int] = dict((market_info or {}).get("inventory") or {})
         for order in market_act:
             score = impact_score(order, market_info, town_shops)
             if score > float("-inf"):
                 self.metrics.sell_impact_scores.append(score)
+            if len(order) < 3 or str(order[0]).upper() != "SELL":
+                continue
+            item = str(order[1]).upper()
+            qty = int(order[2])
+            if qty <= 0:
+                continue
+            market_inv = int(inv_state.get(item, MARKET_I0))
+            slip = simulate_sell_slippage(item, qty, market_inv)
+            self.metrics.estimated_sell_units += qty
+            self.metrics.estimated_sell_revenue += float(slip.total_revenue)
+            inv_state[item] = slip.final_market_inventory
 
     def finish_step(self, decide_ms: float) -> None:
         self.metrics.steps += 1

@@ -36,6 +36,7 @@ def test_episode_metrics_smoke_24_steps():
     assert "decide_ms_p50" in summary
     assert "decide_ms_p95" in summary
     assert "mean_impact_score_of_sells" in summary
+    assert "mean_revenue_per_sold_unit" in summary
     assert "unfillable_sell_slots_burned" in summary
     assert "shed_overflow_units_lost" in summary
     assert "collision_holds" in summary
