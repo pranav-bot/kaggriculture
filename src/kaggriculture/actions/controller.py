@@ -1,4 +1,7 @@
+import time
 from typing import Dict, List, Optional, Set, Tuple, Any, Union
+
+from kaggriculture.helpers.episode_metrics import EpisodeMetricsRecorder
 
 from kaggriculture.helpers.capacity_guard import (
     clamp_sells,
@@ -76,6 +79,7 @@ class ActionController:
         self.enable_market_microstructure = enable_market_microstructure
         self.enable_idle_water_rescue = enable_idle_water_rescue
         self._water_rescue = WaterRescueTracker()
+        self.metrics_recorder: Optional[EpisodeMetricsRecorder] = None
 
     def _loss_if_omitted(
         self,
@@ -534,6 +538,11 @@ class ActionController:
         returning the complete action dictionary for the agent.
         Ensures multi-unit seed safety to avoid simultaneous over-planting penalties.
         """
+        recorder = self.metrics_recorder
+        if recorder is not None:
+            recorder.begin_step(obs)
+        t0 = time.perf_counter()
+
         player = obs["player"]
         me = obs["farms"][player]
         private = obs.get("private", {})
@@ -593,8 +602,14 @@ class ActionController:
             inventories,
             self.board_size,
         )
+        market_planned = [list(order) for order in market_act]
         market_act = clamp_sells(projected, market_act)
         market_act = room_guard_99(obs, market_act, unit_actions)
+        if recorder is not None:
+            recorder.record_market_repair(market_planned, market_act)
+            recorder.record_hires(current_day, market_act)
+
+        market_before_post = [list(order) for order in market_act]
         market_act = self._postprocess_market(
             obs,
             market_act,
@@ -603,6 +618,10 @@ class ActionController:
             hands_act,
             town_shops,
         )
+        if recorder is not None:
+            recorder.record_postprocess(market_before_post, market_act)
+            recorder.record_final_market(market_act, market, town_shops)
+            recorder.finish_step((time.perf_counter() - t0) * 1000.0)
 
         return {
             "farmer": farmer_act,
