@@ -1,4 +1,4 @@
-"""Seven-turn terminal deposit search skeleton (research/03; days 27–29 only)."""
+"""Seven-turn terminal deposit search (research/03 + research/05 B1 prototype)."""
 
 from __future__ import annotations
 
@@ -27,28 +27,6 @@ def terminal_search_window(obs: dict[str, Any]) -> bool:
     return TERMINAL_DAY_MIN <= day <= TERMINAL_DAY_MAX
 
 
-def _shed_access_tiles(board_size: int = 10) -> tuple[tuple[int, int], ...]:
-    half = board_size // 2
-    return ((half - 1, half - 1), (half, half - 1), (half - 1, half), (half, half))
-
-
-def _walk(start: tuple[int, int], end: tuple[int, int]) -> list[list[str]]:
-    x, y = start
-    tx, ty = end
-    return (
-        [["EAST"]] * max(0, tx - x)
-        + [["WEST"]] * max(0, x - tx)
-        + [["SOUTH"]] * max(0, ty - y)
-        + [["NORTH"]] * max(0, y - ty)
-    )
-
-
-def return_to_shed_drop(pos: tuple[int, int], board_size: int = 10) -> list[list[Any]]:
-    targets = _shed_access_tiles(board_size)
-    target = min(targets, key=lambda xy: (abs(pos[0] - xy[0]) + abs(pos[1] - xy[1]), targets.index(xy)))
-    return _walk(pos, target) + [["DROP"]]
-
-
 def dominates(candidate: dict[str, Any], baseline: dict[str, Any]) -> bool:
     if candidate.get("overflow_units"):
         return False
@@ -69,6 +47,15 @@ def plan_value(run: dict[str, Any], prices: dict[str, float]) -> float:
     return sum((int(sold.get(item, 0)) + int(shed.get(item, 0))) * prices.get(item, 1.0) for item in PRODUCTS)
 
 
+def _merge_turn(base: dict[str, Any], proposal: dict[str, Any]) -> dict[str, Any]:
+    merged = deepcopy(base)
+    if proposal.get("farmer"):
+        merged["farmer"] = deepcopy(proposal["farmer"])
+    if proposal.get("hands"):
+        merged["hands"] = deepcopy(proposal["hands"])
+    return merged
+
+
 def plan_terminal(
     obs: dict[str, Any],
     config: dict[str, Any],
@@ -78,7 +65,7 @@ def plan_terminal(
     max_simulations: int = 64,
     proposals_per_actor: int = 4,
 ) -> dict[str, Any]:
-    """Search for a dominating 7-turn schedule; abort if planning exceeds MAX_SEARCH_MS."""
+    """Search harvest→DROP proposals over a 7-turn horizon; 200 ms budget per call."""
     begun = perf_counter()
     fallback: dict[str, Any] = {
         "accepted": False,
@@ -86,10 +73,20 @@ def plan_terminal(
         "actions": None,
         "simulations": 0,
         "planning_ms": 0.0,
+        "changes": [],
     }
+    simulations = 0
 
     def over_budget() -> bool:
         return (perf_counter() - begun) * 1000.0 >= MAX_SEARCH_MS
+
+    def finish(**extra: Any) -> dict[str, Any]:
+        return {
+            **fallback,
+            **extra,
+            "simulations": simulations,
+            "planning_ms": (perf_counter() - begun) * 1000.0,
+        }
 
     try:
         if not terminal_search_window(obs):
@@ -103,45 +100,59 @@ def plan_terminal(
         if over_budget():
             raise Unsupported("latency budget exceeded before baseline simulation")
 
-        baseline = simulate(obs, config, baseline_remaining, detailed=True)
+        baseline_run = simulate(obs, config, baseline_remaining, detailed=True)
+        simulations += 1
         prices = {item: max(1.0, float(obs.get("market", {}).get("prices", {}).get(item, 1))) for item in PRODUCTS}
-        baseline_value = plan_value(baseline, prices)
-        best_value = baseline_value
+        baseline_value = plan_value(baseline_run, prices)
         current = deepcopy(baseline_remaining)
-        simulations = 1
+        best_value = baseline_value
+        changes: list[dict[str, Any]] = []
 
-        # Skeleton: proposal generation hooks live here (harvest→DROP suffixes per actor).
-        proposals: list[list[dict[str, Any]]] = []
-        _ = (max_simulations, proposals_per_actor, proposals)
+        from .proposals import propose_harvest_drop_routes
+
+        proposals = propose_harvest_drop_routes(
+            obs,
+            proposals_per_actor=proposals_per_actor,
+        )
+
+        for turn_idx in range(TERMINAL_HORIZON):
+            if over_budget() or simulations >= max_simulations:
+                break
+            local_best = current[turn_idx]
+            local_value = best_value
+            for proposal in proposals:
+                if over_budget() or simulations >= max_simulations:
+                    break
+                trial_actions = deepcopy(current)
+                trial_actions[turn_idx] = _merge_turn(trial_actions[turn_idx], proposal)
+                trial_run = simulate(obs, config, trial_actions, detailed=True)
+                simulations += 1
+                trial_value = plan_value(trial_run, prices)
+                if trial_value > local_value and dominates(trial_run, baseline_run):
+                    local_best = trial_actions[turn_idx]
+                    local_value = trial_value
+            if local_value > best_value:
+                current[turn_idx] = local_best
+                best_value = local_value
+                changes.append({"turn": turn_idx, "value": local_value})
 
         if over_budget():
             raise Unsupported("latency budget exceeded during proposal search")
 
         if best_value <= baseline_value:
-            return {
-                **fallback,
-                "reason": "no positive physical delivery gain",
-                "simulations": simulations,
-                "planning_ms": (perf_counter() - begun) * 1000,
-            }
+            return finish(reason="no positive physical delivery gain")
 
-        physical = simulate(obs, config, current)
+        physical = simulate(obs, config, current, detailed=True)
         simulations += 1
-        if not dominates(physical, baseline):
+        if not dominates(physical, baseline_run):
             raise Unsupported("no zero-overflow dominating continuation")
 
-        return {
-            "accepted": True,
-            "reason": "joint physical dominance",
-            "baseline": deepcopy(baseline_remaining),
-            "actions": current,
-            "simulations": simulations,
-            "planning_ms": (perf_counter() - begun) * 1000,
-        }
+        return finish(
+            accepted=True,
+            reason="joint physical dominance",
+            baseline=deepcopy(baseline_remaining),
+            actions=current,
+            changes=changes,
+        )
     except (Unsupported, KeyError, TypeError, ValueError, IndexError) as exc:
-        return {
-            **fallback,
-            "reason": str(exc),
-            "simulations": fallback.get("simulations", 0),
-            "planning_ms": (perf_counter() - begun) * 1000,
-        }
+        return finish(reason=str(exc))
