@@ -10,12 +10,23 @@ from kaggriculture.helpers.market_prediction import (
     predict_upcoming_consumption_ticks,
     simulate_sell_slippage,
 )
+from kaggriculture.helpers.opponent import estimate_imminent_sell_volume
 from kaggriculture.helpers.phase_brain import alpha_sale_quantity
 from kaggriculture.helpers.sell_ranking import impact_score
+from kaggriculture.helpers.sell_duel import duel_sell_qty, is_premium_product
 
 DEFAULT_HORIZON = 12
 DEFAULT_WAIT_TURNS = 2
 SHED_WAIT_CAP = 85
+
+
+def _opponent_farm(obs: Mapping[str, Any]) -> Mapping[str, Any]:
+    player = int(obs.get("player", 0) or 0)
+    farms = obs.get("farms") or []
+    opp_id = 1 - player
+    if len(farms) > opp_id:
+        return farms[opp_id]
+    return {}
 
 
 def _combined_stock(
@@ -126,10 +137,16 @@ def plan_sell_horizon(
             continue
 
         quantity = alpha_sale_quantity(item, count, day, shed_total)
+        market_inv = int(inventories.get(item, MARKET_I0))
+        if is_premium_product(item):
+            opp_hat = estimate_imminent_sell_volume(
+                dict(_opponent_farm(obs)),
+                item,
+                current_day=day,
+            )
+            quantity = min(quantity, duel_sell_qty(item, count, market_inv, opp_hat, shed_total))
         if quantity <= 0:
             continue
-
-        market_inv = int(inventories.get(item, MARKET_I0))
         turns_until, drained = turns_until_product_consumption(shops, step, item, horizon)
         rev_now, rev_wait = sell_now_vs_wait_revenue(item, quantity, market_inv, drained)
 

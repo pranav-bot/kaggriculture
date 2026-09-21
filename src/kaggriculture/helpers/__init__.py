@@ -29,6 +29,7 @@ from .opponent import (
     OpponentProfile,
     analyze_opponent_farm,
     clone_like,
+    estimate_imminent_sell_volume,
 )
 from .yield_check import (
     PlantState,
@@ -98,6 +99,7 @@ __all__ = [
     "SabotageOpportunity",
     "OpponentProfile",
     "analyze_opponent_farm",
+    "estimate_imminent_sell_volume",
     "clone_like",
     "PlantState",
     "check_max_yield_met",

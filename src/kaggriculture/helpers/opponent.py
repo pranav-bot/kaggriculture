@@ -169,6 +169,77 @@ def analyze_opponent_farm(
     )
 
 
+def _shed_anchor_tiles(board_size: int) -> List[Tuple[int, int]]:
+    half = board_size // 2
+    return [
+        (half - 1, half - 1),
+        (half, half - 1),
+        (half - 1, half),
+        (half, half),
+    ]
+
+
+def _manhattan_to_shed(x: int, y: int, shed_tiles: List[Tuple[int, int]]) -> int:
+    return min(abs(x - sx) + abs(y - sy) for sx, sy in shed_tiles)
+
+
+def estimate_imminent_sell_volume(
+    opponent_farm: Dict[str, Any],
+    product: str,
+    *,
+    current_day: Optional[int] = None,
+    board_size: Optional[int] = None,
+    shed_radius: int = 6,
+) -> int:
+    """
+    Estimate opponent sell pressure for *product* from visible public state:
+    harvest-ready crop ``yield_units`` near their shed, plus animal held product.
+    """
+    item = str(product).upper()
+    tiles = opponent_farm.get("tiles", []) or []
+    if not tiles:
+        return 0
+    size = board_size or len(tiles)
+    shed_tiles = _shed_anchor_tiles(size)
+    day = int(current_day if current_day is not None else opponent_farm.get("day", 0) or 0)
+    total = 0
+
+    for y, row in enumerate(tiles):
+        for x, tile in enumerate(row or []):
+            if not isinstance(tile, dict):
+                continue
+            if tile.get("kind") == "PLANT":
+                crop = str(tile.get("crop", "")).upper()
+                if crop != item:
+                    continue
+                units = int(tile.get("yield_units", 0) or 0)
+                if units <= 0:
+                    continue
+                cfg = CROPS.get(crop)
+                if cfg and day is not None:
+                    planted = int(tile.get("planted_day", 0) or 0)
+                    ripe = cfg.is_optimal_harvest_age(planted, day) or cfg.is_harvestable(
+                        planted, day, units
+                    )
+                    if not ripe:
+                        continue
+                if _manhattan_to_shed(x, y, shed_tiles) > shed_radius:
+                    continue
+                total += units
+                continue
+            animal_name = tile.get("animal")
+            if not animal_name:
+                continue
+            cfg = ANIMALS.get(str(animal_name))
+            if not cfg or str(cfg.product).upper() != item:
+                continue
+            units = int(tile.get("yield_units", 0) or 0)
+            if units > 0:
+                total += units
+
+    return total
+
+
 def clone_like(obs: Dict[str, Any]) -> bool:
     """True when the opponent's public farm closely mirrors ours (P2 collision gate)."""
     from kaggriculture.helpers.market_overlays import clone_like as _clone_like
