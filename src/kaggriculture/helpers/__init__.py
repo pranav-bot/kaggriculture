@@ -37,6 +37,7 @@ from .yield_check import (
 )
 from .capacity_guard import (
     clamp_sells as clamp_sells_to_projected,
+    dead_stock_sells,
     planned_drop_inventory,
     projected_shed_from_action,
     room_guard_99 as room_guard_99_at_day_close,
@@ -90,4 +91,5 @@ __all__ = [
     "projected_shed_from_action",
     "clamp_sells_to_projected",
     "room_guard_99_at_day_close",
+    "dead_stock_sells",
 ]

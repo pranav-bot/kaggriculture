@@ -1,8 +1,8 @@
-"""Shed capacity projection, sell clamping, and day-close room guard (P0)."""
+"""Shed capacity projection, sell clamping, room guard, and dead-stock sells (Agent 3 / P0)."""
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 from kaggriculture.actions.actions import ANIMALS, Actions
@@ -15,6 +15,14 @@ from kaggriculture.env.items import (
 
 _ANIMAL_NAMES = frozenset(ANIMALS.keys())
 _TARGET_OCCUPANCY = SHED_CAPACITY - 1  # 99
+
+FutureSellsFn = Callable[[str, int], int]
+
+
+def _resolve_future_sells(fn: FutureSellsFn | None, item: str, step: int) -> int:
+    if fn is None:
+        return 0
+    return max(0, int(fn(item, step)))
 
 
 def planned_drop_inventory(
@@ -46,43 +54,38 @@ def projected_shed_from_action(
     inventories: Sequence[Mapping[str, Any]],
     board_size: int = Actions.BOARD_SIZE,
 ) -> dict[str, int]:
-    """Project shed stock after same-turn shed-adjacent DROP, PLACE, and PICKUP."""
-    stock = {str(item): max(0, int(quantity)) for item, quantity in shed.items()}
-    total = sum(stock.values())
-    room = max(0, SHED_CAPACITY - total)
+    """Project shed stock after same-turn shed-adjacent DROP and PLACE (capacity-limited)."""
+    proj = {str(item): max(0, int(quantity)) for item, quantity in shed.items()}
+    room = SHED_CAPACITY - sum(proj.values())
 
     for worker in range(min(len(unit_actions), len(positions))):
+        if room <= 0:
+            break
         pos = (int(positions[worker][0]), int(positions[worker][1]))
-        if not Actions.is_shed_adjacent(pos, board_size):
+        inv = inventories[worker] if worker < len(inventories) else {}
+        if not inv or not Actions.is_shed_adjacent(pos, board_size):
             continue
-        work = unit_actions[worker] or ["PASS"]
-        operation = work[0] if work else "PASS"
-        inventory = inventories[worker] if worker < len(inventories) else {}
-
-        if operation == "PICKUP" and len(work) >= 2:
-            item = str(work[1])
-            quantity = max(0, int(work[2]) if len(work) >= 3 else 1)
-            taken = min(stock.get(item, 0), quantity)
-            if taken > 0:
-                stock[item] = stock.get(item, 0) - taken
-                total -= taken
-        elif operation == "DROP":
-            for item, held in inventory.items():
-                added = min(max(0, int(held)), room)
-                if added > 0:
+        action = unit_actions[worker] or ["PASS"]
+        if not action:
+            continue
+        if action[0] == "DROP":
+            for item, amount in inv.items():
+                take = min(max(0, int(amount)), room)
+                if take > 0:
                     key = str(item)
-                    stock[key] = stock.get(key, 0) + added
-                    total += added
-                    room -= added
-        elif operation == "PLACE" and len(work) >= 2 and str(work[1]) not in _ANIMAL_NAMES:
-            item = str(work[1])
-            quantity = max(0, int(work[2]) if len(work) >= 3 else 1)
-            added = min(quantity, max(0, int(inventory.get(item, 0))), room)
-            if added > 0:
-                stock[item] = stock.get(item, 0) + added
-                total += added
-                room -= added
-    return stock
+                    proj[key] = proj.get(key, 0) + take
+                    room -= take
+        elif action[0] == "PLACE" and len(action) > 1 and str(action[1]) not in _ANIMAL_NAMES:
+            item = str(action[1])
+            take = min(
+                max(0, int(action[2]) if len(action) > 2 else 1),
+                max(0, int(inv.get(item, 0))),
+                room,
+            )
+            if take > 0:
+                proj[item] = proj.get(item, 0) + take
+                room -= take
+    return proj
 
 
 def clamp_sells(projected_shed: Mapping[str, int], orders: Sequence[Sequence[Any]]) -> list[list[Any]]:
@@ -95,6 +98,8 @@ def clamp_sells(projected_shed: Mapping[str, int], orders: Sequence[Sequence[Any
         if str(order[0]).upper() == "SELL" and len(order) >= 3:
             item = str(order[1])
             have = avail.get(item, 0)
+            if have <= 0:
+                continue
             quantity = min(max(0, int(order[2])), have)
             if quantity <= 0:
                 continue
@@ -109,6 +114,8 @@ def room_guard_99(
     obs: Mapping[str, Any],
     market_orders: Sequence[Sequence[Any]],
     unit_actions: Sequence[Sequence[Any]],
+    *,
+    future_sells_fn: FutureSellsFn | None = None,
 ) -> list[list[Any]]:
     """At hour 23, add or boost SELL orders so shed occupancy stays at or below 99."""
     step = int(obs.get("step", int(obs.get("day", 0)) * TURNS_PER_DAY + int(obs.get("hour", 0))))
@@ -119,13 +126,14 @@ def room_guard_99(
     farms = obs.get("farms") or []
     farm = farms[player] if player < len(farms) else {}
     private = obs.get("private") or {}
-    market = obs.get("market") or {}
-    prices = market.get("prices") or {}
+    market_info = obs.get("market") or {}
+    prices = market_info.get("prices") or {}
     shed = private.get("shed") or {}
     invs = private.get("inventories") or []
     tiles = farm.get("tiles") or []
     board = len(tiles) or Actions.BOARD_SIZE
     positions = [farm.get("farmer", [0, 0]), *(farm.get("hands") or [])]
+    next_step = step + 1
 
     carried = sum(max(0, int(n)) for inv in invs for n in (inv or {}).values())
     produced = 0
@@ -168,7 +176,14 @@ def room_guard_99(
     if needed <= 0:
         return market[:MAX_MARKET_ORDERS_PER_TURN]
 
-    priority = sorted(PRODUCTS_LIST, key=lambda item: (-int(prices.get(item, 0)), item))
+    priority = sorted(
+        PRODUCTS_LIST,
+        key=lambda item: (
+            _resolve_future_sells(future_sells_fn, item, next_step) > 0,
+            -int(prices.get(item, 0)),
+            item,
+        ),
+    )
     for item in priority:
         already = planned_sells.get(item, 0)
         available = max(0, int(shed.get(item, 0)) - already)
@@ -191,3 +206,42 @@ def room_guard_99(
             break
 
     return market[:MAX_MARKET_ORDERS_PER_TURN]
+
+
+def dead_stock_sells(
+    projected_shed: Mapping[str, int],
+    market_orders: Sequence[Sequence[Any]],
+    obs: Mapping[str, Any],
+    *,
+    future_sells_fn: FutureSellsFn | None = None,
+) -> list[list[Any]]:
+    """Append SELL orders for surplus not already listed and not reserved by future route sells."""
+    step = int(obs.get("step", int(obs.get("day", 0)) * TURNS_PER_DAY + int(obs.get("hour", 0))))
+    day = int(obs.get("day", step // TURNS_PER_DAY))
+    prices = (obs.get("market") or {}).get("prices") or {}
+    next_step = step + 1
+
+    planned: dict[str, int] = {}
+    for order in market_orders:
+        if order and order[0] == "SELL" and len(order) >= 3:
+            item = str(order[1])
+            planned[item] = planned.get(item, 0) + max(0, int(order[2]))
+
+    extra: list[list[Any]] = []
+    for item in PRODUCTS_LIST:
+        have = max(0, int(projected_shed.get(item, 0))) - planned.get(item, 0)
+        if have <= 0:
+            continue
+        if day >= 29:
+            surplus = have
+        else:
+            surplus = have - _resolve_future_sells(future_sells_fn, item, next_step)
+        if surplus <= 0:
+            continue
+        if int(prices.get(item, 0)) <= 1:
+            continue
+        extra.append(["SELL", item, surplus])
+
+    extra.sort(key=lambda order: -int(prices.get(order[1], 0)) * int(order[2]))
+    market = [list(order) for order in market_orders]
+    return (market + extra)[:MAX_MARKET_ORDERS_PER_TURN]
