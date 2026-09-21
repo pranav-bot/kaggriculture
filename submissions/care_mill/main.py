@@ -33,11 +33,13 @@ BASE = {
     "WOOL": 200, "MILK": 160, "EGG": 50, "STRAWBERRY": 120,
     "CARROT": 35, "WHEAT": 25, "TOMATO": 60, "MELON": 250, "FERTILIZER": 100,
 }
-# Cared output per day, used only to pick the line. See research/09_Baseline_Chase.md.
+# Cared output per day, times a curve weight. Wool gluts are punished: the
+# scarcity curve is only a log, and oversupply is a steep square. Milk's
+# scarcity curve is a square root, so unmet milk drain stays expensive.
 SPECIES = {
-    "COW": {"structure": "PASTURE", "product": "MILK", "cost": 400, "per_day": 1.5},
-    "SHEEP": {"structure": "PASTURE", "product": "WOOL", "cost": 500, "per_day": 4 / 3},
-    "GOOSE": {"structure": "COOP", "product": "EGG", "cost": 300, "per_day": 2.0},
+    "COW": {"structure": "PASTURE", "product": "MILK", "cost": 400, "per_day": 1.5, "curve": 1.7},
+    "SHEEP": {"structure": "PASTURE", "product": "WOOL", "cost": 500, "per_day": 4 / 3, "curve": 0.85},
+    "GOOSE": {"structure": "COOP", "product": "EGG", "cost": 300, "per_day": 2.0, "curve": 1.05},
 }
 MAX_HANDS = 8
 WHEAT_PLOTS = 8
@@ -84,20 +86,52 @@ def _demand(shops: Sequence[str]) -> Dict[str, float]:
     return demand
 
 
-def _focus(demand: Mapping[str, float], day: int) -> str:
+def _scores(demand: Mapping[str, float]) -> Dict[str, float]:
+    """Shop drain only. The +1 town-center term is not a reason to start a herd."""
+    scores: Dict[str, float] = {}
+    for name, spec in SPECIES.items():
+        shop = max(0.0, float(demand.get(spec["product"], 0.0)) - 1.0)
+        scores[name] = shop * BASE[spec["product"]] * spec["per_day"] * spec["curve"]
+    return scores
+
+
+def _focus(demand: Mapping[str, float], day: int, owned: int) -> str:
     if int(day) == 0:
         _LOCK["animal"] = None
-    if _LOCK["animal"] in SPECIES:
-        return str(_LOCK["animal"])
-    if day < 3:
-        return "COW"
-    scores = {
-        name: demand.get(spec["product"], 0.0) * BASE[spec["product"]] * spec["per_day"]
-        for name, spec in SPECIES.items()
-    }
+    scores = _scores(demand)
     best = max(scores, key=scores.get)
+    # Pastures until two shops exist. Buying on the first shop locked sheep
+    # into a farmers-market seed and floored wool at $1.
+    # No animal shop yet: do not lock. Crop shops used to tie-break toward
+    # sheep and then dump wool to $1.
+    if day < 3 or scores[best] <= 0:
+        return str(_LOCK["animal"] or "COW")
+    # Eggs stay near base unless the deficit crosses a hinge far above what a
+    # goose herd can build. Wait through day 15 in case milk or wool opens.
+    if best == "GOOSE" and day < 15 and max(scores["COW"], scores["SHEEP"]) <= 0:
+        return str(_LOCK["animal"] or "COW")
+    locked = _LOCK["animal"]
+    if locked in SPECIES and owned > 4:
+        return str(locked)
+    if locked in SPECIES and owned > 0 and scores[best] < scores[str(locked)] * 1.35:
+        return str(locked)
     _LOCK["animal"] = best
     return best
+
+
+def _wanted(animal: str, demand: Mapping[str, float]) -> int:
+    """How many cared animals match current shop drain, before the tile cap."""
+    spec = SPECIES[animal]
+    shop = max(0.0, float(demand.get(spec["product"], 0.0)) - 1.0)
+    if shop <= 0 or spec["per_day"] <= 0:
+        return 0
+    return max(4, int(round(shop / spec["per_day"])) + 2)
+
+
+def _drain_cap(animal: str, demand: Mapping[str, float], quadrants: int = 1) -> int:
+    """Opening quadrant holds 18. A second quadrant is only bought when drain wants more."""
+    room = 18 if quadrants < 2 else 24
+    return min(_wanted(animal, demand), room)
 
 
 def _target(day: int, quadrants: int = 1) -> int:
@@ -180,11 +214,17 @@ def _sell_qty(
         if fund or save_land:
             return min(have, 4 if save_land else 2)
         return min(have, 4) if shed_total >= 85 else 0
-    if need_cash and price >= BASE.get(item, 1):
+    base = BASE.get(item, 1)
+    # Selling under base walks a sqrt or square curve down to the $1 floor.
+    # Overflow discard is cheaper than that path. Hold while the book is rich,
+    # and stop as soon as the price is back at base.
+    if price < base:
+        return 0
+    if need_cash:
         return min(have, 2)
     if day < 28 and shed_total < 78 and have < 20:
         return 0
-    pace = 8 if day >= 28 or shed_total >= 90 else 3
+    pace = 4 if price < base * 1.15 else (8 if day >= 28 or shed_total >= 90 else 3)
     return min(have, pace)
 
 
@@ -200,9 +240,15 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str, demand
     spec = SPECIES[animal]
     live = sum(scan["counts"].values())
     carried = sum(int((inv or {}).get(animal, 0)) for inv in private.get("inventories", []))
-    owned = live + int(shed.get(animal, 0)) + carried
+    focus_owned = scan["counts"][animal] + int(shed.get(animal, 0)) + carried
+    others = live - scan["counts"][animal]
     quadrants = list(farm.get("unlocked_quadrants", ["NW"]))
-    target = _target(day, len(quadrants))
+    target = min(
+        _target(day, len(quadrants)),
+        _drain_cap(animal, demand, len(quadrants)),
+        max(0, (18 if len(quadrants) < 2 else 24) - others),
+    )
+    owned = focus_owned
     wheat_have = int(shed.get("WHEAT", 0)) + sum(
         int((inv or {}).get("WHEAT", 0)) for inv in private.get("inventories", [])
     )
@@ -236,7 +282,7 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str, demand
             orders.append(["BUY_SEED", "WHEAT", qty])
             money -= qty * 10
 
-    if day >= 3 and owned < target and len(orders) < 10:
+    if day >= 3 and _scores(demand).get(animal, 0) > 0 and owned < target and len(orders) < 10:
         free = len(scan["empty"][spec["structure"]])
         # Two days of wheat is enough: more is bought every turn, and a
         # four-day gate froze the herd once the floor was lowered.
@@ -257,7 +303,9 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str, demand
     return orders[:10]
 
 
-def _units(obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str) -> Tuple[List[Any], List[List[Any]]]:
+def _units(
+    obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str, demand: Mapping[str, float],
+) -> Tuple[List[Any], List[List[Any]]]:
     farm = _farm(obs)
     private = obs.get("private", {})
     day = int(obs.get("day", 0))
@@ -391,7 +439,7 @@ def _units(obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str) -> Tupl
 
         structure = spec["structure"]
         have_struct = scan["counts"][animal] + len(scan["empty"][structure])
-        need_struct = _target(max(day, 3), len(quadrants)) if day >= 3 else 0
+        need_struct = min(_target(day, len(quadrants)), _drain_cap(animal, demand, len(quadrants))) if day >= 3 else 0
         if day >= 3 and day < 26 and have_struct < max(need_struct, owned):
             target = take_nearest(pos, list(scan["empties"]))
             if target is not None:
@@ -430,7 +478,9 @@ def agent(obs: Dict[str, Any]) -> Dict[str, Any]:
     if day == 0 and int(obs.get("hour", 0)) == 0:
         _LOCK["animal"] = None
     demand = _demand(obs.get("town", {}).get("unlocked_shops", []) or [])
-    animal = _focus(demand, day)
     scan = _scan(obs)
-    farmer, hands = _units(obs, scan, animal)
+    shed = obs.get("private", {}).get("shed", {})
+    owned_any = sum(scan["counts"].values()) + sum(int(shed.get(name, 0)) for name in SPECIES)
+    animal = _focus(demand, day, owned_any)
+    farmer, hands = _units(obs, scan, animal, demand)
     return {"farmer": farmer, "hands": hands, "market": _market(obs, scan, animal, demand)}

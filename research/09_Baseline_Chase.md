@@ -79,9 +79,8 @@ Shop-matched herd, then several feed and sell patches.
 | 40 wheat before any animal, then a 6-wheat gate | 19,516 | Herd survived (2 cows, 1 sheep) but the gate never saw 24 wheat at once because feeders ate the stock before the buy check. No further animals. |
 | Same-turn wheat order counts as stock, one species not yet | 34,108 | Herd lived (5 cows, 4 geese, 4 sheep) and milk rose from 175 to 324, which means milk was scarce. Too few cows, placed too late, and labor was split across three species. |
 
-Best solo cash in this chase: about 40k (`demand_mill`) and 34k
-(`shop_supply`). Both are the same band as `market_velocity` /
-`shop_opportunist`. Neither is a 138k herd.
+Those two agents topped out near 40k. `care_mill` is the one that moved
+past that band. The current policy and its numbers are at the bottom.
 
 ## Why those runs cannot reach the baseline
 
@@ -101,30 +100,123 @@ opening has to buy a feed bridge (grown wheat plus a small purchased stock)
 and only then animals. Fertilizer can be sold for a few days to buy the
 rest of the herd, then stopped, because it has no sink and the price fades.
 
-## `care_mill` (in progress)
+## `care_mill` stages
 
-Stage policy in `submissions/care_mill/main.py`:
+`submissions/care_mill/main.py` is a stage policy, not a search.
 
-1. Day 0–2: hire up to 8, plant 8 wheat and water them every day, buy a
-   small wheat stock. No animals, no land.
-2. From day 3: lock one species. Score is shop drain per day times base
-   price times cared output per day (cow 1.5, sheep 1.33, goose 2).
-3. Buy one animal per turn only when wheat on hand covers four days for the
-   enlarged herd. Cap 4 animals until the wheat crop is harvestable (day 5),
-   then 8, then 12.
-4. Workers feed before they do anything else. Care before harvest. Harvest
-   any animal yield immediately. Collect and sell fertilizer only while the
-   herd is still short or cash is under $1,500 and the fertilizer price is
-   at least $60.
-5. Sell milk, wool, and eggs while price is at least 85% of base, a few
-   units per turn, faster when the shed is holding a burst.
+1. Days 0–2: hire 8, grow 8 wheat as a feed bridge, buy a small wheat stock.
+2. From day 3, score only shop drain (the town-center +1 does not count).
+   Weight milk 1.7, wool 0.85, eggs 1.05, times cared output per day.
+   Geese are not started before day 15 unless milk and wool are already open.
+   The choice can change until more than 4 animals are owned.
+3. Herd size ramps 4 → 8 → 14 → 18, and is also capped near
+   `shop_drain / cared_output_per_day`. One or two animals per turn, and
+   only when wheat covers the new mouth.
+4. A worker standing on an animal feeds, cares, then harvests before it
+   walks away. Harvest any yield immediately so the care bonus is not
+   capped away.
+5. Hold milk, wool, and eggs while the shed has room and the price is above
+   base. Never sell them below base. Fertilizer is sold only to finish
+   paying for the herd.
 
-Results are appended below as episodes finish.
+Buying a second quadrant was tried so a milk-heavy board could hold 24 cows.
+It did not raise cash. The extra animals arrived late, and one seed bought
+land for sheep and finished at $33k with 21 sheep. The opener stays in the
+northwest.
 
 ## Iteration log
 
 | Agent | Seed | Opponent | Cash | Herd at day 29 | Note |
 | --- | --- | --- | --- | --- | --- |
-| shop_supply (mixed, wheat gate relaxed) | default | random | 34,108 | 5 cow, 4 goose, 4 sheep | Alive, undersupplied milk |
-| demand_mill (best patch) | default | random | 40,327 | 8 sheep, 2 cow, 6 goose | Alive, wool price still high |
-| care_mill | — | — | — | — | Not run yet |
+| shop_supply (mixed, wheat gate relaxed) | unseeded | random | 34,108 | 5 cow, 4 goose, 4 sheep | Alive, undersupplied milk |
+| demand_mill (best patch) | unseeded | random | 40,327 | 8 sheep, 2 cow, 6 goose | Alive, wool price still high |
+| care_mill, 12 cows, sell early | unseeded | random | 54,449 | 12 cow, fed and cared | Price never got much above $250 |
+| care_mill, hold milk until the shed is tight | unseeded | random | 54,942 | 6 cow | Wheat gate froze the herd |
+| care_mill, hold + 12 cows | 0, but shops depend on weed rolls | random | 79,170 | 12 cow, unfed 0 | Milk ended at $320. Still short of the drain |
+| care_mill, 18 animals, same policy | 0–7 | random | see table | 18, all cared | Mean about $36k. Milk seeds $68–98k. Wrong-species seeds under $16k |
+
+Shop draws share the end-of-day random stream with weed rolls. Two agents on
+the same seed do not see the same shops. A full board rolls fewer weeds and
+shifts every later shop. Solo seed numbers are a distribution, not a paired
+test.
+
+### care_mill seeds 0–7 (18 animals, lock on day 3)
+
+| Seed | Cash | Herd | End prices (milk / wool / egg) | Why |
+| --- | --- | --- | --- | --- |
+| 0 | 98,011 | 18 cow | 272 / 242 / 54 | Milk shops. Best run so far |
+| 1 | 87,615 | 18 cow | 252 / 229 / 62 | Milk shops |
+| 6 | 68,382 | 18 cow | 93 / 250 / 54 | Cows, then milk was oversupplied |
+| 3 | 13,032 | 17 goose | 255 / 240 / 40 | Bakery opened first. Eggs sold under base |
+| 5 | 10,331 | 18 sheep | 306 / 55 / 63 | No wool shop at the decision. Wool crashed |
+| 7 | 11,046 | 18 sheep | 240 / 1 / 59 | Same crash, price floored |
+| 2 | 1,615 | 18 sheep | 364 / 1 / 59 | Farmers market has no wool. 18 sheep dumped into town-only drain |
+| 4 | 1,573 | 18 sheep | 311 / 1 / 66 | Same |
+
+`shop_opportunist` on seeds 0–3, same solo setup, finished at $23,393,
+$25,185, $24,398, and $25,638 with an empty herd. It is stable and far under
+the cow runs, and it does not fall to $1,600.
+
+Equal town-only demand was scored with base price, so sheep (base 200) beat
+cows (base 160) when no animal shop was open. Wool's scarcity curve is a log
+and its glut curve is a steep square, so that herd floors the price.
+
+### Current `care_mill` (shop drain, price floor, herd near the drain)
+
+The built-in random opponent constructs `random.Random()` with no seed, and
+both farms share the weed stream that also draws the next shop. A configured
+episode seed does not replay. These are independent samples.
+
+Eight samples: mean $72,023, worst $53,234, best $96,734. One earlier sample
+on the same code reached $105,972. Herds survived. Prices no longer finish
+at $1.
+
+| Sample | Cash | Herd | End milk / wool / egg |
+| --- | --- | --- | --- |
+| A | 96,734 | 18 cow | 312 / 247 / 54 |
+| B | 74,082 | 14 cow | 267 / 229 / 66 |
+| C | 64,024 | 11 sheep | 301 / 238 / 68 |
+| D | 53,234 | 14 cow | 250 / 229 / 130 |
+| E | 65,493 | 11 sheep | 315 / 238 / 56 |
+| F | 63,509 | 14 cow | 243 / 249 / 66 |
+| G | 76,332 | 18 sheep | 275 / 251 / 60 |
+| H | 82,778 | 18 cow | 284 / 248 / 56 |
+
+Head to head, earlier build of the same herd (both seats, 720 turns):
+
+| Seed | care_mill seat | care_mill | shop_opportunist |
+| --- | --- | --- | --- |
+| 0 | first | 63,661 | 22,675 |
+| 0 | second | 48,994 | 19,722 |
+| 1 | first | 61,111 | 22,688 |
+| 1 | second | 57,848 | 22,875 |
+| 2 | first | 61,900 | 24,269 |
+| 2 | second | 60,934 | 24,095 |
+| 6 | first | 35,130 | 23,790 |
+| 6 | second | 54,572 | 24,904 |
+
+`care_mill` won all eight seats. `shop_opportunist` stays near $20–25k
+because it never builds a cared herd. Those seats are also single noisy
+episodes, not replays. `market_velocity`, loaded the same way, returned
+PASS and finished on $3,000, so it was not a real opponent in this harness.
+
+## Distance to 138k
+
+The best episode observed is $105,972. The best of the eight-sample batch is
+$96,734, with 18 cows and milk still at $312, so that book was not exhausted. Eighteen cows is the opening quadrant. The cows bought
+after day 10 only get about five production cycles (first yield is 8 days
+after placement). That back half produces ~18 milk each. The front half,
+placed around day 5 and cared the whole wait, produces ~30. Blended, that is
+the mid-$90ks when the average sale is near $230 and the last sales are near
+$300.
+
+Another $40k on that seed needs those same cows earlier, which starting cash
+does not allow: 18 cows are $7,200 before wheat. Fertilizer sales fund the
+second wave, and that wave is structurally late. A second quadrant was the
+attempt to add a third wave. It lowered the eight-seed mean from about $61k
+to about $57k, so it is not in the agent.
+
+What is still unused on some seeds: a second scarce good. Seed 2 held 11
+sheep for a yarn store while milk finished at $350. A side herd would have to
+be fed and cared with the same nine workers. That split is what killed the
+earlier mixed herds, so it is not in this policy.
