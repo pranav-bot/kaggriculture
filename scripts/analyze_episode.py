@@ -16,6 +16,7 @@ from agent_utils import load_agent
 from kaggriculture.env import Environment
 from kaggriculture.helpers.episode_metrics import EpisodeMetricsRecorder, MetricsWrapper
 from kaggriculture.helpers.market_overlays import reset_market_overlay_state
+from kaggriculture.helpers.phase_log import PhaseLogWrapper, clear_phase_log, start_phase_log
 
 
 def main() -> None:
@@ -28,12 +29,22 @@ def main() -> None:
     )
     parser.add_argument("--opponent", "-o", default="random")
     parser.add_argument("--steps", type=int, default=720)
+    parser.add_argument(
+        "--phase-log",
+        action="store_true",
+        help="Print JSON phase transition timeline (inferred until PolicyBrain is wired)",
+    )
     args = parser.parse_args()
 
     reset_market_overlay_state()
+    phase_log = start_phase_log() if args.phase_log else None
+    clear_after = args.phase_log
+
     recorder = EpisodeMetricsRecorder()
     agent = load_agent(args.agent)
     wrapped = MetricsWrapper(agent, recorder)
+    if args.phase_log:
+        wrapped = PhaseLogWrapper(wrapped)
 
     env = Environment(configuration={"episodeSteps": args.steps})
     final = env.run_env(wrapped, args.opponent)
@@ -41,8 +52,16 @@ def main() -> None:
     if not isinstance(obs, dict):
         obs = dict(obs) if hasattr(obs, "items") else {"farms": [{}]}
 
+    if args.phase_log and phase_log is not None:
+        print(json.dumps({"phase_timeline": phase_log.to_timeline()}, indent=2))
+        if clear_after:
+            clear_phase_log()
+        return
+
     summary = recorder.finalize(obs, steps=args.steps)
     print(json.dumps(summary, indent=2, sort_keys=True))
+    if clear_after:
+        clear_phase_log()
 
 
 if __name__ == "__main__":
