@@ -183,6 +183,7 @@ Each directory under `submissions/` is a named template you can pass to either s
 |----------|---------------------------|
 | `carrot_compound` | Carrot-focused compound strategy |
 | `compound_expansion` | Conservative expansion baseline |
+| `delta_ranked_velocity` | Market-velocity controller with impact-ranked sells |
 | `equilibrium_harvest` | Harvest-timing equilibrium play |
 | `feed_squeeze` | Livestock feed pressure strategy |
 | `game_theory_supply` | Supply/demand game-theory approach |

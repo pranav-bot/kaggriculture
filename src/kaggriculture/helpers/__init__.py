@@ -35,6 +35,15 @@ from .yield_check import (
     compute_one_time_yield,
     max_achievable_one_time_yield,
 )
+from .sell_ranking import (
+    impact_score,
+    demand_per_day,
+    order_score,
+    rank_sell_slots,
+    projected_shed,
+    clamp_sells,
+    room_guard_99,
+)
 
 __all__ = [
     "CropTileInfo",
@@ -64,4 +73,11 @@ __all__ = [
     "check_max_yield_met",
     "compute_one_time_yield",
     "max_achievable_one_time_yield",
+    "impact_score",
+    "demand_per_day",
+    "order_score",
+    "rank_sell_slots",
+    "projected_shed",
+    "clamp_sells",
+    "room_guard_99",
 ]
