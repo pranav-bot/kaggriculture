@@ -112,7 +112,7 @@ def _focus(demand: Mapping[str, float], day: int, owned: int) -> str:
     if best == "GOOSE" and day < 15 and max(scores["COW"], scores["SHEEP"]) <= 0:
         return str(_LOCK["animal"] or "COW")
     locked = _LOCK["animal"]
-    if locked in SPECIES and owned > 4:
+    if locked in SPECIES and owned > 4 and scores[best] <= scores[str(locked)] * 1.35:
         return str(locked)
     if locked in SPECIES and owned > 0 and scores[best] < scores[str(locked)] * 1.35:
         return str(locked)
@@ -205,11 +205,13 @@ def _sell_qty(
     """
     if have <= 0 or item in SPECIES:
         return 0
+    if day >= 29:
+        return have
     if item == "WHEAT":
         return max(0, have - 12) if shed_total >= 92 else 0
     if item == "FERTILIZER":
         if price < 60:
-            return 0
+            return min(have, 1) if shed_total >= 85 else 0
         if fund or save_land:
             return min(have, 4)
         return min(have, 4) if shed_total >= 85 else 0
@@ -256,19 +258,20 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str, demand
     shed_total = sum(int(v) for v in shed.values())
 
     need_cash = False
+    sell_orders: List[List[Any]] = []
     for item, count in sorted(shed.items(), key=lambda kv: -float(prices.get(kv[0], 0))):
         qty = _sell_qty(
             str(item), int(count), float(prices.get(item, 0)),
             shed_total, fund, day, save_land, need_cash,
         )
-        if qty > 0 and len(orders) < 10:
-            orders.append(["SELL", item, qty])
+        if qty > 0:
+            sell_orders.append(["SELL", item, qty])
             money += qty * float(prices.get(item, BASE.get(str(item), 1)))
 
     wheat_floor = 36 if live == 0 else live * 2 + 4
     wheat_need = max(0, wheat_floor - wheat_have)
     wheat_price = max(1.0, float(prices.get("WHEAT", 25)))
-    if wheat_need and len(orders) < 10 and money >= wheat_price:
+    if wheat_need and money >= wheat_price:
         qty = min(wheat_need, int(money // wheat_price))
         if qty > 0:
             orders.append(["BUY_PRODUCT", "WHEAT", qty])
@@ -292,6 +295,7 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str, demand
         orders.append(["HIRE"])
         money -= cost
         hires += 1
+    orders.extend(sell_orders[: max(0, 10 - len(orders))])
     return orders[:10]
 
 
@@ -342,7 +346,8 @@ def _units(
         here = animal_at.get(pos)
         # Finish the animal underfoot before walking. A second trip from the
         # shed is what was leaving yield unharvested at dusk.
-        if here is not None and not carrying_animal:
+        if here is not None and pos not in claimed and not carrying_animal:
+            claimed.add(pos)
             if wheat > 0 and not here.get("fed_today", False):
                 here["fed_today"] = True
                 unfed_left = max(0, unfed_left - 1)

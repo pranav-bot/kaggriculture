@@ -37,6 +37,7 @@ def assign_actions(state: GameState, tasks: list[Task], config: dict[str, Any]) 
     actions: list[list[Any]] = [["PASS"] for _ in units]
     assigned_units: set[int] = set()
     assigned_tasks: set[str] = set()
+    reserved_targets: set[tuple[int, int]] = set()
     planned_drop: dict[str, int] = {}
     terminal_return = state.day >= int(config["terminal_day"]) and state.hour >= int(config["terminal_return_hour"])
 
@@ -55,6 +56,8 @@ def assign_actions(state: GameState, tasks: list[Task], config: dict[str, Any]) 
         for unit in units:
             if unit.index in assigned_units:
                 continue
+            if task.target in reserved_targets:
+                continue
             pairs.append((task.priority, distance(unit.position, task.target), task.deadline_step, task.task_id, unit.index, task))
     for _, _, _, _, unit_index, task in sorted(pairs):
         if unit_index in assigned_units or task.task_id in assigned_tasks:
@@ -63,5 +66,6 @@ def assign_actions(state: GameState, tasks: list[Task], config: dict[str, Any]) 
         actions[unit_index] = list(task.action) if unit.position == task.target else _step_toward(unit.position, task.target, unit.index)
         assigned_units.add(unit_index)
         assigned_tasks.add(task.task_id)
+        reserved_targets.add(task.target)
 
     return actions, planned_drop

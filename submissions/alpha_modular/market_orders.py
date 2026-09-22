@@ -29,11 +29,12 @@ def make_market_orders(state: GameState, config: dict[str, Any], planned_drop: d
     projected_cash = float(state.money)
 
     available = {item: int(state.shed.get(item, 0)) + int(planned_drop.get(item, 0)) for item in PRODUCTS}
+    sell_orders: list[list[Any]] = []
     for item in sorted(PRODUCTS, key=lambda p: (-state.market_price(p), p)):
         quantity = _sale_quantity(item, available[item], state, config)
-        if quantity <= 0 or len(orders) >= MAX_MARKET_ORDERS:
+        if quantity <= 0:
             continue
-        orders.append(["SELL", item, quantity])
+        sell_orders.append(["SELL", item, quantity])
         projected_cash += simulate_sale(item, state.market_inventory(item), quantity).revenue
 
     planned_unlocked = state.unlocked_count
@@ -71,4 +72,5 @@ def make_market_orders(state: GameState, config: dict[str, Any], planned_drop: d
         projected_cash -= cost
         current_hands += 1
         hires_today += 1
+    orders.extend(sell_orders[: max(0, MAX_MARKET_ORDERS - len(orders))])
     return orders[:MAX_MARKET_ORDERS]
