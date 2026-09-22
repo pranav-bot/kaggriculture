@@ -16,6 +16,11 @@
 | `06_Recreated_Agent_3.md` | Architecture Gamma — conserved-route replay with capacity / dead-stock repair |
 | `07_Recreated_Agent_4.md` | Architecture Delta — opaque schedule + impact-scored sell ranking + weed repair |
 | `08_Overlay_Patterns.md` | Thin market / labor overlays (premium delay, collision guard, clone guard, idle rescue) |
+| `09_Baseline_Chase.md` | Implementation log through care_mill |
+| `10_Cashflow_Prebuild.md` | Wheat crop, early pastures, cash-funded herds |
+| `11_Stage_Experiments.md` | Wheat, sell pace, ramp, and herd-cap grid |
+| `12_Quant_and_RL.md` | Scipy milk path, then a learned inventory floor |
+| `13_All_Products.md` | Catalog of every good; fertilizer cash funds the second cow wave |
 
 **Naming note:** Improvement plan and innovations use the requested `04_` / `05_` filenames. Additional agent recreations continue at `06_` / `07_` so those names stay stable.
 
