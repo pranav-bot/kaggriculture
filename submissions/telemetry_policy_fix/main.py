@@ -266,8 +266,8 @@ def _sell_qty(
     if shed_total >= 70:
         return min(have, 4)
 
-    # Endgame liquidation
-    if day >= 28:
+    # Start paced liquidation one day earlier to avoid terminal stock buildup.
+    if day >= 27:
         return min(have, 4)
 
     # Unchoke sales on Days 26-27: sell at least min(have, 2) even if price < 30

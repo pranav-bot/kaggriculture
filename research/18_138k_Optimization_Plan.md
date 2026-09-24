@@ -619,3 +619,23 @@ invariant, but fails the performance gate against both baselines: it trails
 on mean and median cash, wins only 4/10 versus `velocity_mill` and 2/10
 versus `cash_conversion_mill`, and produces no episode above `$50,000` or
 `$100,000`. It is not accepted as the next optimization baseline.
+
+### Telemetry policy fix — earlier paced liquidation
+
+**Hypothesis:** The completed replay telemetry shows a clear terminal-inventory
+gap: elite sides finish with empty or nearly empty sheds, while weaker policies
+retain saleable wheat, milk, or fertilizer. The strongest current policy already
+liquidates aggressively on days 28–29, so the safest single change is to move
+only its existing capped paced-sale branch forward by one day (day 27), without
+changing herd targets, feed reserves, worker routing, or critical-order
+priorities. This should reduce endgame stock stranded at turn 719 while limiting
+quote pressure to at most four units per item per turn.
+
+**Implementation:** Forked `submissions/agent_final/main.py` to
+`submissions/telemetry_policy_fix/main.py` and changed exactly one decision rule:
+the capped endgame sale branch now starts on day 27 instead of day 28. The
+day-29 full liquidation and all other policy logic remain unchanged.
+
+**Validation:** The candidate compiles successfully with Python bytecode
+compilation. A full 720-turn benchmark was intentionally not run in this
+telemetry-fix step; the change is isolated for the next measured benchmark.

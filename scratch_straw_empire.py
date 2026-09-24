@@ -340,8 +340,8 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str, demand
 
     milk_price = float(prices.get("MILK", BASE["MILK"]))
     wool_price = float(prices.get("WOOL", BASE["WOOL"]))
-    milk_oversupply = (milk_price < 145 or opp_cows >= 3)
-    wool_oversupply = (wool_price < 180 or opp_sheep >= 2)
+    milk_oversupply = (milk_price < 130)
+    wool_oversupply = (wool_price < 160)
 
     # Demand-bounded target herd: never exceed market absorption capacity
     shops_unlocked = obs.get("town", {}).get("unlocked_shops", [])
@@ -450,9 +450,10 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], animal: str, demand
             orders.append(["BUY_SEED", "WHEAT", qty])
             money -= qty * 10
 
-    if 3 <= day <= 14 and len(orders) < 10:
+    max_straw = 8 if len(quadrants) < 2 else (16 if len(quadrants) == 2 else 24)
+    if 3 <= day <= 20 and len(orders) < 10:
         cur_straw = int(seeds.get("STRAWBERRY", 0)) + int(scan["crops"].get("STRAWBERRY", 0))
-        need_straw = max(0, 8 - cur_straw)
+        need_straw = max(0, max_straw - cur_straw)
         straw_price = 100
         feed_buffer_days = min(3, max(1, 29 - day))
         feed_reserve = max(0, live * feed_buffer_days - wheat_have) * max(wheat_price, 30.0) + OPERATING_RESERVE + 200
