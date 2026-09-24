@@ -64,4 +64,5 @@ def trace_match(agent_path, replay_path):
 
 if __name__ == "__main__":
     rep = sys.argv[1] if len(sys.argv) > 1 else "replays/my_agents/agent_final: Sovereign Apex k+/112619304.json"
-    trace_match("scratch_apex_engine.py", rep)
+    cand = sys.argv[2] if len(sys.argv) > 2 else "scratch_grandmaster.py"
+    trace_match(cand, rep)
