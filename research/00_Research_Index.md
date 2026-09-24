@@ -27,6 +27,8 @@
 | `17_Apex_Mill_and_Land_Expansion.md` | Apex Mill: Multi-quadrant land expansion, daily labor reset discovery, $89.6k seed 3 peak |
 | `18_138k_Optimization_Plan.md` | 138k Optimization Roadmap & Cross-Seed Forensic Analysis |
 | `19_Final_Winning_Policy.md` | The Winning Policy Architecture — Sovereign Apex ($100k+ Cash Across Evaluation Episodes) |
+| `20_Replay_Forensics_and_Gauntlet_Findings.md` | Replay forensics, game mechanics discoveries, mathematical pricing models, and 20-replay gauntlet benchmark |
+| `21_Scripts_Reference_and_User_Guide.md` | Scripts reference and developer user guide covering all 27+ evaluation, replay, and quant tools |
 
 **Naming note:** Improvement plan and innovations use the requested `04_` / `05_` filenames. Additional agent recreations continue at `06_` / `07_` so those names stay stable.
 

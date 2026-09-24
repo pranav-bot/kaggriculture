@@ -27,12 +27,18 @@ Built artifacts are written to `build/` (gitignored).
 
 ---
 
-## Scripts Guide
+## Scripts Guide & Research Infrastructure
 
-Two helper scripts live in `scripts/`. Use them in this order while developing an agent:
+The `scripts/` directory provides an end-to-end quantitative research, replay parsing, optimization, and evaluation infrastructure. See **[`research/21_Scripts_Reference_and_User_Guide.md`](research/21_Scripts_Reference_and_User_Guide.md)** for the complete 27+ tool reference and **[`research/20_Replay_Forensics_and_Gauntlet_Findings.md`](research/20_Replay_Forensics_and_Gauntlet_Findings.md)** for forensic findings from elite ladder matches.
 
-1. **`test_submission.py`** — run matches locally and compare agents
-2. **`build_submission.py`** — package and validate a Kaggle-ready submission
+Key tools in workflow order:
+
+1. **`scripts/eval_against_replays.py`** — Gauntlet benchmark: test agents against 20 top-tier real-world ladder replays (Boey, Clement Ling, DECEM, Kaggledew Valley, BenPalmer59, etc.)
+2. **`scripts/trace_replay_match.py`** — Forensic simulation tracer comparing live actions against historical opponent steps turn-by-turn
+3. **`scripts/eval_cash.py`** — Evaluates terminal cash across 14 benchmark seeds (1, 3, 5, 7, 10, 15, 20)
+4. **`scripts/quant_full_product.py`** — SciPy-based multi-product pricing and liquidation optimizer
+5. **`scripts/test_submission.py`** — Run matches locally, measure latency (<2ms), and profile agent performance
+6. **`scripts/build_submission.py`** — Package and validate a Kaggle-ready submission (single-file or tar.gz)
 
 ### `scripts/test_submission.py`
 
