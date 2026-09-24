@@ -21,6 +21,12 @@
 | `11_Stage_Experiments.md` | Wheat, sell pace, ramp, and herd-cap grid |
 | `12_Quant_and_RL.md` | Scipy milk path, then a learned inventory floor |
 | `13_All_Products.md` | Catalog of every good; fertilizer cash funds the second cow wave |
+| `14_Quant_Optimization.md` | Scipy pricing sensitivities, multi-product optimization, joint milk+fert ceiling |
+| `15_Velocity_Mill_and_H2H_Breakthrough.md` | Replay forensics, velocity_mill architecture, 90% win-rate H2H breakthrough |
+| `16_Elite_Compound_Architecture.md` | Reverse-engineered compound architecture of Rank 1-3 agents (Melon catalyst, land expansion, Dawn labor pulse) |
+| `17_Apex_Mill_and_Land_Expansion.md` | Apex Mill: Multi-quadrant land expansion, daily labor reset discovery, $89.6k seed 3 peak |
+| `18_138k_Optimization_Plan.md` | 138k Optimization Roadmap & Cross-Seed Forensic Analysis |
+| `19_Final_Winning_Policy.md` | The Winning Policy Architecture — Sovereign Apex ($100k+ Cash Across Evaluation Episodes) |
 
 **Naming note:** Improvement plan and innovations use the requested `04_` / `05_` filenames. Additional agent recreations continue at `06_` / `07_` so those names stay stable.
 

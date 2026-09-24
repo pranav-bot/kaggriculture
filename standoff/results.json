@@ -1,5 +1,5 @@
 {
-  "selected_agent": "rl_fert_mill",
+  "selected_agent": "velocity_sovereign",
   "configuration": {
     "episode_steps": 720,
     "act_timeout_seconds": 1.0,
@@ -14,9 +14,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 32.635,
-      "selected_cash_mean": 62404.0,
-      "opponent_cash_mean": 47797.0
+      "max_ms": 1.925,
+      "selected_cash_mean": 103298.5,
+      "opponent_cash_mean": 48016.5
     },
     "alpha_shop_hybrid": {
       "matches": 2,
@@ -25,31 +25,53 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 1.104,
-      "selected_cash_mean": 53948.5,
-      "opponent_cash_mean": 35910.0
+      "max_ms": 33.299,
+      "selected_cash_mean": 95307.5,
+      "opponent_cash_mean": 35003.5
     },
     "alpha_velocity_p0": {
       "matches": 2,
-      "wins": 2,
-      "losses": 0,
+      "wins": 1,
+      "losses": 1,
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 44.244,
-      "selected_cash_mean": 56869.0,
-      "opponent_cash_mean": 31978.5
+      "max_ms": 8.553,
+      "selected_cash_mean": 39138.5,
+      "opponent_cash_mean": 36529.5
     },
     "alpha_velocity_p1": {
+      "matches": 2,
+      "wins": 1,
+      "losses": 1,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 4.244,
+      "selected_cash_mean": 71643.5,
+      "opponent_cash_mean": 35180.5
+    },
+    "apex_mill": {
       "matches": 2,
       "wins": 2,
       "losses": 0,
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 1.085,
-      "selected_cash_mean": 72859.5,
-      "opponent_cash_mean": 34539.0
+      "max_ms": 0.567,
+      "selected_cash_mean": 51224.5,
+      "opponent_cash_mean": 15158.5
+    },
+    "apex_sovereign": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 10.722,
+      "selected_cash_mean": 77303.5,
+      "opponent_cash_mean": 57370.0
     },
     "band_mill": {
       "matches": 2,
@@ -58,9 +80,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 46.568,
-      "selected_cash_mean": 48819.0,
-      "opponent_cash_mean": 20329.0
+      "max_ms": 20.66,
+      "selected_cash_mean": 58361.0,
+      "opponent_cash_mean": 9842.5
     },
     "bridge_mill": {
       "matches": 2,
@@ -69,9 +91,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.439,
-      "selected_cash_mean": 39026.0,
-      "opponent_cash_mean": 33586.5
+      "max_ms": 16.539,
+      "selected_cash_mean": 70492.0,
+      "opponent_cash_mean": 21692.0
     },
     "care_mill": {
       "matches": 2,
@@ -80,9 +102,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 45.679,
-      "selected_cash_mean": 40963.5,
-      "opponent_cash_mean": 26097.0
+      "max_ms": 18.124,
+      "selected_cash_mean": 81739.5,
+      "opponent_cash_mean": 6727.5
     },
     "carrot_compound": {
       "matches": 2,
@@ -91,9 +113,20 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 34.185,
-      "selected_cash_mean": 60564.5,
+      "max_ms": 0.319,
+      "selected_cash_mean": 87321.0,
       "opponent_cash_mean": 3000.0
+    },
+    "cash_conversion_mill": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 12.269,
+      "selected_cash_mean": 73140.5,
+      "opponent_cash_mean": 39814.5
     },
     "cashflow_mill": {
       "matches": 2,
@@ -102,9 +135,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 33.651,
-      "selected_cash_mean": 47413.0,
-      "opponent_cash_mean": 37642.0
+      "max_ms": 18.418,
+      "selected_cash_mean": 43378.0,
+      "opponent_cash_mean": 14349.0
     },
     "catalog_mill": {
       "matches": 2,
@@ -113,9 +146,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 44.46,
-      "selected_cash_mean": 27114.0,
-      "opponent_cash_mean": 23709.5
+      "max_ms": 11.084,
+      "selected_cash_mean": 59128.5,
+      "opponent_cash_mean": 21894.0
     },
     "compound_expansion": {
       "matches": 2,
@@ -124,9 +157,20 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 44.049,
-      "selected_cash_mean": 50832.5,
-      "opponent_cash_mean": 896.0
+      "max_ms": 18.374,
+      "selected_cash_mean": 99818.5,
+      "opponent_cash_mean": 913.0
+    },
+    "compound_implementation": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 0.303,
+      "selected_cash_mean": 53534.0,
+      "opponent_cash_mean": 43075.5
     },
     "delta_ranked_velocity": {
       "matches": 2,
@@ -135,9 +179,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 57.468,
-      "selected_cash_mean": 67689.0,
-      "opponent_cash_mean": 28059.5
+      "max_ms": 24.186,
+      "selected_cash_mean": 81245.0,
+      "opponent_cash_mean": 31195.5
     },
     "demand_mill": {
       "matches": 2,
@@ -146,9 +190,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.451,
-      "selected_cash_mean": 72324.0,
-      "opponent_cash_mean": 27048.0
+      "max_ms": 20.721,
+      "selected_cash_mean": 37098.5,
+      "opponent_cash_mean": 1211.0
     },
     "demand_mpc": {
       "matches": 2,
@@ -157,9 +201,20 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 1.08,
-      "selected_cash_mean": 69518.5,
-      "opponent_cash_mean": 32635.0
+      "max_ms": 2.113,
+      "selected_cash_mean": 112676.5,
+      "opponent_cash_mean": 33097.0
+    },
+    "early_herd_design": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 17.799,
+      "selected_cash_mean": 70347.0,
+      "opponent_cash_mean": 37775.5
     },
     "equilibrium_harvest": {
       "matches": 2,
@@ -168,9 +223,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 27.404,
-      "selected_cash_mean": 65072.0,
-      "opponent_cash_mean": 23563.5
+      "max_ms": 17.351,
+      "selected_cash_mean": 102663.5,
+      "opponent_cash_mean": 23284.5
     },
     "feed_squeeze": {
       "matches": 2,
@@ -179,9 +234,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.546,
-      "selected_cash_mean": 72147.5,
-      "opponent_cash_mean": 5728.0
+      "max_ms": 0.653,
+      "selected_cash_mean": 96749.5,
+      "opponent_cash_mean": 5035.5
     },
     "fert_mill": {
       "matches": 2,
@@ -190,9 +245,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 47.822,
-      "selected_cash_mean": 37630.5,
-      "opponent_cash_mean": 35988.5
+      "max_ms": 23.513,
+      "selected_cash_mean": 64833.5,
+      "opponent_cash_mean": 27643.5
     },
     "floor_mill": {
       "matches": 2,
@@ -201,9 +256,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 52.459,
-      "selected_cash_mean": 39150.5,
-      "opponent_cash_mean": 25761.5
+      "max_ms": 21.517,
+      "selected_cash_mean": 51590.5,
+      "opponent_cash_mean": 3135.0
     },
     "game_theory_supply": {
       "matches": 2,
@@ -212,9 +267,42 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 42.948,
-      "selected_cash_mean": 66861.0,
-      "opponent_cash_mean": 26403.5
+      "max_ms": 20.07,
+      "selected_cash_mean": 105014.5,
+      "opponent_cash_mean": 25596.5
+    },
+    "iteration1_land_velocity": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 20.253,
+      "selected_cash_mean": 64914.0,
+      "opponent_cash_mean": 20184.0
+    },
+    "iteration4_surge_floor": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 19.366,
+      "selected_cash_mean": 56381.5,
+      "opponent_cash_mean": 12955.5
+    },
+    "iteration5_expansion": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 23.911,
+      "selected_cash_mean": 54412.5,
+      "opponent_cash_mean": 13079.5
     },
     "liquidity_guard": {
       "matches": 2,
@@ -223,20 +311,20 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 40.537,
-      "selected_cash_mean": 55835.0,
-      "opponent_cash_mean": 25215.0
+      "max_ms": 18.331,
+      "selected_cash_mean": 51784.0,
+      "opponent_cash_mean": 26481.0
     },
     "market_velocity": {
       "matches": 2,
-      "wins": 1,
-      "losses": 1,
+      "wins": 2,
+      "losses": 0,
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 1.286,
-      "selected_cash_mean": 34518.0,
-      "opponent_cash_mean": 29703.5
+      "max_ms": 1.013,
+      "selected_cash_mean": 111016.0,
+      "opponent_cash_mean": 28887.0
     },
     "market_velocity_plus": {
       "matches": 2,
@@ -245,9 +333,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.725,
-      "selected_cash_mean": 51904.0,
-      "opponent_cash_mean": 33831.5
+      "max_ms": 3.641,
+      "selected_cash_mean": 112613.5,
+      "opponent_cash_mean": 33409.0
     },
     "melon_conveyor": {
       "matches": 2,
@@ -256,9 +344,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 1.674,
-      "selected_cash_mean": 58512.5,
-      "opponent_cash_mean": 12409.5
+      "max_ms": 0.928,
+      "selected_cash_mean": 89298.0,
+      "opponent_cash_mean": 11610.5
     },
     "melon_flood": {
       "matches": 2,
@@ -267,8 +355,8 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.627,
-      "selected_cash_mean": 50273.0,
+      "max_ms": 0.354,
+      "selected_cash_mean": 93164.0,
       "opponent_cash_mean": 3000.0
     },
     "melon_pipeline": {
@@ -278,8 +366,8 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 43.329,
-      "selected_cash_mean": 42069.0,
+      "max_ms": 0.579,
+      "selected_cash_mean": 103959.0,
       "opponent_cash_mean": 3000.0
     },
     "melon_rusher": {
@@ -289,8 +377,8 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.514,
-      "selected_cash_mean": 98571.0,
+      "max_ms": 19.05,
+      "selected_cash_mean": 92460.5,
       "opponent_cash_mean": 17263.0
     },
     "melon_surge": {
@@ -300,9 +388,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 45.91,
-      "selected_cash_mean": 42047.0,
-      "opponent_cash_mean": 7659.0
+      "max_ms": 21.324,
+      "selected_cash_mean": 77378.5,
+      "opponent_cash_mean": 6605.0
     },
     "microbatch_opportunist": {
       "matches": 2,
@@ -311,9 +399,20 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.595,
-      "selected_cash_mean": 53517.5,
+      "max_ms": 0.329,
+      "selected_cash_mean": 77344.5,
       "opponent_cash_mean": 3000.0
+    },
+    "opening_herd_mill": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 22.257,
+      "selected_cash_mean": 33282.0,
+      "opponent_cash_mean": 18687.0
     },
     "prebuild_mill": {
       "matches": 2,
@@ -322,20 +421,31 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 48.535,
-      "selected_cash_mean": 37285.0,
-      "opponent_cash_mean": 23698.0
+      "max_ms": 20.772,
+      "selected_cash_mean": 89000.5,
+      "opponent_cash_mean": 4614.0
     },
     "prefert_mill": {
       "matches": 2,
-      "wins": 0,
-      "losses": 2,
+      "wins": 2,
+      "losses": 0,
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 50.717,
-      "selected_cash_mean": 28839.0,
-      "opponent_cash_mean": 29718.0
+      "max_ms": 28.863,
+      "selected_cash_mean": 33972.5,
+      "opponent_cash_mean": 9251.0
+    },
+    "pressure75_mill": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 46.519,
+      "selected_cash_mean": 39823.5,
+      "opponent_cash_mean": 20825.0
     },
     "quant_mill": {
       "matches": 2,
@@ -344,9 +454,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.489,
-      "selected_cash_mean": 26301.0,
-      "opponent_cash_mean": 19696.5
+      "max_ms": 23.646,
+      "selected_cash_mean": 68426.5,
+      "opponent_cash_mean": 11122.5
     },
     "quant_momentum": {
       "matches": 2,
@@ -355,20 +465,31 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.53,
-      "selected_cash_mean": 65429.5,
-      "opponent_cash_mean": 30140.0
+      "max_ms": 0.36,
+      "selected_cash_mean": 109476.0,
+      "opponent_cash_mean": 31288.0
     },
     "regime_counter": {
       "matches": 2,
-      "wins": 1,
-      "losses": 1,
+      "wins": 2,
+      "losses": 0,
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 2.316,
-      "selected_cash_mean": 38828.5,
-      "opponent_cash_mean": 35737.0
+      "max_ms": 14.929,
+      "selected_cash_mean": 62225.0,
+      "opponent_cash_mean": 36902.5
+    },
+    "rl_fert_mill": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 20.806,
+      "selected_cash_mean": 61581.5,
+      "opponent_cash_mean": 16841.0
     },
     "rl_sell_mill": {
       "matches": 2,
@@ -377,9 +498,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 48.932,
-      "selected_cash_mean": 37175.0,
-      "opponent_cash_mean": 25224.0
+      "max_ms": 24.874,
+      "selected_cash_mean": 53319.5,
+      "opponent_cash_mean": 3739.0
     },
     "sheep_mill": {
       "matches": 2,
@@ -388,8 +509,8 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 35.807,
-      "selected_cash_mean": 50688.5,
+      "max_ms": 0.4,
+      "selected_cash_mean": 75227.0,
       "opponent_cash_mean": 0.0
     },
     "shop_compound": {
@@ -399,8 +520,8 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 38.908,
-      "selected_cash_mean": 73064.5,
+      "max_ms": 0.396,
+      "selected_cash_mean": 115088.0,
       "opponent_cash_mean": 3000.0
     },
     "shop_opportunist": {
@@ -410,9 +531,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 36.161,
-      "selected_cash_mean": 72477.5,
-      "opponent_cash_mean": 24561.0
+      "max_ms": 18.753,
+      "selected_cash_mean": 52754.5,
+      "opponent_cash_mean": 29294.0
     },
     "shop_supply": {
       "matches": 2,
@@ -421,9 +542,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 2.309,
-      "selected_cash_mean": 56126.0,
-      "opponent_cash_mean": 4377.5
+      "max_ms": 23.109,
+      "selected_cash_mean": 96738.5,
+      "opponent_cash_mean": 4193.0
     },
     "shop_velocity": {
       "matches": 2,
@@ -432,9 +553,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 57.923,
-      "selected_cash_mean": 48920.5,
-      "opponent_cash_mean": 24146.5
+      "max_ms": 1.068,
+      "selected_cash_mean": 90711.5,
+      "opponent_cash_mean": 37612.0
     },
     "sized_mill": {
       "matches": 2,
@@ -443,9 +564,20 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.209,
-      "selected_cash_mean": 35908.0,
-      "opponent_cash_mean": 22983.0
+      "max_ms": 14.873,
+      "selected_cash_mean": 65278.5,
+      "opponent_cash_mean": 19243.0
+    },
+    "sovereign_mill": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 25.808,
+      "selected_cash_mean": 31617.5,
+      "opponent_cash_mean": 15876.5
     },
     "stage_probe": {
       "matches": 2,
@@ -454,9 +586,31 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 57.829,
-      "selected_cash_mean": 12921.5,
-      "opponent_cash_mean": 2802.0
+      "max_ms": 33.77,
+      "selected_cash_mean": 35885.0,
+      "opponent_cash_mean": 19.0
+    },
+    "surge_mill": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 24.318,
+      "selected_cash_mean": 60278.0,
+      "opponent_cash_mean": 19370.5
+    },
+    "surplus_wheat_strawberry": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 19.921,
+      "selected_cash_mean": 63478.5,
+      "opponent_cash_mean": 19178.5
     },
     "trigger_mill": {
       "matches": 2,
@@ -465,9 +619,31 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.558,
-      "selected_cash_mean": 30992.0,
-      "opponent_cash_mean": 22720.5
+      "max_ms": 19.878,
+      "selected_cash_mean": 87001.0,
+      "opponent_cash_mean": 35760.5
+    },
+    "velocity_apex": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 12.797,
+      "selected_cash_mean": 27609.0,
+      "opponent_cash_mean": 21961.0
+    },
+    "velocity_mill": {
+      "matches": 2,
+      "wins": 2,
+      "losses": 0,
+      "ties": 0,
+      "failed": 0,
+      "max_overage_seconds": 0.0,
+      "max_ms": 17.955,
+      "selected_cash_mean": 72090.5,
+      "opponent_cash_mean": 19887.0
     },
     "wheat_carrot_rotation": {
       "matches": 2,
@@ -476,9 +652,9 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 0.502,
-      "selected_cash_mean": 70749.5,
-      "opponent_cash_mean": 3168.0
+      "max_ms": 17.72,
+      "selected_cash_mean": 58716.0,
+      "opponent_cash_mean": 7316.5
     },
     "wheat_loop": {
       "matches": 2,
@@ -487,34 +663,34 @@
       "ties": 0,
       "failed": 0,
       "max_overage_seconds": 0.0,
-      "max_ms": 47.615,
-      "selected_cash_mean": 62208.5,
-      "opponent_cash_mean": 3215.5
+      "max_ms": 21.784,
+      "selected_cash_mean": 118798.0,
+      "opponent_cash_mean": 3655.0
     }
   },
   "matches": [
     {
-      "first": "rl_fert_mill",
+      "first": "velocity_sovereign",
       "second": "alpha_modular",
       "steps": 720,
       "status": "completed",
-      "first_cash": 68419.0,
-      "second_cash": 47278.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 97020.0,
+      "second_cash": 47701.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.070672,
-        "mean_ms": 0.098,
-        "max_ms": 0.326,
+        "total_seconds": 0.040836,
+        "mean_ms": 0.057,
+        "max_ms": 0.37,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.290627,
-        "mean_ms": 0.404,
-        "max_ms": 0.875,
+        "total_seconds": 0.157962,
+        "mean_ms": 0.22,
+        "max_ms": 1.925,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -522,53 +698,53 @@
     },
     {
       "first": "alpha_modular",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 48316.0,
-      "second_cash": 56389.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 48332.0,
+      "second_cash": 109577.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.327858,
-        "mean_ms": 0.456,
-        "max_ms": 32.635,
+        "total_seconds": 0.159023,
+        "mean_ms": 0.221,
+        "max_ms": 1.433,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.064874,
-        "mean_ms": 0.09,
-        "max_ms": 0.139,
+        "total_seconds": 0.038546,
+        "mean_ms": 0.054,
+        "max_ms": 0.242,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
+      "first": "velocity_sovereign",
       "second": "alpha_shop_hybrid",
       "steps": 720,
       "status": "completed",
-      "first_cash": 60975.0,
-      "second_cash": 34972.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 113082.0,
+      "second_cash": 34784.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.069287,
-        "mean_ms": 0.096,
-        "max_ms": 0.342,
+        "total_seconds": 0.0764,
+        "mean_ms": 0.106,
+        "max_ms": 33.299,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.314846,
-        "mean_ms": 0.438,
-        "max_ms": 1.056,
+        "total_seconds": 0.17692,
+        "mean_ms": 0.246,
+        "max_ms": 3.625,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -576,53 +752,53 @@
     },
     {
       "first": "alpha_shop_hybrid",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 36848.0,
-      "second_cash": 46922.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 35223.0,
+      "second_cash": 77533.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.324295,
-        "mean_ms": 0.451,
-        "max_ms": 1.104,
+        "total_seconds": 0.179575,
+        "mean_ms": 0.25,
+        "max_ms": 4.142,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.066306,
-        "mean_ms": 0.092,
-        "max_ms": 0.867,
+        "total_seconds": 0.039061,
+        "mean_ms": 0.054,
+        "max_ms": 0.295,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
+      "first": "velocity_sovereign",
       "second": "alpha_velocity_p0",
       "steps": 720,
       "status": "completed",
-      "first_cash": 42488.0,
-      "second_cash": 29226.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 42599.0,
+      "second_cash": 42904.0,
+      "winner": "alpha_velocity_p0",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.074963,
-        "mean_ms": 0.104,
-        "max_ms": 0.409,
+        "total_seconds": 0.048141,
+        "mean_ms": 0.067,
+        "max_ms": 4.167,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.203369,
-        "mean_ms": 0.283,
-        "max_ms": 1.053,
+        "total_seconds": 0.144973,
+        "mean_ms": 0.202,
+        "max_ms": 8.553,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -630,53 +806,53 @@
     },
     {
       "first": "alpha_velocity_p0",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 34731.0,
-      "second_cash": 71250.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 30155.0,
+      "second_cash": 35678.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.226066,
-        "mean_ms": 0.314,
-        "max_ms": 1.136,
+        "total_seconds": 0.112859,
+        "mean_ms": 0.157,
+        "max_ms": 0.632,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.118528,
-        "mean_ms": 0.165,
-        "max_ms": 44.244,
+        "total_seconds": 0.037689,
+        "mean_ms": 0.052,
+        "max_ms": 0.286,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
+      "first": "velocity_sovereign",
       "second": "alpha_velocity_p1",
       "steps": 720,
       "status": "completed",
-      "first_cash": 74667.0,
-      "second_cash": 34792.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 110466.0,
+      "second_cash": 35311.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.070952,
-        "mean_ms": 0.099,
-        "max_ms": 0.403,
+        "total_seconds": 0.04682,
+        "mean_ms": 0.065,
+        "max_ms": 1.093,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.278609,
-        "mean_ms": 0.387,
-        "max_ms": 1.085,
+        "total_seconds": 0.155057,
+        "mean_ms": 0.216,
+        "max_ms": 4.244,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -684,53 +860,161 @@
     },
     {
       "first": "alpha_velocity_p1",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 34286.0,
-      "second_cash": 71052.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 35050.0,
+      "second_cash": 32821.0,
+      "winner": "alpha_velocity_p1",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.295138,
-        "mean_ms": 0.41,
-        "max_ms": 0.87,
+        "total_seconds": 0.151731,
+        "mean_ms": 0.211,
+        "max_ms": 2.074,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.069125,
-        "mean_ms": 0.096,
-        "max_ms": 0.368,
+        "total_seconds": 0.03337,
+        "mean_ms": 0.046,
+        "max_ms": 0.127,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
-      "second": "band_mill",
+      "first": "velocity_sovereign",
+      "second": "apex_mill",
       "steps": 720,
       "status": "completed",
-      "first_cash": 57144.0,
-      "second_cash": 7170.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 62918.0,
+      "second_cash": 21298.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.074356,
-        "mean_ms": 0.103,
-        "max_ms": 0.381,
+        "total_seconds": 0.040524,
+        "mean_ms": 0.056,
+        "max_ms": 0.293,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.116728,
-        "mean_ms": 0.162,
-        "max_ms": 46.568,
+        "total_seconds": 0.035892,
+        "mean_ms": 0.05,
+        "max_ms": 0.451,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "apex_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 9019.0,
+      "second_cash": 39531.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.036825,
+        "mean_ms": 0.051,
+        "max_ms": 0.421,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.034258,
+        "mean_ms": 0.048,
+        "max_ms": 0.567,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "apex_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 77650.0,
+      "second_cash": 46104.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.037606,
+        "mean_ms": 0.052,
+        "max_ms": 0.216,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.031809,
+        "mean_ms": 0.044,
+        "max_ms": 0.109,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "apex_sovereign",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 68636.0,
+      "second_cash": 76957.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.045906,
+        "mean_ms": 0.064,
+        "max_ms": 10.722,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.033314,
+        "mean_ms": 0.046,
+        "max_ms": 0.091,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "band_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 65172.0,
+      "second_cash": 18112.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.044335,
+        "mean_ms": 0.062,
+        "max_ms": 0.266,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.032802,
+        "mean_ms": 0.046,
+        "max_ms": 0.245,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -738,53 +1022,53 @@
     },
     {
       "first": "band_mill",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 33488.0,
-      "second_cash": 40494.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 1573.0,
+      "second_cash": 51550.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.117435,
-        "mean_ms": 0.163,
-        "max_ms": 36.706,
+        "total_seconds": 0.061592,
+        "mean_ms": 0.086,
+        "max_ms": 20.66,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.059289,
-        "mean_ms": 0.082,
-        "max_ms": 0.148,
+        "total_seconds": 0.032203,
+        "mean_ms": 0.045,
+        "max_ms": 0.095,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
+      "first": "velocity_sovereign",
       "second": "bridge_mill",
       "steps": 720,
       "status": "completed",
-      "first_cash": 33660.0,
-      "second_cash": 28431.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 70030.0,
+      "second_cash": 23597.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.071239,
-        "mean_ms": 0.099,
-        "max_ms": 0.439,
+        "total_seconds": 0.05294,
+        "mean_ms": 0.074,
+        "max_ms": 12.843,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.059475,
-        "mean_ms": 0.083,
-        "max_ms": 0.17,
+        "total_seconds": 0.031865,
+        "mean_ms": 0.044,
+        "max_ms": 0.136,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -792,53 +1076,53 @@
     },
     {
       "first": "bridge_mill",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 38742.0,
-      "second_cash": 44392.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 19787.0,
+      "second_cash": 70954.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.071725,
-        "mean_ms": 0.1,
-        "max_ms": 0.352,
+        "total_seconds": 0.03384,
+        "mean_ms": 0.047,
+        "max_ms": 0.16,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.064011,
-        "mean_ms": 0.089,
-        "max_ms": 0.152,
+        "total_seconds": 0.052319,
+        "mean_ms": 0.073,
+        "max_ms": 16.539,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
+      "first": "velocity_sovereign",
       "second": "care_mill",
       "steps": 720,
       "status": "completed",
-      "first_cash": 42012.0,
-      "second_cash": 21702.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 79380.0,
+      "second_cash": 109.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.069177,
-        "mean_ms": 0.096,
-        "max_ms": 0.329,
+        "total_seconds": 0.037791,
+        "mean_ms": 0.053,
+        "max_ms": 0.234,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.058358,
-        "mean_ms": 0.081,
-        "max_ms": 0.159,
+        "total_seconds": 0.046543,
+        "mean_ms": 0.065,
+        "max_ms": 18.124,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -846,1267 +1130,25 @@
     },
     {
       "first": "care_mill",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 30492.0,
-      "second_cash": 39915.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 13346.0,
+      "second_cash": 84099.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.1231,
-        "mean_ms": 0.171,
-        "max_ms": 45.679,
+        "total_seconds": 0.046368,
+        "mean_ms": 0.064,
+        "max_ms": 12.436,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.062163,
-        "mean_ms": 0.086,
-        "max_ms": 0.361,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "carrot_compound",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 103497.0,
-      "second_cash": 3000.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.076141,
-        "mean_ms": 0.106,
-        "max_ms": 0.646,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 1,
-        "total_seconds": 3.7e-05,
-        "mean_ms": 0.037,
-        "max_ms": 0.037,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "carrot_compound",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 3000.0,
-      "second_cash": 17632.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 1,
-        "total_seconds": 3.9e-05,
-        "mean_ms": 0.039,
-        "max_ms": 0.039,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.106266,
-        "mean_ms": 0.148,
-        "max_ms": 34.185,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "cashflow_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 65044.0,
-      "second_cash": 56593.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.10946,
-        "mean_ms": 0.152,
-        "max_ms": 33.651,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.06223,
-        "mean_ms": 0.087,
-        "max_ms": 0.166,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "cashflow_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 18691.0,
-      "second_cash": 29782.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.076361,
-        "mean_ms": 0.106,
-        "max_ms": 0.429,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.059199,
-        "mean_ms": 0.082,
-        "max_ms": 0.18,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "catalog_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 38554.0,
-      "second_cash": 31990.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.126941,
-        "mean_ms": 0.177,
-        "max_ms": 44.46,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.066515,
-        "mean_ms": 0.093,
-        "max_ms": 0.357,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "catalog_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 15429.0,
-      "second_cash": 15674.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.06664,
-        "mean_ms": 0.093,
-        "max_ms": 0.155,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.091839,
-        "mean_ms": 0.128,
-        "max_ms": 34.709,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "compound_expansion",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 39266.0,
-      "second_cash": 514.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.071368,
-        "mean_ms": 0.099,
-        "max_ms": 0.474,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.091318,
-        "mean_ms": 0.127,
-        "max_ms": 0.545,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "compound_expansion",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 1278.0,
-      "second_cash": 62399.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.150314,
-        "mean_ms": 0.209,
-        "max_ms": 44.049,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.068708,
-        "mean_ms": 0.096,
-        "max_ms": 0.156,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "delta_ranked_velocity",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 54696.0,
-      "second_cash": 22571.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.139023,
-        "mean_ms": 0.193,
-        "max_ms": 57.468,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.198701,
-        "mean_ms": 0.276,
-        "max_ms": 1.069,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "delta_ranked_velocity",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 33548.0,
-      "second_cash": 80682.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.158134,
-        "mean_ms": 0.22,
-        "max_ms": 0.802,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.092911,
-        "mean_ms": 0.129,
-        "max_ms": 23.299,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "demand_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 86079.0,
-      "second_cash": 40589.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.085485,
-        "mean_ms": 0.119,
-        "max_ms": 0.451,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.067537,
-        "mean_ms": 0.094,
-        "max_ms": 0.187,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "demand_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 13507.0,
-      "second_cash": 58569.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.059348,
-        "mean_ms": 0.083,
-        "max_ms": 0.306,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.065883,
-        "mean_ms": 0.092,
-        "max_ms": 0.152,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "demand_mpc",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 78830.0,
-      "second_cash": 32669.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.072737,
-        "mean_ms": 0.101,
-        "max_ms": 0.364,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.299444,
-        "mean_ms": 0.416,
-        "max_ms": 0.977,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "demand_mpc",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 32601.0,
-      "second_cash": 60207.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.294984,
-        "mean_ms": 0.41,
-        "max_ms": 1.08,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.068486,
-        "mean_ms": 0.095,
-        "max_ms": 0.35,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "equilibrium_harvest",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 60137.0,
-      "second_cash": 22475.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.101029,
-        "mean_ms": 0.141,
-        "max_ms": 27.404,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.107031,
-        "mean_ms": 0.149,
-        "max_ms": 0.367,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "equilibrium_harvest",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 24652.0,
-      "second_cash": 70007.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.108727,
-        "mean_ms": 0.151,
-        "max_ms": 0.761,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.071023,
-        "mean_ms": 0.099,
-        "max_ms": 0.411,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "feed_squeeze",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 58260.0,
-      "second_cash": 6328.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.07056,
-        "mean_ms": 0.098,
-        "max_ms": 0.426,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.061013,
-        "mean_ms": 0.085,
-        "max_ms": 0.277,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "feed_squeeze",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 5128.0,
-      "second_cash": 86035.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.066424,
-        "mean_ms": 0.092,
-        "max_ms": 0.354,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.077474,
-        "mean_ms": 0.108,
-        "max_ms": 0.546,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 35326.0,
-      "second_cash": 33655.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.073673,
-        "mean_ms": 0.102,
-        "max_ms": 0.431,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.124219,
-        "mean_ms": 0.173,
-        "max_ms": 47.822,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "fert_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 38322.0,
-      "second_cash": 39935.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.121764,
-        "mean_ms": 0.169,
-        "max_ms": 38.462,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.065866,
-        "mean_ms": 0.092,
-        "max_ms": 0.346,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "floor_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 36594.0,
-      "second_cash": 25982.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.072173,
-        "mean_ms": 0.1,
-        "max_ms": 0.602,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.058604,
-        "mean_ms": 0.082,
-        "max_ms": 0.117,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "floor_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 25541.0,
-      "second_cash": 41707.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.178028,
-        "mean_ms": 0.248,
-        "max_ms": 52.459,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.064264,
-        "mean_ms": 0.089,
-        "max_ms": 0.378,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "game_theory_supply",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 89248.0,
-      "second_cash": 26197.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.075424,
-        "mean_ms": 0.105,
-        "max_ms": 0.417,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.106798,
-        "mean_ms": 0.149,
-        "max_ms": 0.58,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "game_theory_supply",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 26610.0,
-      "second_cash": 44474.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.153959,
-        "mean_ms": 0.214,
-        "max_ms": 42.948,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.07174,
-        "mean_ms": 0.1,
-        "max_ms": 0.411,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "liquidity_guard",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 36212.0,
-      "second_cash": 24979.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.073356,
-        "mean_ms": 0.102,
-        "max_ms": 0.622,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.089736,
-        "mean_ms": 0.125,
-        "max_ms": 0.525,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "liquidity_guard",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 25451.0,
-      "second_cash": 75458.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.13268,
-        "mean_ms": 0.185,
-        "max_ms": 40.537,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.073093,
-        "mean_ms": 0.102,
-        "max_ms": 0.487,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "market_velocity",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 37206.0,
-      "second_cash": 24469.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.07231,
-        "mean_ms": 0.101,
-        "max_ms": 0.469,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.196441,
-        "mean_ms": 0.273,
-        "max_ms": 1.262,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "market_velocity",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 34938.0,
-      "second_cash": 31830.0,
-      "winner": "market_velocity",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.191543,
-        "mean_ms": 0.266,
-        "max_ms": 1.286,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.069457,
-        "mean_ms": 0.097,
-        "max_ms": 0.505,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "market_velocity_plus",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 55577.0,
-      "second_cash": 33750.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.07084,
-        "mean_ms": 0.099,
-        "max_ms": 0.19,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.12735,
-        "mean_ms": 0.177,
-        "max_ms": 0.581,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "market_velocity_plus",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 33913.0,
-      "second_cash": 48231.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.132322,
-        "mean_ms": 0.184,
-        "max_ms": 0.725,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.0676,
-        "mean_ms": 0.094,
-        "max_ms": 0.357,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "melon_conveyor",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 53980.0,
-      "second_cash": 13330.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.076092,
-        "mean_ms": 0.106,
-        "max_ms": 0.344,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.25468,
-        "mean_ms": 0.354,
-        "max_ms": 1.322,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "melon_conveyor",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 11489.0,
-      "second_cash": 63045.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.261305,
-        "mean_ms": 0.363,
-        "max_ms": 1.674,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.077925,
-        "mean_ms": 0.108,
-        "max_ms": 0.355,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "melon_flood",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 46432.0,
-      "second_cash": 3000.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.068116,
-        "mean_ms": 0.095,
-        "max_ms": 0.533,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 1,
-        "total_seconds": 3.6e-05,
-        "mean_ms": 0.036,
-        "max_ms": 0.036,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "melon_flood",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 3000.0,
-      "second_cash": 54114.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 1,
-        "total_seconds": 4.1e-05,
-        "mean_ms": 0.041,
-        "max_ms": 0.041,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.078224,
-        "mean_ms": 0.109,
-        "max_ms": 0.627,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "melon_pipeline",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 15772.0,
-      "second_cash": 3000.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.11422,
-        "mean_ms": 0.159,
-        "max_ms": 43.329,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 1,
-        "total_seconds": 3.6e-05,
-        "mean_ms": 0.036,
-        "max_ms": 0.036,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "melon_pipeline",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 3000.0,
-      "second_cash": 68366.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 1,
-        "total_seconds": 4.1e-05,
-        "mean_ms": 0.041,
-        "max_ms": 0.041,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.070313,
-        "mean_ms": 0.098,
-        "max_ms": 0.293,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "melon_rusher",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 107550.0,
-      "second_cash": 17263.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.073487,
-        "mean_ms": 0.102,
-        "max_ms": 0.245,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.071948,
-        "mean_ms": 0.1,
-        "max_ms": 0.25,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "melon_rusher",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 17263.0,
-      "second_cash": 89592.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.073807,
-        "mean_ms": 0.103,
-        "max_ms": 0.384,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.070975,
-        "mean_ms": 0.099,
-        "max_ms": 0.514,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "melon_surge",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 64062.0,
-      "second_cash": 7572.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.078177,
-        "mean_ms": 0.109,
-        "max_ms": 0.406,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.118273,
-        "mean_ms": 0.164,
-        "max_ms": 45.91,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "melon_surge",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 7746.0,
-      "second_cash": 20032.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.115437,
-        "mean_ms": 0.161,
-        "max_ms": 38.049,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.063666,
-        "mean_ms": 0.089,
-        "max_ms": 0.147,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "microbatch_opportunist",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 46928.0,
-      "second_cash": 3000.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.066285,
-        "mean_ms": 0.092,
-        "max_ms": 0.595,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 1,
-        "total_seconds": 5e-05,
-        "mean_ms": 0.05,
-        "max_ms": 0.05,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "microbatch_opportunist",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 3000.0,
-      "second_cash": 60107.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 1,
-        "total_seconds": 5.2e-05,
-        "mean_ms": 0.052,
-        "max_ms": 0.052,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.070102,
-        "mean_ms": 0.097,
-        "max_ms": 0.58,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "prebuild_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 37325.0,
-      "second_cash": 18932.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.126271,
-        "mean_ms": 0.176,
-        "max_ms": 47.008,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.055156,
-        "mean_ms": 0.077,
-        "max_ms": 0.115,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "prebuild_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 28464.0,
-      "second_cash": 37245.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.115009,
-        "mean_ms": 0.16,
-        "max_ms": 48.535,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.059406,
-        "mean_ms": 0.083,
-        "max_ms": 0.325,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "prefert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 24064.0,
-      "second_cash": 25482.0,
-      "winner": "prefert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.122438,
-        "mean_ms": 0.17,
-        "max_ms": 50.717,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.057891,
-        "mean_ms": 0.081,
-        "max_ms": 0.339,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "prefert_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 33954.0,
-      "second_cash": 33614.0,
-      "winner": "prefert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.114249,
-        "mean_ms": 0.159,
-        "max_ms": 43.293,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.059713,
-        "mean_ms": 0.083,
+        "total_seconds": 0.033934,
+        "mean_ms": 0.047,
         "max_ms": 0.153,
         "overage_seconds": 0.0,
         "timed_out": false,
@@ -2114,539 +1156,323 @@
       }
     },
     {
-      "first": "rl_fert_mill",
-      "second": "quant_mill",
+      "first": "velocity_sovereign",
+      "second": "carrot_compound",
       "steps": 720,
       "status": "completed",
-      "first_cash": 25949.0,
-      "second_cash": 16031.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.064122,
-        "mean_ms": 0.089,
-        "max_ms": 0.166,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.057279,
-        "mean_ms": 0.08,
-        "max_ms": 0.489,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "quant_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 23362.0,
-      "second_cash": 26653.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.064789,
-        "mean_ms": 0.09,
-        "max_ms": 0.384,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.054852,
-        "mean_ms": 0.076,
-        "max_ms": 0.265,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "quant_momentum",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 49606.0,
-      "second_cash": 31064.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.066551,
-        "mean_ms": 0.093,
-        "max_ms": 0.3,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.102289,
-        "mean_ms": 0.142,
-        "max_ms": 0.452,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "quant_momentum",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 29216.0,
-      "second_cash": 81253.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.101461,
-        "mean_ms": 0.141,
-        "max_ms": 0.425,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.070509,
-        "mean_ms": 0.098,
-        "max_ms": 0.53,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "regime_counter",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 45541.0,
-      "second_cash": 34296.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.064643,
-        "mean_ms": 0.09,
-        "max_ms": 0.17,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.348349,
-        "mean_ms": 0.484,
-        "max_ms": 2.316,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "regime_counter",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 37178.0,
-      "second_cash": 32116.0,
-      "winner": "regime_counter",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.342954,
-        "mean_ms": 0.477,
-        "max_ms": 1.103,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.064396,
-        "mean_ms": 0.09,
-        "max_ms": 0.342,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "rl_sell_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 44713.0,
-      "second_cash": 29343.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.069858,
-        "mean_ms": 0.097,
-        "max_ms": 0.518,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.157001,
-        "mean_ms": 0.218,
-        "max_ms": 48.932,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_sell_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 21105.0,
-      "second_cash": 29637.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.069234,
-        "mean_ms": 0.096,
-        "max_ms": 0.453,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.056698,
-        "mean_ms": 0.079,
-        "max_ms": 0.145,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "sheep_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 41282.0,
-      "second_cash": 0.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.102276,
-        "mean_ms": 0.142,
-        "max_ms": 35.807,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.072912,
-        "mean_ms": 0.101,
-        "max_ms": 0.278,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "sheep_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 0.0,
-      "second_cash": 60095.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.074848,
-        "mean_ms": 0.104,
-        "max_ms": 0.383,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.066128,
-        "mean_ms": 0.092,
-        "max_ms": 0.442,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "shop_compound",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 59698.0,
+      "first_cash": 64481.0,
       "second_cash": 3000.0,
-      "winner": "rl_fert_mill",
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.071187,
-        "mean_ms": 0.099,
-        "max_ms": 0.558,
+        "total_seconds": 0.036524,
+        "mean_ms": 0.051,
+        "max_ms": 0.319,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 1,
-        "total_seconds": 4.5e-05,
-        "mean_ms": 0.045,
-        "max_ms": 0.045,
+        "total_seconds": 2.1e-05,
+        "mean_ms": 0.021,
+        "max_ms": 0.021,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "shop_compound",
-      "second": "rl_fert_mill",
+      "first": "carrot_compound",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
       "first_cash": 3000.0,
-      "second_cash": 86431.0,
-      "winner": "rl_fert_mill",
+      "second_cash": 110161.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 1,
-        "total_seconds": 4.8e-05,
-        "mean_ms": 0.048,
-        "max_ms": 0.048,
+        "total_seconds": 2.2e-05,
+        "mean_ms": 0.022,
+        "max_ms": 0.022,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.112246,
-        "mean_ms": 0.156,
-        "max_ms": 38.908,
+        "total_seconds": 0.037906,
+        "mean_ms": 0.053,
+        "max_ms": 0.287,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
-      "second": "shop_opportunist",
+      "first": "velocity_sovereign",
+      "second": "cash_conversion_mill",
       "steps": 720,
       "status": "completed",
-      "first_cash": 54911.0,
-      "second_cash": 24315.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 60259.0,
+      "second_cash": 33548.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.068077,
-        "mean_ms": 0.095,
-        "max_ms": 0.442,
+        "total_seconds": 0.036612,
+        "mean_ms": 0.051,
+        "max_ms": 0.242,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.094044,
-        "mean_ms": 0.131,
-        "max_ms": 0.316,
+        "total_seconds": 0.032291,
+        "mean_ms": 0.045,
+        "max_ms": 0.282,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "shop_opportunist",
-      "second": "rl_fert_mill",
+      "first": "cash_conversion_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 24807.0,
-      "second_cash": 90044.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 46081.0,
+      "second_cash": 86022.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.09922,
-        "mean_ms": 0.138,
-        "max_ms": 0.336,
+        "total_seconds": 0.046834,
+        "mean_ms": 0.065,
+        "max_ms": 12.269,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.110038,
-        "mean_ms": 0.153,
-        "max_ms": 36.161,
+        "total_seconds": 0.033884,
+        "mean_ms": 0.047,
+        "max_ms": 0.285,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
-      "second": "shop_supply",
+      "first": "velocity_sovereign",
+      "second": "cashflow_mill",
       "steps": 720,
       "status": "completed",
-      "first_cash": 29995.0,
-      "second_cash": 53.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 45204.0,
+      "second_cash": 13835.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.06768,
-        "mean_ms": 0.094,
-        "max_ms": 2.309,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.071832,
-        "mean_ms": 0.1,
-        "max_ms": 0.312,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "shop_supply",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 8702.0,
-      "second_cash": 82257.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.066887,
-        "mean_ms": 0.093,
-        "max_ms": 0.552,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.069303,
-        "mean_ms": 0.096,
-        "max_ms": 0.374,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "shop_velocity",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 40145.0,
-      "second_cash": 23272.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.080943,
-        "mean_ms": 0.113,
-        "max_ms": 0.492,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.218908,
-        "mean_ms": 0.304,
-        "max_ms": 1.951,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "shop_velocity",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 25021.0,
-      "second_cash": 57696.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.224095,
-        "mean_ms": 0.312,
-        "max_ms": 1.147,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.137496,
-        "mean_ms": 0.191,
-        "max_ms": 57.923,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "rl_fert_mill",
-      "second": "sized_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 39553.0,
-      "second_cash": 25886.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.068032,
-        "mean_ms": 0.095,
-        "max_ms": 0.173,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      },
-      "second_timing": {
-        "turns": 719,
-        "total_seconds": 0.05744,
+        "total_seconds": 0.057207,
         "mean_ms": 0.08,
-        "max_ms": 0.165,
-        "overage_seconds": 0.0,
-        "timed_out": false,
-        "within_budget": true
-      }
-    },
-    {
-      "first": "sized_mill",
-      "second": "rl_fert_mill",
-      "steps": 720,
-      "status": "completed",
-      "first_cash": 20080.0,
-      "second_cash": 32263.0,
-      "winner": "rl_fert_mill",
-      "first_timing": {
-        "turns": 719,
-        "total_seconds": 0.068212,
-        "mean_ms": 0.095,
-        "max_ms": 0.209,
+        "max_ms": 18.418,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.061533,
-        "mean_ms": 0.086,
+        "total_seconds": 0.030077,
+        "mean_ms": 0.042,
+        "max_ms": 0.179,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "cashflow_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 14863.0,
+      "second_cash": 41552.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.033026,
+        "mean_ms": 0.046,
+        "max_ms": 0.256,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.031828,
+        "mean_ms": 0.044,
+        "max_ms": 0.189,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "catalog_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 46231.0,
+      "second_cash": 22961.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.038164,
+        "mean_ms": 0.053,
+        "max_ms": 0.258,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.042934,
+        "mean_ms": 0.06,
+        "max_ms": 11.084,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "catalog_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 20827.0,
+      "second_cash": 72026.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.033941,
+        "mean_ms": 0.047,
+        "max_ms": 0.232,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.033061,
+        "mean_ms": 0.046,
+        "max_ms": 0.245,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "compound_expansion",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 116585.0,
+      "second_cash": 950.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.067964,
+        "mean_ms": 0.095,
+        "max_ms": 18.374,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.041065,
+        "mean_ms": 0.057,
+        "max_ms": 0.235,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "compound_expansion",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 876.0,
+      "second_cash": 83052.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.04351,
+        "mean_ms": 0.061,
+        "max_ms": 0.362,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.033602,
+        "mean_ms": 0.047,
+        "max_ms": 0.171,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "compound_implementation",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 76478.0,
+      "second_cash": 61327.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.035821,
+        "mean_ms": 0.05,
+        "max_ms": 0.183,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.031726,
+        "mean_ms": 0.044,
+        "max_ms": 0.303,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "compound_implementation",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 24824.0,
+      "second_cash": 30590.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.034356,
+        "mean_ms": 0.048,
+        "max_ms": 0.206,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.031772,
+        "mean_ms": 0.044,
         "max_ms": 0.181,
         "overage_seconds": 0.0,
         "timed_out": false,
@@ -2654,27 +1480,2025 @@
       }
     },
     {
-      "first": "rl_fert_mill",
-      "second": "stage_probe",
+      "first": "velocity_sovereign",
+      "second": "delta_ranked_velocity",
       "steps": 720,
       "status": "completed",
-      "first_cash": 22432.0,
-      "second_cash": 5587.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 60308.0,
+      "second_cash": 27706.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.119606,
-        "mean_ms": 0.166,
-        "max_ms": 45.34,
+        "total_seconds": 0.037078,
+        "mean_ms": 0.052,
+        "max_ms": 0.25,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.146881,
-        "mean_ms": 0.204,
-        "max_ms": 57.829,
+        "total_seconds": 0.099062,
+        "mean_ms": 0.138,
+        "max_ms": 0.508,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "delta_ranked_velocity",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 34685.0,
+      "second_cash": 102182.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.109335,
+        "mean_ms": 0.152,
+        "max_ms": 0.56,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.065322,
+        "mean_ms": 0.091,
+        "max_ms": 24.186,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "demand_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 56488.0,
+      "second_cash": 549.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.055654,
+        "mean_ms": 0.077,
+        "max_ms": 20.721,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.033048,
+        "mean_ms": 0.046,
+        "max_ms": 11.794,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "demand_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 1873.0,
+      "second_cash": 17709.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.023355,
+        "mean_ms": 0.032,
+        "max_ms": 0.223,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.028846,
+        "mean_ms": 0.04,
+        "max_ms": 0.178,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "demand_mpc",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 113389.0,
+      "second_cash": 32909.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.03776,
+        "mean_ms": 0.053,
+        "max_ms": 0.169,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.151853,
+        "mean_ms": 0.211,
+        "max_ms": 2.113,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "demand_mpc",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 33285.0,
+      "second_cash": 111964.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.16002,
+        "mean_ms": 0.223,
+        "max_ms": 0.536,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.037029,
+        "mean_ms": 0.052,
+        "max_ms": 0.171,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "early_herd_design",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 80935.0,
+      "second_cash": 46334.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.040915,
+        "mean_ms": 0.057,
+        "max_ms": 0.796,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.035209,
+        "mean_ms": 0.049,
+        "max_ms": 0.337,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "early_herd_design",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 29217.0,
+      "second_cash": 59759.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.058937,
+        "mean_ms": 0.082,
+        "max_ms": 17.799,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.035423,
+        "mean_ms": 0.049,
+        "max_ms": 0.658,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "equilibrium_harvest",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 115909.0,
+      "second_cash": 23733.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.038275,
+        "mean_ms": 0.053,
+        "max_ms": 0.288,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.053629,
+        "mean_ms": 0.075,
+        "max_ms": 0.296,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "equilibrium_harvest",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 22836.0,
+      "second_cash": 89418.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.054305,
+        "mean_ms": 0.076,
+        "max_ms": 0.206,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.052959,
+        "mean_ms": 0.074,
+        "max_ms": 17.351,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "feed_squeeze",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 73524.0,
+      "second_cash": 3547.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.04165,
+        "mean_ms": 0.058,
+        "max_ms": 0.271,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.03216,
+        "mean_ms": 0.045,
+        "max_ms": 0.175,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "feed_squeeze",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 6524.0,
+      "second_cash": 119975.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.039308,
+        "mean_ms": 0.055,
+        "max_ms": 0.653,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.040714,
+        "mean_ms": 0.057,
+        "max_ms": 0.262,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "fert_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 81722.0,
+      "second_cash": 40332.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.042312,
+        "mean_ms": 0.059,
+        "max_ms": 0.298,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.033137,
+        "mean_ms": 0.046,
+        "max_ms": 0.107,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "fert_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 14955.0,
+      "second_cash": 47945.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.060454,
+        "mean_ms": 0.084,
+        "max_ms": 23.513,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.062703,
+        "mean_ms": 0.087,
+        "max_ms": 19.444,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "floor_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 51576.0,
+      "second_cash": 902.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.039997,
+        "mean_ms": 0.056,
+        "max_ms": 0.362,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.031009,
+        "mean_ms": 0.043,
+        "max_ms": 0.289,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "floor_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 5368.0,
+      "second_cash": 51605.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.059631,
+        "mean_ms": 0.083,
+        "max_ms": 21.517,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.039327,
+        "mean_ms": 0.055,
+        "max_ms": 0.252,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "game_theory_supply",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 122997.0,
+      "second_cash": 26607.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.059426,
+        "mean_ms": 0.083,
+        "max_ms": 20.07,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.048319,
+        "mean_ms": 0.067,
+        "max_ms": 0.19,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "game_theory_supply",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 24586.0,
+      "second_cash": 87032.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.052819,
+        "mean_ms": 0.073,
+        "max_ms": 0.479,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.038833,
+        "mean_ms": 0.054,
+        "max_ms": 0.375,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "iteration1_land_velocity",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 50850.0,
+      "second_cash": 27593.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.039891,
+        "mean_ms": 0.055,
+        "max_ms": 0.206,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.055236,
+        "mean_ms": 0.077,
+        "max_ms": 20.253,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "iteration1_land_velocity",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 12775.0,
+      "second_cash": 78978.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.040394,
+        "mean_ms": 0.056,
+        "max_ms": 2.245,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.054583,
+        "mean_ms": 0.076,
+        "max_ms": 18.877,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "iteration4_surge_floor",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 75528.0,
+      "second_cash": 15366.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.061229,
+        "mean_ms": 0.085,
+        "max_ms": 19.366,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.045679,
+        "mean_ms": 0.064,
+        "max_ms": 12.459,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "iteration4_surge_floor",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 10545.0,
+      "second_cash": 37235.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.033277,
+        "mean_ms": 0.046,
+        "max_ms": 0.294,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.029682,
+        "mean_ms": 0.041,
+        "max_ms": 0.079,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "iteration5_expansion",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 78528.0,
+      "second_cash": 15311.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.061921,
+        "mean_ms": 0.086,
+        "max_ms": 23.911,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.030144,
+        "mean_ms": 0.042,
+        "max_ms": 0.081,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "iteration5_expansion",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 10848.0,
+      "second_cash": 30297.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.036987,
+        "mean_ms": 0.051,
+        "max_ms": 0.275,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.0324,
+        "mean_ms": 0.045,
+        "max_ms": 0.25,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "liquidity_guard",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 36067.0,
+      "second_cash": 27908.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.037475,
+        "mean_ms": 0.052,
+        "max_ms": 0.259,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.047055,
+        "mean_ms": 0.065,
+        "max_ms": 0.212,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "liquidity_guard",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 25054.0,
+      "second_cash": 67501.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.065967,
+        "mean_ms": 0.092,
+        "max_ms": 18.331,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.034184,
+        "mean_ms": 0.048,
+        "max_ms": 0.097,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "market_velocity",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 118260.0,
+      "second_cash": 35501.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.043331,
+        "mean_ms": 0.06,
+        "max_ms": 0.911,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.098542,
+        "mean_ms": 0.137,
+        "max_ms": 1.013,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "market_velocity",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 22273.0,
+      "second_cash": 103772.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.109965,
+        "mean_ms": 0.153,
+        "max_ms": 0.831,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.039629,
+        "mean_ms": 0.055,
+        "max_ms": 0.225,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "market_velocity_plus",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 102743.0,
+      "second_cash": 34006.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.04022,
+        "mean_ms": 0.056,
+        "max_ms": 0.24,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.060248,
+        "mean_ms": 0.084,
+        "max_ms": 0.512,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "market_velocity_plus",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 32812.0,
+      "second_cash": 122484.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.080207,
+        "mean_ms": 0.112,
+        "max_ms": 3.641,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.043839,
+        "mean_ms": 0.061,
+        "max_ms": 0.571,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "melon_conveyor",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 63060.0,
+      "second_cash": 11603.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.038636,
+        "mean_ms": 0.054,
+        "max_ms": 0.43,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.132751,
+        "mean_ms": 0.185,
+        "max_ms": 0.834,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "melon_conveyor",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 11618.0,
+      "second_cash": 115536.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.131819,
+        "mean_ms": 0.183,
+        "max_ms": 0.928,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.039546,
+        "mean_ms": 0.055,
+        "max_ms": 0.208,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "melon_flood",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 91754.0,
+      "second_cash": 3000.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.040228,
+        "mean_ms": 0.056,
+        "max_ms": 0.354,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 1,
+        "total_seconds": 2e-05,
+        "mean_ms": 0.02,
+        "max_ms": 0.02,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "melon_flood",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 3000.0,
+      "second_cash": 94574.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 1,
+        "total_seconds": 1.9e-05,
+        "mean_ms": 0.019,
+        "max_ms": 0.019,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.035851,
+        "mean_ms": 0.05,
+        "max_ms": 0.319,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "melon_pipeline",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 90363.0,
+      "second_cash": 3000.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.03973,
+        "mean_ms": 0.055,
+        "max_ms": 0.563,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 1,
+        "total_seconds": 2.1e-05,
+        "mean_ms": 0.021,
+        "max_ms": 0.021,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "melon_pipeline",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 3000.0,
+      "second_cash": 117555.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 1,
+        "total_seconds": 4.1e-05,
+        "mean_ms": 0.041,
+        "max_ms": 0.041,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.039947,
+        "mean_ms": 0.056,
+        "max_ms": 0.579,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "melon_rusher",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 89885.0,
+      "second_cash": 17263.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.058439,
+        "mean_ms": 0.081,
+        "max_ms": 19.05,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.037275,
+        "mean_ms": 0.052,
+        "max_ms": 0.188,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "melon_rusher",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 17263.0,
+      "second_cash": 95036.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.051567,
+        "mean_ms": 0.072,
+        "max_ms": 12.886,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.039932,
+        "mean_ms": 0.056,
+        "max_ms": 0.458,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "melon_surge",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 71871.0,
+      "second_cash": 7044.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.062458,
+        "mean_ms": 0.087,
+        "max_ms": 21.324,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.036737,
+        "mean_ms": 0.051,
+        "max_ms": 0.345,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "melon_surge",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 6166.0,
+      "second_cash": 82886.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.033641,
+        "mean_ms": 0.047,
+        "max_ms": 0.268,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.034127,
+        "mean_ms": 0.047,
+        "max_ms": 0.096,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "microbatch_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 101445.0,
+      "second_cash": 3000.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.038977,
+        "mean_ms": 0.054,
+        "max_ms": 0.329,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 1,
+        "total_seconds": 2.7e-05,
+        "mean_ms": 0.027,
+        "max_ms": 0.027,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "microbatch_opportunist",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 3000.0,
+      "second_cash": 53244.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 1,
+        "total_seconds": 3.1e-05,
+        "mean_ms": 0.031,
+        "max_ms": 0.031,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.034756,
+        "mean_ms": 0.048,
+        "max_ms": 0.264,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "opening_herd_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 29876.0,
+      "second_cash": 13691.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.039507,
+        "mean_ms": 0.055,
+        "max_ms": 1.114,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.058685,
+        "mean_ms": 0.082,
+        "max_ms": 22.257,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "opening_herd_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 23683.0,
+      "second_cash": 36688.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.056315,
+        "mean_ms": 0.078,
+        "max_ms": 12.58,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.033158,
+        "mean_ms": 0.046,
+        "max_ms": 0.177,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "prebuild_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 84515.0,
+      "second_cash": 9188.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.062761,
+        "mean_ms": 0.087,
+        "max_ms": 20.772,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.031069,
+        "mean_ms": 0.043,
+        "max_ms": 0.782,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "prebuild_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 40.0,
+      "second_cash": 93486.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.036226,
+        "mean_ms": 0.05,
+        "max_ms": 1.057,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.038454,
+        "mean_ms": 0.053,
+        "max_ms": 0.405,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "prefert_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 41024.0,
+      "second_cash": 12159.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.074237,
+        "mean_ms": 0.103,
+        "max_ms": 26.121,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.033261,
+        "mean_ms": 0.046,
+        "max_ms": 0.447,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "prefert_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 6343.0,
+      "second_cash": 26921.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.042288,
+        "mean_ms": 0.059,
+        "max_ms": 1.202,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.060241,
+        "mean_ms": 0.084,
+        "max_ms": 28.863,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "pressure75_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 40859.0,
+      "second_cash": 19679.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.064956,
+        "mean_ms": 0.09,
+        "max_ms": 22.062,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.037395,
+        "mean_ms": 0.052,
+        "max_ms": 2.557,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "pressure75_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 21971.0,
+      "second_cash": 38788.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.084132,
+        "mean_ms": 0.117,
+        "max_ms": 46.519,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.034227,
+        "mean_ms": 0.048,
+        "max_ms": 0.386,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "quant_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 49820.0,
+      "second_cash": 12251.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.038874,
+        "mean_ms": 0.054,
+        "max_ms": 0.386,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.031175,
+        "mean_ms": 0.043,
+        "max_ms": 0.291,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "quant_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 9994.0,
+      "second_cash": 87033.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.086416,
+        "mean_ms": 0.12,
+        "max_ms": 23.646,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.036896,
+        "mean_ms": 0.051,
+        "max_ms": 0.139,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "quant_momentum",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 127413.0,
+      "second_cash": 31414.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.04125,
+        "mean_ms": 0.057,
+        "max_ms": 0.36,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.058941,
+        "mean_ms": 0.082,
+        "max_ms": 0.263,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "quant_momentum",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 31162.0,
+      "second_cash": 91539.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.059536,
+        "mean_ms": 0.083,
+        "max_ms": 0.273,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.039577,
+        "mean_ms": 0.055,
+        "max_ms": 0.306,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "regime_counter",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 59189.0,
+      "second_cash": 37462.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.038642,
+        "mean_ms": 0.054,
+        "max_ms": 0.262,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.196966,
+        "mean_ms": 0.274,
+        "max_ms": 3.828,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "regime_counter",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 36343.0,
+      "second_cash": 65261.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.19552,
+        "mean_ms": 0.272,
+        "max_ms": 2.048,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.0522,
+        "mean_ms": 0.073,
+        "max_ms": 14.929,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "rl_fert_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 43501.0,
+      "second_cash": 20450.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.064716,
+        "mean_ms": 0.09,
+        "max_ms": 20.806,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.035437,
+        "mean_ms": 0.049,
+        "max_ms": 1.58,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "rl_fert_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 13232.0,
+      "second_cash": 79662.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.037544,
+        "mean_ms": 0.052,
+        "max_ms": 0.266,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.058383,
+        "mean_ms": 0.081,
+        "max_ms": 19.729,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "rl_sell_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 37605.0,
+      "second_cash": 2434.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.039643,
+        "mean_ms": 0.055,
+        "max_ms": 0.315,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.032633,
+        "mean_ms": 0.045,
+        "max_ms": 0.336,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "rl_sell_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 5044.0,
+      "second_cash": 69034.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.035818,
+        "mean_ms": 0.05,
+        "max_ms": 0.307,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.063514,
+        "mean_ms": 0.088,
+        "max_ms": 24.874,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "sheep_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 48551.0,
+      "second_cash": 0.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.034358,
+        "mean_ms": 0.048,
+        "max_ms": 0.216,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.038434,
+        "mean_ms": 0.053,
+        "max_ms": 0.194,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "sheep_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 0.0,
+      "second_cash": 101903.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.041109,
+        "mean_ms": 0.057,
+        "max_ms": 0.4,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.037096,
+        "mean_ms": 0.052,
+        "max_ms": 0.227,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "shop_compound",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 110319.0,
+      "second_cash": 3000.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.04154,
+        "mean_ms": 0.058,
+        "max_ms": 0.396,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 1,
+        "total_seconds": 2.4e-05,
+        "mean_ms": 0.024,
+        "max_ms": 0.024,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_compound",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 3000.0,
+      "second_cash": 119857.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 1,
+        "total_seconds": 2.7e-05,
+        "mean_ms": 0.027,
+        "max_ms": 0.027,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.041542,
+        "mean_ms": 0.058,
+        "max_ms": 0.384,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "shop_opportunist",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 62388.0,
+      "second_cash": 25269.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.038607,
+        "mean_ms": 0.054,
+        "max_ms": 0.352,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.055016,
+        "mean_ms": 0.077,
+        "max_ms": 0.206,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_opportunist",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 33319.0,
+      "second_cash": 43121.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.057335,
+        "mean_ms": 0.08,
+        "max_ms": 0.298,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.057191,
+        "mean_ms": 0.08,
+        "max_ms": 18.753,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "shop_supply",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 103464.0,
+      "second_cash": 7772.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.044917,
+        "mean_ms": 0.062,
+        "max_ms": 0.322,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.046692,
+        "mean_ms": 0.065,
+        "max_ms": 12.565,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_supply",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 614.0,
+      "second_cash": 90013.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.05896,
+        "mean_ms": 0.082,
+        "max_ms": 23.109,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.039285,
+        "mean_ms": 0.055,
+        "max_ms": 0.103,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "shop_velocity",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 103300.0,
+      "second_cash": 49900.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.045159,
+        "mean_ms": 0.063,
+        "max_ms": 0.232,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.133644,
+        "mean_ms": 0.186,
+        "max_ms": 0.656,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "shop_velocity",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 25324.0,
+      "second_cash": 78123.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.130765,
+        "mean_ms": 0.182,
+        "max_ms": 1.068,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.044113,
+        "mean_ms": 0.061,
+        "max_ms": 0.285,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "sized_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 71918.0,
+      "second_cash": 23797.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.060585,
+        "mean_ms": 0.084,
+        "max_ms": 14.873,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.039863,
+        "mean_ms": 0.055,
+        "max_ms": 2.695,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "sized_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 14689.0,
+      "second_cash": 58639.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.039548,
+        "mean_ms": 0.055,
+        "max_ms": 0.297,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.040371,
+        "mean_ms": 0.056,
+        "max_ms": 0.51,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "sovereign_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 16836.0,
+      "second_cash": 13264.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.043668,
+        "mean_ms": 0.061,
+        "max_ms": 0.412,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.038255,
+        "mean_ms": 0.053,
+        "max_ms": 0.188,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "sovereign_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 18489.0,
+      "second_cash": 46399.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.084684,
+        "mean_ms": 0.118,
+        "max_ms": 25.808,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.042462,
+        "mean_ms": 0.059,
+        "max_ms": 0.535,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "stage_probe",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 32209.0,
+      "second_cash": 15.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.042892,
+        "mean_ms": 0.06,
+        "max_ms": 0.353,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.076123,
+        "mean_ms": 0.106,
+        "max_ms": 33.77,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -2682,53 +3506,161 @@
     },
     {
       "first": "stage_probe",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 17.0,
-      "second_cash": 3411.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 23.0,
+      "second_cash": 39561.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.078137,
-        "mean_ms": 0.109,
-        "max_ms": 0.384,
+        "total_seconds": 0.087451,
+        "mean_ms": 0.122,
+        "max_ms": 23.741,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.057116,
-        "mean_ms": 0.079,
-        "max_ms": 0.163,
+        "total_seconds": 0.041593,
+        "mean_ms": 0.058,
+        "max_ms": 0.315,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
-      "second": "trigger_mill",
+      "first": "velocity_sovereign",
+      "second": "surge_mill",
       "steps": 720,
       "status": "completed",
-      "first_cash": 32466.0,
-      "second_cash": 24277.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 77556.0,
+      "second_cash": 14809.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.077566,
-        "mean_ms": 0.108,
-        "max_ms": 0.558,
+        "total_seconds": 0.055652,
+        "mean_ms": 0.077,
+        "max_ms": 13.263,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.060695,
-        "mean_ms": 0.084,
-        "max_ms": 0.173,
+        "total_seconds": 0.03557,
+        "mean_ms": 0.049,
+        "max_ms": 0.447,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "surge_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 23932.0,
+      "second_cash": 43000.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.042518,
+        "mean_ms": 0.059,
+        "max_ms": 0.288,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.06109,
+        "mean_ms": 0.085,
+        "max_ms": 24.318,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "surplus_wheat_strawberry",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 56956.0,
+      "second_cash": 18830.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.061809,
+        "mean_ms": 0.086,
+        "max_ms": 19.483,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.039259,
+        "mean_ms": 0.055,
+        "max_ms": 0.346,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "surplus_wheat_strawberry",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 19527.0,
+      "second_cash": 70001.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.080097,
+        "mean_ms": 0.111,
+        "max_ms": 19.921,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.037594,
+        "mean_ms": 0.052,
+        "max_ms": 0.107,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "trigger_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 81359.0,
+      "second_cash": 15803.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.063578,
+        "mean_ms": 0.088,
+        "max_ms": 19.878,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.054351,
+        "mean_ms": 0.076,
+        "max_ms": 17.144,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -2736,53 +3668,161 @@
     },
     {
       "first": "trigger_mill",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 21164.0,
-      "second_cash": 29518.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 55718.0,
+      "second_cash": 92643.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.071548,
-        "mean_ms": 0.1,
-        "max_ms": 0.345,
+        "total_seconds": 0.035685,
+        "mean_ms": 0.05,
+        "max_ms": 0.295,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.061722,
-        "mean_ms": 0.086,
-        "max_ms": 0.351,
+        "total_seconds": 0.033968,
+        "mean_ms": 0.047,
+        "max_ms": 0.117,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
-      "second": "wheat_carrot_rotation",
+      "first": "velocity_sovereign",
+      "second": "velocity_apex",
       "steps": 720,
       "status": "completed",
-      "first_cash": 39690.0,
-      "second_cash": 2962.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 26450.0,
+      "second_cash": 17564.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.070822,
-        "mean_ms": 0.099,
-        "max_ms": 0.502,
+        "total_seconds": 0.036178,
+        "mean_ms": 0.05,
+        "max_ms": 0.311,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.090909,
-        "mean_ms": 0.126,
-        "max_ms": 0.398,
+        "total_seconds": 0.028324,
+        "mean_ms": 0.039,
+        "max_ms": 0.104,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_apex",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 26358.0,
+      "second_cash": 28768.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.045276,
+        "mean_ms": 0.063,
+        "max_ms": 12.797,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.032576,
+        "mean_ms": 0.045,
+        "max_ms": 0.123,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "velocity_mill",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 69939.0,
+      "second_cash": 9934.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.03903,
+        "mean_ms": 0.054,
+        "max_ms": 0.23,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.049549,
+        "mean_ms": 0.069,
+        "max_ms": 17.955,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_mill",
+      "second": "velocity_sovereign",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 29840.0,
+      "second_cash": 74242.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.049491,
+        "mean_ms": 0.069,
+        "max_ms": 13.803,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.033417,
+        "mean_ms": 0.046,
+        "max_ms": 0.297,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      }
+    },
+    {
+      "first": "velocity_sovereign",
+      "second": "wheat_carrot_rotation",
+      "steps": 720,
+      "status": "completed",
+      "first_cash": 69004.0,
+      "second_cash": 9070.0,
+      "winner": "velocity_sovereign",
+      "first_timing": {
+        "turns": 719,
+        "total_seconds": 0.052611,
+        "mean_ms": 0.073,
+        "max_ms": 16.136,
+        "overage_seconds": 0.0,
+        "timed_out": false,
+        "within_budget": true
+      },
+      "second_timing": {
+        "turns": 719,
+        "total_seconds": 0.047518,
+        "mean_ms": 0.066,
+        "max_ms": 0.468,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -2790,53 +3830,53 @@
     },
     {
       "first": "wheat_carrot_rotation",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 3374.0,
-      "second_cash": 101809.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 5563.0,
+      "second_cash": 48428.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.092573,
-        "mean_ms": 0.129,
-        "max_ms": 0.417,
+        "total_seconds": 0.066628,
+        "mean_ms": 0.093,
+        "max_ms": 17.72,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.069772,
-        "mean_ms": 0.097,
-        "max_ms": 0.479,
+        "total_seconds": 0.039807,
+        "mean_ms": 0.055,
+        "max_ms": 0.345,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       }
     },
     {
-      "first": "rl_fert_mill",
+      "first": "velocity_sovereign",
       "second": "wheat_loop",
       "steps": 720,
       "status": "completed",
-      "first_cash": 57497.0,
-      "second_cash": 3105.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 125973.0,
+      "second_cash": 3537.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.070375,
-        "mean_ms": 0.098,
-        "max_ms": 0.515,
+        "total_seconds": 0.054463,
+        "mean_ms": 0.076,
+        "max_ms": 16.441,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.029874,
-        "mean_ms": 0.042,
-        "max_ms": 0.119,
+        "total_seconds": 0.015444,
+        "mean_ms": 0.021,
+        "max_ms": 0.364,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
@@ -2844,26 +3884,26 @@
     },
     {
       "first": "wheat_loop",
-      "second": "rl_fert_mill",
+      "second": "velocity_sovereign",
       "steps": 720,
       "status": "completed",
-      "first_cash": 3326.0,
-      "second_cash": 66920.0,
-      "winner": "rl_fert_mill",
+      "first_cash": 3773.0,
+      "second_cash": 111623.0,
+      "winner": "velocity_sovereign",
       "first_timing": {
         "turns": 719,
-        "total_seconds": 0.032245,
-        "mean_ms": 0.045,
-        "max_ms": 0.548,
+        "total_seconds": 0.040069,
+        "mean_ms": 0.056,
+        "max_ms": 21.784,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
       },
       "second_timing": {
         "turns": 719,
-        "total_seconds": 0.12688,
-        "mean_ms": 0.176,
-        "max_ms": 47.615,
+        "total_seconds": 0.037995,
+        "mean_ms": 0.053,
+        "max_ms": 0.318,
         "overage_seconds": 0.0,
         "timed_out": false,
         "within_budget": true
