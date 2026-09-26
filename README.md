@@ -27,18 +27,30 @@ Built artifacts are written to `build/` (gitignored).
 
 ---
 
+## High-Performance Simulation Engine (`kaggriculture-simulation`)
+
+The project is integrated with **`kaggriculture-simulation`**, a byte-identical Rust port of the Kaggle engine operating at **293 episodes/sec** (~210,000 steps/sec) natively, and **~0.30s per 720-step match** for Python agents.
+
+See **[`docs/kaggriculture_simulation_guide.md`](docs/kaggriculture_simulation_guide.md)** for architecture, benchmarks, and API usage.
+
+---
+
 ## Scripts Guide & Research Infrastructure
 
-The `scripts/` directory provides an end-to-end quantitative research, replay parsing, optimization, and evaluation infrastructure. See **[`research/21_Scripts_Reference_and_User_Guide.md`](research/21_Scripts_Reference_and_User_Guide.md)** for the complete 27+ tool reference and **[`research/20_Replay_Forensics_and_Gauntlet_Findings.md`](research/20_Replay_Forensics_and_Gauntlet_Findings.md)** for forensic findings from elite ladder matches.
+The `scripts/` directory provides an end-to-end quantitative research, replay parsing, optimization, and evaluation infrastructure. All evaluation tools automatically leverage the high-performance Rust simulator by default (with seamless `--official` fallback).
+
+See **[`research/21_Scripts_Reference_and_User_Guide.md`](research/21_Scripts_Reference_and_User_Guide.md)** for the complete 27+ tool reference and **[`research/20_Replay_Forensics_and_Gauntlet_Findings.md`](research/20_Replay_Forensics_and_Gauntlet_Findings.md)** for forensic findings from elite ladder matches.
 
 Key tools in workflow order:
 
-1. **`scripts/eval_against_replays.py`** — Gauntlet benchmark: test agents against 20 top-tier real-world ladder replays (Boey, Clement Ling, DECEM, Kaggledew Valley, BenPalmer59, etc.)
-2. **`scripts/trace_replay_match.py`** — Forensic simulation tracer comparing live actions against historical opponent steps turn-by-turn
-3. **`scripts/eval_cash.py`** — Evaluates terminal cash across 14 benchmark seeds (1, 3, 5, 7, 10, 15, 20)
-4. **`scripts/quant_full_product.py`** — SciPy-based multi-product pricing and liquidation optimizer
-5. **`scripts/test_submission.py`** — Run matches locally, measure latency (<2ms), and profile agent performance
-6. **`scripts/build_submission.py`** — Package and validate a Kaggle-ready submission (single-file or tar.gz)
+1. **`scripts/eval_against_replays.py`** — Gauntlet benchmark: test agents against 20 top-tier real-world ladder replays in ~6–8s (Boey, Clement Ling, DECEM, Kaggledew Valley, BenPalmer59, etc.)
+2. **`scripts/h2h_bench.py`** — Fast head-to-head multi-seed benchmark between two agents (~0.2s/match)
+3. **`scripts/trace_replay_match.py`** — Forensic simulation tracer comparing live actions against historical opponent steps turn-by-turn (~0.5s)
+4. **`scripts/eval_cash.py`** — Evaluates terminal cash across 14 benchmark seeds (1, 3, 5, 7, 10, 15, 20) in ~4s
+5. **`standoff/run_standoff.py`** — Fast round-robin tournament across all 62 agents in `submissions/` (~23s total)
+6. **`scripts/quant_full_product.py`** — SciPy-based multi-product pricing and liquidation optimizer
+7. **`scripts/test_submission.py`** — Instant local match simulator (<1ms/turn) and Kaggle validator
+8. **`scripts/build_submission.py`** — Package and validate a Kaggle-ready submission (single-file or tar.gz)
 
 ### `scripts/test_submission.py`
 
@@ -188,6 +200,12 @@ Each directory under `submissions/` is a named template you can pass to either s
 
 | Template | Description (from naming) |
 |----------|---------------------------|
+| **`two_team_grandmaster`** | **Two-Team Division of Labor: Segregated Livestock (Units 0-2) & Field Teams (Units 3-7), Day 0-7 Fertilizer Liquidation, Multi-Quadrant Scaling** |
+| **`sovereign_apex`** | **Demand-Coupled Herd Scaling & Dual-Species Pivot with Strawberry Diversification** |
+| **`apex_engine`** | **Day 0 Melon Kickstart, Day 5-6 NE Unlock, Day 10 Melon Cash Influx funding SW Expansion** |
+| **`straw_empire`** | **Strawberry Cash-Crop Specialization with early fertilizer boost** |
+| **`care_mill`** | **Cared-Cow production loop with wheat feed management** |
+| **`velocity_mill`** | **Adaptive town shop demand velocity controller** |
 | `carrot_compound` | Carrot-focused compound strategy |
 | `compound_expansion` | Conservative expansion baseline |
 | `delta_ranked_velocity` | Market-velocity controller with impact-ranked sells |

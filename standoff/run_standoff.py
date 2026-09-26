@@ -2,8 +2,7 @@
 """Full-season Kaggriculture standoff runner.
 
 The selected submission is played against every other submission for 720 turns.
-Each side is timed independently and is charged against a one-second turn budget
-plus a 60-second episode-wide overage bank.
+Powered by `kaggriculture-simulation` (Rust engine) with automatic fallback.
 """
 
 from __future__ import annotations
@@ -16,10 +15,12 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
-from kaggle_environments import make
-
-
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from sim_engine import FastSimulation, is_kagg_available
+
 SUBMISSIONS = ROOT / "submissions"
 DEFAULT_RESULTS = Path(__file__).resolve().parent / "results.json"
 TURN_LIMIT_SECONDS = 1.0
@@ -105,6 +106,7 @@ def run_match(
     second_name: str,
     second_path: Path,
     match_index: int,
+    sim: FastSimulation | None = None,
 ) -> Dict[str, Any]:
     first = TimedAgent(load_callable(first_path, f"standoff_{match_index}_first"), first_name)
     second = TimedAgent(load_callable(second_path, f"standoff_{match_index}_second"), second_name)
@@ -115,19 +117,9 @@ def run_match(
         "status": "running",
     }
     try:
-        env = make(
-            "kaggriculture",
-            configuration={"episodeSteps": SEASON_STEPS, "actTimeout": TURN_LIMIT_SECONDS},
-            debug=False,
-        )
-        steps = env.run([first, second])
-        record["steps"] = len(steps or [])
-        if not steps:
-            record["status"] = "no_steps"
-        else:
-            final = steps[-1]
-            first_cash = float(final[0].observation["farms"][0]["money"])
-            second_cash = float(final[1].observation["farms"][1]["money"])
+        if sim is not None:
+            first_cash, second_cash, final_st = sim.run_match(first, second, seed=match_index)
+            record["steps"] = int(final_st.get("step", SEASON_STEPS))
             record.update({
                 "status": "completed",
                 "first_cash": first_cash,
@@ -138,6 +130,31 @@ def run_match(
                     else "tie"
                 ),
             })
+        else:
+            from kaggle_environments import make
+            env = make(
+                "kaggriculture",
+                configuration={"episodeSteps": SEASON_STEPS, "actTimeout": TURN_LIMIT_SECONDS, "seed": match_index},
+                debug=False,
+            )
+            steps = env.run([first, second])
+            record["steps"] = len(steps or [])
+            if not steps:
+                record["status"] = "no_steps"
+            else:
+                final = steps[-1]
+                first_cash = float(final[0].observation["farms"][0]["money"])
+                second_cash = float(final[1].observation["farms"][1]["money"])
+                record.update({
+                    "status": "completed",
+                    "first_cash": first_cash,
+                    "second_cash": second_cash,
+                    "winner": (
+                        first_name if first_cash > second_cash
+                        else second_name if second_cash > first_cash
+                        else "tie"
+                    ),
+                })
     except Exception as exc:
         record.update({"status": "failed", "error": f"{type(exc).__name__}: {exc}"})
     record["first_timing"] = first.metrics()
@@ -195,14 +212,16 @@ def summarize(selected: str, matches: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run a full-season Kaggriculture standoff.")
-    parser.add_argument("--agent", "-a", default="compound_expansion",
-                        help="Selected agent name or path.")
+    parser.add_argument("--agent", "-a", default="two_team_grandmaster",
+                        help="Selected agent name or path (default: two_team_grandmaster).")
     parser.add_argument("--output", "--mode", choices=("summary", "detailed"), default="summary",
                         help="Console output format.")
     parser.add_argument("--results", "-o", type=Path, default=DEFAULT_RESULTS,
                         help="JSON file for persisted standoff results.")
     parser.add_argument("--no-swap", action="store_true",
                         help="Run one match per opponent instead of both starting positions.")
+    parser.add_argument("--official", action="store_true",
+                        help="Force official Python engine instead of fast Rust engine.")
     args = parser.parse_args()
 
     agents = discover_agents()
@@ -210,12 +229,29 @@ def main() -> None:
     opponents = [(name, path) for name, path in agents.items() if name != selected_name]
     matches: List[Dict[str, Any]] = []
     match_index = 0
-    for opponent_name, opponent_path in opponents:
-        matches.append(run_match(selected_name, selected_path, opponent_name, opponent_path, match_index))
-        match_index += 1
-        if not args.no_swap:
-            matches.append(run_match(opponent_name, opponent_path, selected_name, selected_path, match_index))
+
+    use_fast = is_kagg_available() and not args.official
+    engine_name = "kaggriculture-simulation (Rust)" if use_fast else "kaggle_environments (Python)"
+    print(f"Engine: {engine_name} | Running standoff for {selected_name} against {len(opponents)} opponents...")
+
+    t_start = time.perf_counter()
+
+    def run_tournament(sim=None):
+        nonlocal match_index
+        for opponent_name, opponent_path in opponents:
+            matches.append(run_match(selected_name, selected_path, opponent_name, opponent_path, match_index, sim=sim))
             match_index += 1
+            if not args.no_swap:
+                matches.append(run_match(opponent_name, opponent_path, selected_name, selected_path, match_index, sim=sim))
+                match_index += 1
+
+    if use_fast:
+        with FastSimulation() as sim:
+            run_tournament(sim)
+    else:
+        run_tournament(None)
+
+    elapsed = time.perf_counter() - t_start
 
     payload = {
         "selected_agent": selected_name,
@@ -224,6 +260,8 @@ def main() -> None:
             "act_timeout_seconds": TURN_LIMIT_SECONDS,
             "overage_bank_seconds": OVERAGE_BANK_SECONDS,
             "swapped_sides": not args.no_swap,
+            "engine": engine_name,
+            "elapsed_seconds": round(elapsed, 2),
         },
         "summary": summarize(selected_name, matches),
         "matches": matches,
@@ -234,7 +272,7 @@ def main() -> None:
     if args.output == "detailed":
         print(json.dumps(payload, indent=2))
         return
-    print(f"Standoff: {selected_name} vs {len(opponents)} agents ({len(matches)} full 720-turn matches)")
+    print(f"Standoff: {selected_name} vs {len(opponents)} agents ({len(matches)} full 720-turn matches) | Time: {elapsed:.2f}s")
     for opponent, row in sorted(payload["summary"].items()):
         print(
             f"{selected_name} vs {opponent}: "

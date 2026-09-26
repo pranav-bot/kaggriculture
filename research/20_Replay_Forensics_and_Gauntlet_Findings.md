@@ -10,7 +10,7 @@
 
 This report documents the forensic analysis of 20 top-tier real-world ladder match replays (`replays/`), the quantitative discovery of core game mechanics governing animal yield curves and market dynamics, and the empirical findings from evaluating candidate policies against historical ladder opponents (including Boey, Clement Ling, DECEM, BenPalmer59, Kaggledew Valley, Scarttish, and 吃白饭的大肥鱼).
 
-Through step-by-step replay parsing and simulation tracing, we reverse-engineered the mathematical mechanisms separating sub-600 score agents from 3,000+ score elite ladder champions. These insights directly inform the **Two-Team Division of Labor Architecture** implemented in [`scratch_grandmaster.py`](file:///Users/pranav/dev/kaggriculture/scratch_grandmaster.py).
+Through step-by-step replay parsing and simulation tracing, we reverse-engineered the mathematical mechanisms separating sub-600 score agents from 3,000+ score elite ladder champions. These insights directly inform the **Two-Team Division of Labor Architecture** implemented in [`agent_two_team_grandmaster.py`](file:///Users/pranav/dev/kaggriculture/agent_two_team_grandmaster.py) (and packaged in [`submissions/two_team_grandmaster/main.py`](file:///Users/pranav/dev/kaggriculture/submissions/two_team_grandmaster/main.py)).
 
 ---
 
@@ -109,7 +109,7 @@ Using [`scripts/replay_parser.py`](file:///Users/pranav/dev/kaggriculture/script
 
 ## 4. The Two-Team Division of Labor Architecture
 
-In [`scratch_grandmaster.py`](file:///Users/pranav/dev/kaggriculture/scratch_grandmaster.py), we resolved worker pathfinding congestion and role interference by formalizing the **Two-Team Division of Labor**:
+In [`agent_two_team_grandmaster.py`](file:///Users/pranav/dev/kaggriculture/agent_two_team_grandmaster.py), we resolved worker pathfinding congestion and role interference by formalizing the **Two-Team Division of Labor**:
 
 ```mermaid
 flowchart TD

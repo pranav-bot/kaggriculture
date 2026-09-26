@@ -1,0 +1,3 @@
+[submodule "kaggriculture-simulation"]
+	path = kaggriculture-simulation
+	url = https://github.com/debmalyaroy/kaggriculture-simulation.git

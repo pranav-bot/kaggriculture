@@ -1,4 +1,4 @@
-"""agent_two_team_grandmaster.py — Apex Two-Team Division of Labor Architecture
+"""two_team_grandmaster.py — Apex Two-Team Division of Labor Architecture
 
 Key Pillars:
 1. Division of Labor (Zero Congestion & Role Interference):

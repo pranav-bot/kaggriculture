@@ -57,12 +57,12 @@ flowchart TD
   .venv/bin/python scripts/eval_against_replays.py <agent_path> [--quick] [--player {0,1}]
   ```
 - **Arguments:**
-  - `<agent_path>`: Path to agent script (e.g., `scratch_grandmaster.py`, `agent_final.py`).
+  - `<agent_path>`: Path or name of agent (e.g., `two_team_grandmaster`, `agent_two_team_grandmaster.py`, `sovereign_apex`).
   - `--quick`: Runs only the top 4 landmark replays instead of all 20.
   - `--player`: Player seat for our agent (`0` default, or `1`).
 - **Example:**
   ```bash
-  .venv/bin/python scripts/eval_against_replays.py scratch_grandmaster.py
+  .venv/bin/python scripts/eval_against_replays.py two_team_grandmaster
   ```
 - **Output:** Outputs per-replay match results, seed, opponent name, final cash, score margin, and overall win rate.
 
@@ -81,7 +81,7 @@ flowchart TD
   - `--output`: Markdown output destination (defaults to `eval_results.md`).
 - **Example:**
   ```bash
-  .venv/bin/python scripts/eval_runner.py --candidate scratch_grandmaster.py --output eval_grandmaster.md
+  .venv/bin/python scripts/eval_runner.py --candidate two_team_grandmaster --output eval_grandmaster.md
   ```
 
 ---
@@ -118,7 +118,7 @@ flowchart TD
   ```
 - **Example:**
   ```bash
-  .venv/bin/python scripts/h2h_bench.py scratch_grandmaster.py submissions/care_mill/main.py --seeds 10
+  .venv/bin/python scripts/h2h_bench.py two_team_grandmaster submissions/care_mill/main.py --seeds 10
   ```
 
 ---
@@ -164,7 +164,7 @@ flowchart TD
   ```
 - **Example:**
   ```bash
-  .venv/bin/python scripts/trace_replay_match.py replays/other_agents/rank1/112542379.json scratch_grandmaster.py
+  .venv/bin/python scripts/trace_replay_match.py replays/other_agents/rank1/112542379.json two_team_grandmaster
   ```
 
 ---
@@ -274,6 +274,6 @@ flowchart TD
 
 ### 3. `scripts/agent_utils.py`
 **Purpose:** Core utility library providing [`load_agent`](file:///Users/pranav/dev/kaggriculture/scripts/agent_utils.py#L12-L35). Dynamically loads agents from:
-- File paths (e.g. `scratch_grandmaster.py`).
-- Directory packages (e.g. `submissions/agent_final`).
+- File paths (e.g. `agent_two_team_grandmaster.py`).
+- Directory packages (e.g. `submissions/two_team_grandmaster`).
 - Named agent aliases with isolated module namespaces to prevent variable cross-contamination during multi-agent evaluations.

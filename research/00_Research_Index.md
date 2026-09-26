@@ -29,6 +29,8 @@
 | `19_Final_Winning_Policy.md` | The Winning Policy Architecture — Sovereign Apex ($100k+ Cash Across Evaluation Episodes) |
 | `20_Replay_Forensics_and_Gauntlet_Findings.md` | Replay forensics, game mechanics discoveries, mathematical pricing models, and 20-replay gauntlet benchmark |
 | `21_Scripts_Reference_and_User_Guide.md` | Scripts reference and developer user guide covering all 27+ evaluation, replay, and quant tools |
+| `22_Competition_State_and_Deep_Research_Context.md` | Master competition research brief, simulator specs, failure autopsy, and deep research mandate for Top 10 rank |
+| `23_Kaggriculture_Simulation_Integration.md` | Kaggriculture simulation engine integration, Rust benchmarks, API guide, and rewired toolchain |
 
 **Naming note:** Improvement plan and innovations use the requested `04_` / `05_` filenames. Additional agent recreations continue at `06_` / `07_` so those names stay stable.
 
