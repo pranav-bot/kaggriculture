@@ -629,7 +629,7 @@ The older table's `_shape` **raises `ValueError` on `"hinge"`** — it physicall
 the engine's shape. I verified against **`src/kaggriculture/env/items.py` in your own repo**,
 which is an exact engine clone: it uses `hinge` for CARROT/TOMATO/EGG with
 `shape_func(..., T)` implementing `u + HINGE_GAIN·max(0, u−1)²`. **The `_R37` table is correct;
-the older one is wrong.** (And note your own `agent_final.py` / `scratch_grandmaster.py` contain
+the older one is wrong.** (And note your own `agent_final.py` / `agent_two_team_grandmaster.py` contain
 **no price model at all** — so this bug is one you can avoid rather than one you have.)
 
 Measured divergence, short (scarce) side only:
@@ -1402,7 +1402,7 @@ recovered sales** and acting on it in the next 1-4 turns. Concretely:
 
 Two blockers to fix regardless of triggers:
 - `agent_final._hire_cost = 20 + 10k` contradicts the engine's Fibonacci (correct in
-  `scratch_apex_engine.py`). Rayk's SL2 shows the *marginal* cost of hands #12/#13 is
+  `agent_apex_engine.py`). Rayk's SL2 shows the *marginal* cost of hands #12/#13 is
   $377/day — the single cheapest win in the list is getting this function right.
 - `run_agent_analysis.py` reports exactly $3,000 / 0.0 ms p95 for every `ActionController`
   agent. That is a telemetry-wiring bug in the panel harness, and it means **your current

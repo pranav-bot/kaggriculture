@@ -169,8 +169,8 @@ flowchart TD
 
 ---
 
-### 4. `scripts/trace_timeline.py` & `scripts/scratch_boey_timeline.py`
-**Purpose:** Fast forensic snapshot tools. Extracts game state at Hour 2 (after dawn market orders and labor placement) across all 30 days for both players in a replay file.
+### 4. `scripts/trace_timeline.py`
+**Purpose:** Fast forensic snapshot tool. Extracts game state at Hour 2 (after dawn market orders and labor placement) across all 30 days for both players in a replay file.
 
 - **Syntax:**
   ```bash

@@ -144,7 +144,7 @@ from sim_engine import FastSimulation, is_kagg_available
 # 1. Run a match between two agents
 with FastSimulation() as sim:
     cash0, cash1, final_state = sim.run_match(
-        agent0="scratch_grandmaster.py",
+        agent0="two_team_grandmaster",
         agent1="submissions/care_mill/main.py",
         seed=42,
     )
@@ -153,7 +153,7 @@ with FastSimulation() as sim:
 # 2. Run against a historical replay
 with FastSimulation() as sim:
     our_m, opp_m, won, _ = sim.run_replay(
-        agent="scratch_grandmaster.py",
+        agent="two_team_grandmaster",
         replay_data_or_path="replays/other_agents/rank1/112542379.json",
         our_player=0,
     )

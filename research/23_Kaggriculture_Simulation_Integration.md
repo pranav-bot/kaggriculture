@@ -82,54 +82,54 @@ All primary evaluation and strategy scripts have been updated to use the fast en
 Runs any agent against the recorded step-by-step actions of elite ladder opponents on exact match seeds:
 ```bash
 # Evaluate candidate across all 20 replays in ~6-8 seconds
-python scripts/eval_against_replays.py scratch_grandmaster.py
+python scripts/eval_against_replays.py two_team_grandmaster
 
 # Evaluate against top 4 landmark replays only (~3 seconds)
-python scripts/eval_against_replays.py scratch_grandmaster.py --quick
+python scripts/eval_against_replays.py two_team_grandmaster --quick
 
 # Force execution on official python runner if needed
-python scripts/eval_against_replays.py scratch_grandmaster.py --official
+python scripts/eval_against_replays.py two_team_grandmaster --official
 ```
 
 ### B. Head-to-Head Match Benchmark (`scripts/h2h_bench.py`)
 Pits two agents against each other on shared seeds with position swapping:
 ```bash
 # Run 5 seeds (10 matches) in ~3 seconds
-python scripts/h2h_bench.py scratch_grandmaster.py submissions/care_mill/main.py --seeds 5
+python scripts/h2h_bench.py two_team_grandmaster submissions/care_mill/main.py --seeds 5
 ```
 
 ### C. Cash Benchmark Across Seeds (`scripts/eval_cash.py`)
 Evaluates terminal cash across standard benchmark seeds against a passive PASS bot:
 ```bash
 # Evaluates 7 benchmark seeds in ~2.5 seconds
-python scripts/eval_cash.py scratch_grandmaster.py pass 1 3 5 7 10 15 20
+python scripts/eval_cash.py two_team_grandmaster pass 1 3 5 7 10 15 20
 ```
 
 ### D. Full Standoff Tournament (`standoff/run_standoff.py`)
 Runs a complete round-robin tournament against all 62 agents in `submissions/`:
 ```bash
 # Runs 62 full 720-turn matches in ~23 seconds
-python standoff/run_standoff.py -a agent_final --no-swap
+python standoff/run_standoff.py -a two_team_grandmaster --no-swap
 
 # Run with starting position swap (124 matches)
-python standoff/run_standoff.py -a agent_final
+python standoff/run_standoff.py -a two_team_grandmaster
 ```
 
 ### E. Match Forensic Tracer (`scripts/trace_replay_match.py`)
 Prints step-by-step cash, animal counts, crop counts, and market prices against a replay opponent:
 ```bash
 # Traces match in ~0.5 seconds
-python scripts/trace_replay_match.py replays/my_agents/agent_final:\ Sovereign\ Apex\ k+/112619304.json scratch_grandmaster.py
+python scripts/trace_replay_match.py "replays/my_agents/agent_final: Sovereign Apex k+/112619304.json" two_team_grandmaster
 ```
 
 ### F. Submission Validator (`scripts/test_submission.py`)
 Tests submission integrity, turn latency, and schema compliance:
 ```bash
 # Tests full season in ~0.6 seconds (<1ms/turn)
-python scripts/test_submission.py -a1 scratch_grandmaster.py -a2 submissions/care_mill/main.py
+python scripts/test_submission.py -a1 two_team_grandmaster -a2 submissions/care_mill/main.py
 
 # Test with HTML replay generation (forces official visual renderer)
-python scripts/test_submission.py -a1 scratch_grandmaster.py -a2 random --render
+python scripts/test_submission.py -a1 two_team_grandmaster -a2 random --render
 ```
 
 ---
@@ -144,7 +144,7 @@ from sim_engine import FastSimulation, is_kagg_available
 # 1. Run a match between two agents
 with FastSimulation() as sim:
     cash0, cash1, final_state = sim.run_match(
-        agent0="scratch_grandmaster.py",
+        agent0="two_team_grandmaster",
         agent1="submissions/care_mill/main.py",
         seed=42,
     )
@@ -153,7 +153,7 @@ with FastSimulation() as sim:
 # 2. Run against a historical replay
 with FastSimulation() as sim:
     our_m, opp_m, won, _ = sim.run_replay(
-        agent="scratch_grandmaster.py",
+        agent="two_team_grandmaster",
         replay_data_or_path="replays/other_agents/rank1/112542379.json",
         our_player=0,
     )

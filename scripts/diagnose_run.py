@@ -58,7 +58,7 @@ def diagnose(agent_path, seed=1142076532):
     return final_cash
 
 if __name__ == "__main__":
-    p1 = sys.argv[1] if len(sys.argv) > 1 else "scratch_straw_empire.py"
+    p1 = sys.argv[1] if len(sys.argv) > 1 else "two_team_grandmaster"
     diagnose(p1)
     if len(sys.argv) > 2:
         diagnose(sys.argv[2])

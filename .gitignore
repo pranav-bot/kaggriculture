@@ -1,16 +1,26 @@
 # Python-generated files
 __pycache__/
 *.py[oc]
+*.pyc
 build/
 dist/
 wheels/
 *.egg-info
-
-# Virtual environments
-.venv
-
 .pytest_cache/
 
-*.csv
+# Virtual environments
+.venv/
+.venv
 
+# OS artifacts
+.DS_Store
+*/.DS_Store
+
+# Evaluation dumps and telemetry
+*.csv
+eval_*.md
+
+# Fast simulator tape caches
+*.tape
+replays/tapes/
 tapes/

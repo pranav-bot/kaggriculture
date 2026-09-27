@@ -219,7 +219,7 @@ graph TD
     C --> D["Apex Mill (Multi-Quadrant Land + Dawn Labor Pulse)"]
     D --> E["Sovereign Apex k+ (Ladder Submission: Rank 7000, Score 508)"]
     E --> F["Forensic Replay Engine (scripts/eval_against_replays.py)"]
-    F --> G["Grandmaster Two-Team Architecture (scratch_grandmaster.py)"]
+    F --> G["Grandmaster Two-Team Architecture (two_team_grandmaster)"]
 ```
 
 ### 1. `shop_opportunist` & `melon_rusher` (Early Baselines)
