@@ -1,4 +1,4 @@
-"""agent_two_team_grandmaster.py — Apex Two-Team Division of Labor Architecture
+"""two_team_grandmaster.py — Apex Two-Team Division of Labor Architecture
 
 Key Pillars:
 1. Division of Labor (Zero Congestion & Role Interference):
@@ -31,6 +31,8 @@ from __future__ import annotations
 import os
 import sys
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+import numpy as np
+from scipy.optimize import linear_sum_assignment
 
 Pos = Tuple[int, int]
 
@@ -88,6 +90,34 @@ def _sheds(board: int, quadrants: Sequence[str] = ("NW",)) -> List[Pos]:
     if "SE" in quadrants:
         shed_tiles.append((half, half))
     return shed_tiles
+
+
+def _traverses_locked_se(src: Sequence[int], dst: Sequence[int], quadrants: Sequence[str] = ("NW",)) -> bool:
+    """Returns True if path between src and dst traverses the locked Southeast tile at coordinate (5, 5)."""
+    if "SE" in quadrants:
+        return False
+    sx, sy = int(src[0]), int(src[1])
+    tx, ty = int(dst[0]), int(dst[1])
+    # Exact hit on (5, 5)
+    if (sx, sy) == (5, 5) or (tx, ty) == (5, 5):
+        return True
+    # Coordinate inside locked SE quadrant (5..9, 5..9)
+    if (sx >= 5 and sy >= 5) or (tx >= 5 and ty >= 5):
+        return True
+    # Diagonal crossing between SW (x<=4, y>=5) and NE (x>=5, y<=4)
+    in_sw = (sx <= 4 and sy >= 5)
+    in_ne = (sx >= 5 and sy <= 4)
+    dst_sw = (tx <= 4 and ty >= 5)
+    dst_ne = (tx >= 5 and ty <= 4)
+    if (in_sw and dst_ne) or (in_ne and dst_sw):
+        return True
+    # Bounding box containing (5, 5)
+    min_x, max_x = min(sx, tx), max(sx, tx)
+    min_y, max_y = min(sy, ty), max(sy, ty)
+    if min_x <= 5 <= max_x and min_y <= 5 <= max_y:
+        if (min_x < 5 < max_x) or (min_y < 5 < max_y):
+            return True
+    return False
 
 
 def _move(src: Sequence[int], target: Pos) -> List[str]:
@@ -483,14 +513,6 @@ def _units(
     def nearest_shed(pos: Pos) -> Pos:
         return min(scan["shed"], key=lambda tile: (_dist(pos, tile), tile))
 
-    def take_nearest(pos: Pos, pool: List[Pos]) -> Optional[Pos]:
-        open_tiles = [tile for tile in pool if tile not in claimed]
-        if not open_tiles:
-            return None
-        choice = min(open_tiles, key=lambda tile: (_dist(pos, tile), tile))
-        claimed.add(choice)
-        return choice
-
     def _crop_ripe(tile: Mapping[str, Any]) -> bool:
         c = str(tile.get("crop"))
         p_day = int(tile.get("planted_day", 0))
@@ -499,7 +521,122 @@ def _units(
         m_age = 2 if c == "WHEAT" else (10 if c in ("MELON", "STRAWBERRY") else 8)
         return (day - p_day) >= m_age
 
+    # =========================================================================
+    # PHASE 1: BIPARTITE MATCHING SYSTEM (Hungarian Algorithm)
+    # At Hour 0 of each in-game day, extract all spatial tasks on the grid
+    # and calculate Manhattan distance from all available workers to these tasks.
+    # Use scipy.optimize.linear_sum_assignment with (5,5) infinite penalty.
+    # =========================================================================
+    hour0_tasks: List[Tuple[Pos, str, float]] = []
+    hour0_assignments: Dict[int, Pos] = {}
+
+    if hour == 0:
+        # 1. Danger watering tasks (consecutive_unwatered >= 1)
+        for p, tile in plants:
+            if not tile.get("watered_today", False) and int(tile.get("consecutive_unwatered", 0)) >= 1:
+                hour0_tasks.append((p, "WATER", 1000.0))
+        # 2. Ripe crop harvest tasks
+        for p, tile in plants:
+            if _crop_ripe(tile):
+                hour0_tasks.append((p, "HARVEST", 850.0))
+        # 3. Animal care / harvest / fertilizer
+        for p, tile in animals:
+            if not tile.get("cared_today", False) or int(tile.get("yield_units", 0)) > 0 or tile.get("fertilizer_available", False):
+                hour0_tasks.append((p, "ANIMAL_SERVICE", 700.0))
+        # 4. Animal feeding
+        for p, tile in animals:
+            if not tile.get("fed_today", False):
+                hour0_tasks.append((p, "FEED", 650.0))
+        # 5. Strawberry fertilizing
+        for p, tile in plants:
+            if str(tile.get("crop")) == "STRAWBERRY" and int(tile.get("fertilized_until_day", -1)) < day:
+                hour0_tasks.append((p, "FERTILIZE", 550.0))
+        # 6. Weeds digging
+        for p in scan["weeds"]:
+            hour0_tasks.append((p, "DIG", 500.0))
+        # 7. Routine watering
+        for p, tile in plants:
+            if not tile.get("watered_today", False) and int(tile.get("consecutive_unwatered", 0)) == 0:
+                hour0_tasks.append((p, "WATER", 450.0))
+        # 8. Seed planting
+        avail_straw = int(seeds.get("STRAWBERRY", 0))
+        avail_melon = int(seeds.get("MELON", 0))
+        avail_wheat = int(seeds.get("WHEAT", 0))
+        for p in scan["empties"]:
+            if avail_straw > 0:
+                hour0_tasks.append((p, "PLANT_STRAWBERRY", 400.0))
+                avail_straw -= 1
+            elif avail_melon > 0:
+                hour0_tasks.append((p, "PLANT_MELON", 380.0))
+                avail_melon -= 1
+            elif avail_wheat > 0:
+                hour0_tasks.append((p, "PLANT_WHEAT", 360.0))
+                avail_wheat -= 1
+
+        n_workers = len(positions)
+        n_tasks = len(hour0_tasks)
+        if n_workers > 0 and n_tasks > 0:
+            cost_matrix = np.zeros((n_workers, n_tasks), dtype=float)
+            for i, p_arr in enumerate(positions):
+                w_pos = (int(p_arr[0]), int(p_arr[1]))
+                is_livestock = (i < 4)
+                for j, (t_pos, t_kind, priority_bonus) in enumerate(hour0_tasks):
+                    if _traverses_locked_se(w_pos, t_pos, quadrants):
+                        cost_matrix[i, j] = 1e9  # Infinite cost penalty
+                    else:
+                        dist = abs(w_pos[0] - t_pos[0]) + abs(w_pos[1] - t_pos[1])
+                        cost = dist - priority_bonus
+                        is_animal = t_kind in ("ANIMAL_SERVICE", "FEED")
+                        if is_livestock and not is_animal:
+                            cost += 30.0
+                        elif not is_livestock and is_animal:
+                            cost += 30.0
+                        cost_matrix[i, j] = cost
+
+            row_ind, col_ind = linear_sum_assignment(cost_matrix)
+            for r, c in zip(row_ind, col_ind):
+                if cost_matrix[r, c] < 1e8:
+                    hour0_assignments[r] = hour0_tasks[c][0]
+
+    completed_units: Set[int] = set()
+
+    def bipartite_take(w_idx: int, pos: Pos, pool: List[Pos]) -> Optional[Pos]:
+        open_tiles = [tile for tile in pool if tile not in claimed]
+        if not open_tiles:
+            return None
+        # Check if pre-assigned Hour 0 task matches an open tile in this pool
+        if hour == 0 and w_idx in hour0_assignments and hour0_assignments[w_idx] in open_tiles:
+            choice = hour0_assignments[w_idx]
+            claimed.add(choice)
+            return choice
+        # Active remaining workers
+        active_w_indices = [i for i in range(len(positions)) if i not in completed_units]
+        if not active_w_indices:
+            return None
+        active_w_positions = [(int(positions[i][0]), int(positions[i][1])) for i in active_w_indices]
+        cost_matrix = np.zeros((len(active_w_indices), len(open_tiles)), dtype=float)
+        for i, w_pos in enumerate(active_w_positions):
+            for j, t_pos in enumerate(open_tiles):
+                if _traverses_locked_se(w_pos, t_pos, quadrants):
+                    cost_matrix[i, j] = 1e9  # Infinite cost penalty for paths traversing locked (5,5)
+                else:
+                    cost_matrix[i, j] = abs(w_pos[0] - t_pos[0]) + abs(w_pos[1] - t_pos[1])
+        row_ind, col_ind = linear_sum_assignment(cost_matrix)
+        for r, c in zip(row_ind, col_ind):
+            if active_w_indices[r] == w_idx and cost_matrix[r, c] < 1e8:
+                choice = open_tiles[c]
+                claimed.add(choice)
+                return choice
+        # Safe fallback
+        safe_tiles = [t for t in open_tiles if not _traverses_locked_se(pos, t, quadrants)]
+        if safe_tiles:
+            choice = min(safe_tiles, key=lambda tile: (_dist(pos, tile), tile))
+            claimed.add(choice)
+            return choice
+        return None
+
     for index, position in enumerate(positions):
+        completed_units.add(index)
         pos = (int(position[0]), int(position[1]))
         inv = inventories[index] if index < len(inventories) else {}
         wheat = int(inv.get("WHEAT", 0))
@@ -558,7 +695,7 @@ def _units(
             # 2. Build pasture if animal is waiting in shed and no pasture is empty
             animals_waiting = int(shed_stock.get("COW", 0)) + int(shed_stock.get("SHEEP", 0))
             if not carrying_animal and animals_waiting > 0 and len(scan["empty"]["PASTURE"]) == 0 and scan["empties"]:
-                target = take_nearest(pos, list(scan["empties"]))
+                target = bipartite_take(index, pos, list(scan["empties"]))
                 if target is not None:
                     actions.append(["BUILD_PASTURE"] if pos == target else _move(pos, target))
                     continue
@@ -566,7 +703,7 @@ def _units(
             # 3. Place carried animal into pasture
             if carrying_animal and carried_sp is not None:
                 sp_struct = SPECIES[carried_sp]["structure"]
-                target = take_nearest(pos, list(scan["empty"][sp_struct]))
+                target = bipartite_take(index, pos, list(scan["empty"][sp_struct]))
                 if target is not None:
                     actions.append(["PLACE", carried_sp, 1] if pos == target else _move(pos, target))
                     continue
@@ -588,7 +725,7 @@ def _units(
 
             # 4. Feed hungry animals (if holding wheat)
             if unfed_left and wheat > 0:
-                target = take_nearest(pos, [p for p, tile in animals if not tile.get("fed_today", False)])
+                target = bipartite_take(index, pos, [p for p, tile in animals if not tile.get("fed_today", False)])
                 if target is not None:
                     actions.append(["FEED"] if pos == target else _move(pos, target))
                     continue
@@ -619,7 +756,7 @@ def _units(
                 if not tile.get("cared_today", False) or int(tile.get("yield_units", 0)) > 0 or tile.get("fertilizer_available", False)
             ]
             if animal_service:
-                target = take_nearest(pos, animal_service)
+                target = bipartite_take(index, pos, animal_service)
                 if target is not None:
                     actions.append(_move(pos, target))
                     continue
@@ -627,7 +764,7 @@ def _units(
             # 8. Help field team plant seeds if any are waiting
             avail_straw = int(seeds.get("STRAWBERRY", 0)) - planted_straw
             if avail_straw > 0 and scan["empties"]:
-                target = take_nearest(pos, list(scan["empties"]))
+                target = bipartite_take(index, pos, list(scan["empties"]))
                 if target is not None:
                     planted_straw += 1
                     actions.append(["PLANT", "STRAWBERRY"] if pos == target else _move(pos, target))
@@ -635,7 +772,7 @@ def _units(
 
             avail_melon = int(seeds.get("MELON", 0)) - planted_melon
             if avail_melon > 0 and scan["empties"]:
-                target = take_nearest(pos, list(scan["empties"]))
+                target = bipartite_take(index, pos, list(scan["empties"]))
                 if target is not None:
                     planted_melon += 1
                     actions.append(["PLANT", "MELON"] if pos == target else _move(pos, target))
@@ -644,7 +781,7 @@ def _units(
             # 9. Help field team water thirsty plants!
             thirsty = [p for p, tile in plants if not tile.get("watered_today", False)]
             if thirsty:
-                target = take_nearest(pos, thirsty)
+                target = bipartite_take(index, pos, thirsty)
                 if target is not None:
                     actions.append(["WATER"] if pos == target else _move(pos, target))
                     continue
@@ -682,7 +819,7 @@ def _units(
                     if str(tile.get("crop")) == "STRAWBERRY" and int(tile.get("fertilized_until_day", -1)) < day
                 ]
                 if unfert:
-                    target = take_nearest(pos, unfert)
+                    target = bipartite_take(index, pos, unfert)
                     if target is not None:
                         actions.append(["FERTILIZE"] if pos == target else _move(pos, target))
                         continue
@@ -699,7 +836,7 @@ def _units(
                 if not tile.get("watered_today", False) and int(tile.get("consecutive_unwatered", 0)) >= 1
             ]
             if danger_plants:
-                target = take_nearest(pos, danger_plants)
+                target = bipartite_take(index, pos, danger_plants)
                 if target is not None:
                     actions.append(["WATER"] if pos == target else _move(pos, target))
                     continue
@@ -707,7 +844,7 @@ def _units(
             # 5. Harvest ripe crops
             if day >= 2:
                 ripe = [p for p, tile in plants if _crop_ripe(tile)]
-                target = take_nearest(pos, ripe)
+                target = bipartite_take(index, pos, ripe)
                 if target is not None:
                     actions.append(["HARVEST"] if pos == target else _move(pos, target))
                     continue
@@ -715,7 +852,7 @@ def _units(
             # 6. Plant Strawberry (High margin cash crop — Plant immediately!)
             avail_straw = int(seeds.get("STRAWBERRY", 0)) - planted_straw
             if avail_straw > 0 and scan["empties"]:
-                target = take_nearest(pos, list(scan["empties"]))
+                target = bipartite_take(index, pos, list(scan["empties"]))
                 if target is not None:
                     planted_straw += 1
                     actions.append(["PLANT", "STRAWBERRY"] if pos == target else _move(pos, target))
@@ -724,7 +861,7 @@ def _units(
             # 7. Plant Melon (Day 0-1 compounding cash crop)
             avail_melon = int(seeds.get("MELON", 0)) - planted_melon
             if avail_melon > 0 and scan["empties"]:
-                target = take_nearest(pos, list(scan["empties"]))
+                target = bipartite_take(index, pos, list(scan["empties"]))
                 if target is not None:
                     planted_melon += 1
                     actions.append(["PLANT", "MELON"] if pos == target else _move(pos, target))
@@ -733,7 +870,7 @@ def _units(
             # 8. Plant Wheat (Feed sustainability)
             avail_wheat = int(seeds.get("WHEAT", 0)) - planted_wheat
             if avail_wheat > 0 and scan["empties"]:
-                target = take_nearest(pos, list(scan["empties"]))
+                target = bipartite_take(index, pos, list(scan["empties"]))
                 if target is not None:
                     planted_wheat += 1
                     actions.append(["PLANT", "WHEAT"] if pos == target else _move(pos, target))
@@ -742,14 +879,14 @@ def _units(
             # 9. Routine watering of all thirsty plants
             thirsty = [p for p, tile in plants if not tile.get("watered_today", False)]
             if thirsty:
-                target = take_nearest(pos, thirsty)
+                target = bipartite_take(index, pos, thirsty)
                 if target is not None:
                     actions.append(["WATER"] if pos == target else _move(pos, target))
                     continue
 
             # 10. Dig Weeds (Clears tiles immediately for next replanting cycle!)
             if scan["weeds"]:
-                target = take_nearest(pos, list(scan["weeds"]))
+                target = bipartite_take(index, pos, list(scan["weeds"]))
                 if target is not None:
                     actions.append(["DIG"] if pos == target else _move(pos, target))
                     continue
@@ -760,7 +897,7 @@ def _units(
                 target_pastures - total_pastures
             )
             if day < 22 and needed_pastures > building_pastures and scan["empties"]:
-                target = take_nearest(pos, list(scan["empties"]))
+                target = bipartite_take(index, pos, list(scan["empties"]))
                 if target is not None:
                     building_pastures += 1
                     actions.append(["BUILD_PASTURE"] if pos == target else _move(pos, target))

@@ -24,3 +24,7 @@ eval_*.md
 *.tape
 replays/tapes/
 tapes/
+
+datasets/
+bootstrap_v4/
+.gitattributes

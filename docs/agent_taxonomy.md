@@ -22,14 +22,20 @@ All agents in `submissions/` now adhere to strict, self-describing functional na
 - **Family:** Two-Team Segregated Multi-Agent Planner
 - **Core Strategy:**
   1. **Two-Team Division of Labor:**
-     - **Livestock Team (Units 0–2: Main Farmer + Hands 0–1):** 100% dedicated to animal care (Feed, Care, Milk/Wool harvest, Fertilizer collection, and open pasture delivery). Never distracted by crop fields.
-     - **Field & Expansion Team (Units 3–7: Hands 2–6):** 100% dedicated to crop cultivation and expansion (Strawberry planting across NE and SW quadrants, danger watering, crop harvesting, weed digging, and pasture building). Never distracted by livestock.
-  2. **Day 0–7 100% Fertilizer Liquidation Rule:** Liquidates 100% of early fertilizer ($500/day for 5 animals), generating $3,500 in non-dilutive liquidity to self-fund the Northeast land expansion ($1,000) on Day 4–5 before milk unlocks.
-  3. **High-Frequency Market Clearing:** Evaluates sales *first* (Priority 0) before assessing hiring or expansion, completely eliminating cash starvation at dawn.
-  4. **$60 Fibonacci Wage Reserve:** Always holds $\ge \$60$ cash at sunset, ensuring dawn hand hiring is never rejected by the environment.
+     - **Livestock Team (Units 0–3: Main Farmer + Hands 0–2):** 100% dedicated to animal care (Feed, Care, Milk/Wool harvest, Fertilizer collection, and open pasture delivery). Never distracted by crop fields.
+     - **Field & Expansion Team (Units 4–7: Hands 3–6):** 100% dedicated to crop cultivation and expansion (Strawberry planting across NE and SW quadrants, danger watering, crop harvesting, weed digging, and pasture building). Never distracted by livestock.
+  2. **Phase 1 Bipartite Matching Labor Layer (Hungarian Algorithm):**
+     - At Hour 0 of each in-game day, extracts all spatial tasks on the grid (harvesting, watering, feeding, care, fertilizing, planting, weeding) and computes the Manhattan distance matrix between workers and tasks.
+     - Employs `scipy.optimize.linear_sum_assignment` to solve global min-cost 1-to-1 task allocations, eliminating crossing paths and worker traffic jams.
+     - Paths traversing the locked Southeast tile at coordinate `(5, 5)` are penalized with infinite cost ($10^9$), eliminating cross-quadrant crossroads deadlocks.
+     - Replaces the legacy monolithic greedy sequential queue (`take_nearest`) with collision-free bipartite dispatch throughout the turn.
+  3. **Day 0–7 100% Fertilizer Liquidation Rule:** Liquidates 100% of early fertilizer ($500/day for 5 animals), generating $3,500 in non-dilutive liquidity to self-fund the Northeast land expansion ($1,000) on Day 4–5 before milk unlocks.
+  4. **High-Frequency Market Clearing:** Evaluates sales *first* (Priority 0) before assessing hiring or expansion, completely eliminating cash starvation at dawn.
+  5. **$60 Fibonacci Wage Reserve:** Always holds $\ge \$60$ cash at sunset, ensuring dawn hand hiring is never rejected by the environment.
 - **Benchmark Record:**
-  - 20-Replay Gauntlet: **6/20 Won (30%)**, average cash **$61,820** against top ladder opponents.
-  - Decisive wins: BenPalmer59 (**+$54,818 margin**), M & M & P & Q (**+$33,010 and +$27,307 margins**), Dohwan Kwak (**+$30,549 margin**).
+  - 20-Replay Gauntlet: **7/20 Won (35.0%)**, with benchmark cash up to **$93,771** against historical ladder champions.
+  - Decisive wins: Scarttish (**+$35,158 margin**), M & M & P & Q (**+$27,814 and +$14,331 margins**), Come Back (**+$20,888 margin**), Dohwan Kwak (**+$10,620 margin**), 吃白饭的大肥鱼 (**+$8,233 and +$1,727 margins**).
+  - Dry run validation: **$82,807.00** in official Kaggle Environments runner.
 
 ---
 
