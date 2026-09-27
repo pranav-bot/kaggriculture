@@ -29,13 +29,19 @@ All agents in `submissions/` now adhere to strict, self-describing functional na
      - Employs `scipy.optimize.linear_sum_assignment` to solve global min-cost 1-to-1 task allocations, eliminating crossing paths and worker traffic jams.
      - Paths traversing the locked Southeast tile at coordinate `(5, 5)` are penalized with infinite cost ($10^9$), eliminating cross-quadrant crossroads deadlocks.
      - Replaces the legacy monolithic greedy sequential queue (`take_nearest`) with collision-free bipartite dispatch throughout the turn.
-  3. **Day 0–7 100% Fertilizer Liquidation Rule:** Liquidates 100% of early fertilizer ($500/day for 5 animals), generating $3,500 in non-dilutive liquidity to self-fund the Northeast land expansion ($1,000) on Day 4–5 before milk unlocks.
-  4. **High-Frequency Market Clearing:** Evaluates sales *first* (Priority 0) before assessing hiring or expansion, completely eliminating cash starvation at dawn.
-  5. **$60 Fibonacci Wage Reserve:** Always holds $\ge \$60$ cash at sunset, ensuring dawn hand hiring is never rejected by the environment.
+  3. **Phase 2 Market Microstructure & Forward MPC Lookahead:**
+     - Simulates non-linear price slippage across multi-unit tranches ($\Delta P = -2.098 \Delta I$ linear for Milk, quadratic $\Delta P = -0.058 (\Delta I)^2$ for Wool).
+     - Caps Wool tranche sizes strictly to 4–6 units max to prevent disastrous quadratic price crashes.
+     - Synchronizes sell orders with the 4-turn town shop consumption calendar: if an imminent consumption tick (in 1–2 turns) will drain market inventory and raise prices by $> 5\%$, sale is delayed until after the pulse.
+     - Dynamic Strawberry scheduling: accelerates planting across NE/SW quadrants and targets high-margin quotes ($200–$280).
+  4. **Day 0–7 100% Fertilizer Liquidation Rule:** Liquidates 100% of early fertilizer ($500/day for 5 animals), generating $3,500 in non-dilutive liquidity to self-fund the Northeast land expansion ($1,000) on Day 4–5 before milk unlocks.
+  5. **High-Frequency Market Clearing:** Evaluates sales *first* (Priority 0) before assessing hiring or expansion, completely eliminating cash starvation at dawn.
+  6. **$60 Fibonacci Wage Reserve:** Always holds $\ge \$60$ cash at sunset, ensuring dawn hand hiring is never rejected by the environment.
 - **Benchmark Record:**
-  - 20-Replay Gauntlet: **7/20 Won (35.0%)**, with benchmark cash up to **$93,771** against historical ladder champions.
-  - Decisive wins: Scarttish (**+$35,158 margin**), M & M & P & Q (**+$27,814 and +$14,331 margins**), Come Back (**+$20,888 margin**), Dohwan Kwak (**+$10,620 margin**), 吃白饭的大肥鱼 (**+$8,233 and +$1,727 margins**).
-  - Dry run validation: **$82,807.00** in official Kaggle Environments runner.
+  - 20-Replay Gauntlet: **8/20 Won (40.0%)**, average cash **$59,200** across all 20 historical ladder replays.
+  - 7-Seed Suite (Seeds 1, 3, 5, 7, 10, 15, 20): **$77,726.6 avg** (Peak: $89,414).
+  - Decisive wins: Scarttish (**+$25,112 margin**), Come Back (**+$20,892 margin**), Dohwan Kwak (**+$9,281 margin**), Ahmed Bootaan (**+$8,041 margin** - flipped from loss), M & M & P & Q (**+$27,820 and +$14,384 margins**), 吃白饭的大肥鱼 (**+$18,902 and +$14,432 margins**).
+  - Dry run validation: **$76,858.00** in official Kaggle Environments runner.
 
 ---
 

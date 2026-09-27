@@ -28,6 +28,7 @@ Key Pillars:
 
 from __future__ import annotations
 
+import math
 import os
 import sys
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
@@ -59,6 +60,64 @@ SPECIES = {
 }
 
 OPERATING_RESERVE = 60
+
+MARKET_PARAMS: Dict[str, Dict[str, Any]] = {
+    "WHEAT":      {"base":  25, "I0": 10000, "T": 400, "below_func": "sqrt",   "below_target": 0.80, "above_func": "log",    "above_target": 0.20},
+    "CARROT":     {"base":  35, "I0": 10000, "T": 450, "below_func": "hinge",  "below_target": 1.00, "above_func": "sqrt",   "above_target": 0.70},
+    "TOMATO":     {"base":  60, "I0": 10000, "T": 200, "below_func": "hinge",  "below_target": 0.40, "above_func": "sqrt",   "above_target": 0.60},
+    "STRAWBERRY": {"base": 120, "I0": 10000, "T": 100, "below_func": "sqrt",   "below_target": 0.70, "above_func": "linear", "above_target": 1.60},
+    "MELON":      {"base": 250, "I0": 10000, "T": 300, "below_func": "log",    "below_target": 0.20, "above_func": "sq",     "above_target": 3.60},
+    "EGG":        {"base":  50, "I0": 10000, "T": 332, "below_func": "hinge",  "below_target": 0.40, "above_func": "log",    "above_target": 0.20},
+    "MILK":       {"base": 160, "I0": 10000, "T": 122, "below_func": "sqrt",   "below_target": 0.60, "above_func": "linear", "above_target": 1.60},
+    "WOOL":       {"base": 200, "I0": 10000, "T": 105, "below_func": "log",    "below_target": 0.20, "above_func": "sq",     "above_target": 3.20},
+    "FERTILIZER": {"base": 100, "I0": 10000, "T": 200, "below_func": "linear", "below_target": 0.40, "above_func": "linear", "above_target": 0.40},
+}
+
+
+def _shape_func(func: str, x: float, T: float) -> float:
+    x = max(0.0, float(x))
+    if func == "linear": return x
+    if func == "sq":     return x * x
+    if func == "sqrt":   return math.sqrt(x)
+    if func == "log":    return math.log(1.0 + x)
+    if func == "hinge":
+        if T <= 0: return x
+        u = x / T
+        return u + 8.0 * max(0.0, u - 1.0) ** 2
+    return x
+
+
+def _unit_market_price(item: str, inv: int) -> int:
+    p = MARKET_PARAMS.get(item)
+    if not p: return 1
+    base, I0, T = p["base"], p["I0"], p["T"]
+    if inv < I0:
+        f = p["below_func"]
+        amp = p["below_target"] * base / _shape_func(f, T, T)
+        return max(1, int(round(base + amp * _shape_func(f, I0 - inv, T))))
+    else:
+        f = p["above_func"]
+        amp = p["above_target"] * base / _shape_func(f, T, T)
+        return max(1, int(round(base - amp * _shape_func(f, inv - I0, T))))
+
+
+def _simulate_sell_revenue(item: str, qty: int, market_inv: int) -> int:
+    rev = 0
+    cur = market_inv
+    for _ in range(qty):
+        rev += _unit_market_price(item, cur)
+        cur += 1
+    return rev
+
+
+def _shop_drain_per_tick(unlocked_shops: Sequence[str], item: str) -> int:
+    drain = 0
+    for shop in unlocked_shops:
+        prods = SHOPS.get(shop, ())
+        if item in prods:
+            mult = 2 if len(prods) == 1 else 1
+            drain += mult
+    return drain
 
 
 def _fib(n: int) -> int:
@@ -200,7 +259,14 @@ def _scan(obs: Mapping[str, Any]) -> Dict[str, Any]:
 
 
 def _sell_qty(
-    item: str, have: int, price: float, shed_total: int, day: int,
+    item: str,
+    have: int,
+    price: float,
+    shed_total: int,
+    day: int,
+    market_inv: int = 10000,
+    step: int = 0,
+    shops: Sequence[str] = (),
 ) -> int:
     if have <= 0 or item in SPECIES:
         return 0
@@ -210,7 +276,6 @@ def _sell_qty(
         return have
 
     if item == "WHEAT":
-        # Keep feed buffer; in late game liquidate excess feed
         wheat_buffer = 12 if day >= 20 else 20
         return max(0, have - wheat_buffer)
 
@@ -228,21 +293,52 @@ def _sell_qty(
 
     # Strawberries: sell in large batches so shed never bottlenecks
     if item == "STRAWBERRY":
-        if price >= 100:
-            return min(have, 18)
-        if price >= 50:
-            return min(have, 14)
-        return min(have, 8)
+        if price >= 180:
+            target_tranche = 18
+        elif price >= 120:
+            target_tranche = 14
+        elif price >= 60:
+            target_tranche = 10
+        else:
+            target_tranche = 6
+    elif item == "MILK":
+        # Linear elasticity: Delta P = -2.098 Delta I
+        if price >= 160:
+            target_tranche = 14
+        elif price >= 100:
+            target_tranche = 10
+        else:
+            target_tranche = 6
+    elif item == "WOOL":
+        # Quadratic elasticity: Delta P = -0.058 (Delta I)^2
+        # Strictly cap tranche size to avoid quadratic collapse
+        if price >= 180:
+            target_tranche = 6
+        elif price >= 120:
+            target_tranche = 4
+        else:
+            target_tranche = 2
+    else:
+        target_tranche = 6
 
-    # Milk & Wool: sell steadily in large batches
-    if item in ("MILK", "WOOL"):
-        if price >= 100:
-            return min(have, 16)
-        if price >= 30:
-            return min(have, 12)
-        return min(have, 8)
+    qty = min(have, target_tranche)
+    if qty <= 0:
+        return 0
 
-    return min(have, 6)
+    # MPC Shop Drain Lookahead:
+    # Shops consume every 4 turns. If consumption tick happens in next 1-2 turns,
+    # and market inventory is elevated, delay sale to sell into higher post-drain price.
+    turn_offset = step % 4
+    turns_until_tick = 4 - turn_offset if turn_offset > 0 else 0
+    drained = _shop_drain_per_tick(shops, item)
+
+    if 1 <= turns_until_tick <= 2 and drained > 0 and shed_total < 82:
+        rev_now = _simulate_sell_revenue(item, qty, market_inv)
+        rev_wait = _simulate_sell_revenue(item, qty, max(0, market_inv - drained))
+        if rev_wait > int(rev_now * 1.05):
+            return 0
+
+    return qty
 
 
 def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], demand: Mapping[str, float]) -> List[List[Any]]:
@@ -250,9 +346,13 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], demand: Mapping[str
     private = obs.get("private", {})
     day = int(obs.get("day", 0))
     hour = int(obs.get("hour", 0))
+    step = int(obs.get("step", 0))
     money = float(farm.get("money", 0))
     shed = dict(private.get("shed", {}))
-    prices = obs.get("market", {}).get("prices", {})
+    market = obs.get("market", {})
+    prices = market.get("prices", {})
+    market_invs = market.get("inventory", {})
+    shops = list((obs.get("town", {})).get("unlocked_shops", []))
     seeds = dict(private.get("seeds", {}))
     orders: List[List[Any]] = []
     live = sum(scan["counts"].values())
@@ -274,10 +374,13 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], demand: Mapping[str
     for item, count in ranked:
         if len(orders) >= 4:
             break
-        qty = _sell_qty(str(item), int(count), float(prices.get(item, 0)), shed_total, day)
+        item_str = str(item)
+        cur_inv = int(market_invs.get(item_str, 10000))
+        cur_p = float(prices.get(item_str, 0))
+        qty = _sell_qty(item_str, int(count), cur_p, shed_total, day, cur_inv, step, shops)
         if qty > 0:
             orders.append(["SELL", item, qty])
-            money += qty * float(prices.get(item, BASE.get(str(item), 1)))
+            money += _simulate_sell_revenue(item_str, qty, cur_inv)
             shed[item] -= qty
 
     # === PRIORITY 1: Emergency Feed Wheat (Only if farm harvest is dry) ===
