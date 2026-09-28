@@ -111,11 +111,14 @@ Key tools in workflow order:
 11. **`src/kaggriculture/meta/`** — PSRO MetaController switching MacroIntent profiles above Beam Search
 12. **`scripts/psro_league.py`** — PSRO Fictitious-Play league: payoff matrix via `kagg tournament`, Nash solve, best-response training, Nash ensemble
 13. **`scripts/find_best_agent.py`** — Master evaluation: 500-seed round-robin over all submissions + elite tape gauntlet, Elo/McNemar/latency Markdown leaderboard
-13. **`scripts/opening_book_generator.py`** — Replay consensus parser & runtime `OpeningBookController` for deterministic Days 0–15 expansion books
-14. **`scripts/run_elo_tournament.py`** — Master evaluation script & local Elo ladder engine wrapping `kagg tournament` with McNemar A/B test CIs and 5.0ms/turn latency profiling gate
-15. **`scripts/solve_liquidation.py`** — Retrograde DP & MILP terminal liquidation solver calculating Days 20–29 daily quotas and 6-tick shop synchronizations
-16. **`scripts/test_submission.py`** — Instant local match simulator (<1ms/turn) and Kaggle validator
-17. **`scripts/build_submission.py`** — Package and validate a Kaggle-ready submission (single-file or tar.gz)
+14. **`scripts/ladder_ghost.py`** — Ladder-loss → ghost agent injection (`submissions/ladder_ghost_<ID>/`), grandmaster-vs-ghost meta-solver check, conditional Optuna HPO over Beam Search weights
+15. **`scripts/opening_book_generator.py`** — Replay consensus parser & runtime `OpeningBookController` for deterministic Days 0–15 expansion books
+16. **`scripts/run_elo_tournament.py`** — Master evaluation script & local Elo ladder engine wrapping `kagg tournament` with McNemar A/B test CIs and 5.0ms/turn latency profiling gate
+17. **`scripts/solve_liquidation.py`** — Retrograde DP & MILP terminal liquidation solver calculating Days 20–29 daily quotas and 6-tick shop synchronizations
+18. **`scripts/continuous_train_iql.py`** — Continuous Training (CT) pipeline fine-tuning IQL Value Network on live replays with overestimation bias correction and holdout validation gate
+19. **`scripts/test_submission.py`** — Instant local match simulator (<1ms/turn) and Kaggle validator
+20. **`scripts/build_submission.py`** — Package and validate a Kaggle-ready submission (single-file or tar.gz)
+
 
 ### `scripts/test_submission.py`
 
@@ -607,7 +610,31 @@ Key features:
 
 ---
 
+## Continuous Training (CT) Pipeline for IQL Value Network (`scripts/continuous_train_iql.py`)
+
+Continually fine-tunes the PyTorch Implicit Q-Learning (IQL) Value Network on live match replays (`replays/live_losses/` and `replays/live_wins/`) to aggressively correct value overestimation hallucinations while preserving base representations.
+
+```bash
+# Fine-tune v1 weights against live replay buffers with validation gate:
+python scripts/continuous_train_iql.py --v1 experiments/iql_value/iql_weights_v1.pt \
+                                        --v2 experiments/iql_value/iql_weights_v2.pt \
+                                        --losses-dir replays/live_losses \
+                                        --wins-dir replays/live_wins \
+                                        --epochs 3 --lr 1e-5
+```
+
+Key features:
+- **Raw Replay Feature Extraction**: Extracts normalized `(23, 10, 10)` spatial grids, `(65,)` global and market vectors, and scaled return-to-go targets directly from raw Kaggle JSON / JSON.gz replay step logs.
+- **Low Learning Rate Fine-Tuning**: Employs `lr=1e-5` with Adam and gradient norm clipping to prevent catastrophic forgetting of base HuggingFace imitation learning representations.
+- **Importance-Weighted Expectile Loss**: Incorporates asymmetric expectile regression ($\tau = 0.7$) with dynamic importance weighting:
+  - States from live losses where the network overpredicted terminal cash ($\text{ReLU}(\text{pred} - \text{target})$) receive amplified loss weights ($6\times - 15\times$).
+  - Bankruptcy and low-cash states receive $+10\times$ priority to aggressively extinguish hallucinated upside.
+- **Strict Validation Gate**: Evaluates candidate Mean Squared Error (MSE) on a holdout validation set of recent ladder replays; atomically emits `iql_weights_v2.pt` **strictly** if candidate MSE outperforms the v1 baseline.
+
+---
+
 ## Other tooling
+
 
 **`tests/`** — unit tests for the library (`pytest`).
 

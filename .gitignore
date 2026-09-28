@@ -29,6 +29,7 @@ tournaments/
 *.tape
 replays/tapes/
 replays/live_losses/
+replays/live_wins/
 tapes/
 
 datasets/
