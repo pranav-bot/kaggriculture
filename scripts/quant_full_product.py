@@ -17,9 +17,11 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import math
 import sys
+from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -591,6 +593,490 @@ def analyze_all_products(quick: bool = False) -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Opponent modeling: Bayesian Online Change Point Detection (BOCD)
+# ---------------------------------------------------------------------------
+# Economic rationale (engine-grounded, see MARKET_PARAMS in env/items.py):
+#   * WOOL above_func="sq" (above_target 3.20): price falls QUADRATICALLY in
+#     shared-book surplus. A simultaneous opponent dump craters Wool to $1.
+#   * MILK above_func="linear" (above_target 1.60): price falls LINEARLY.
+#   * Scarcity upside is weak (WOOL log/0.20, MILK sqrt/0.60), so dumping hurts
+#     far more than hoarding helps -- the shared book is negatively asymmetric.
+#   * FERTILIZER is the ideal tripwire: no town shop or town-center consumes
+#     it (drain == 0 always), so window-to-window changes in its market
+#     inventory equal executed player sells (up to partial-fill noise).
+# Causal story: opponent CEASES selling fertilizer -> they are stockpiling it
+# for herd expansion (or net-buying it) -> a Milk/Wool production boom follows
+# -> simultaneous dump crashes the shared book. Fertilizer-sale cessation is a
+# LEADING indicator of an incoming Milk/Wool flood, so we preemptively
+# liquidate our own Milk/Wool BEFORE the opponent acts.
+
+OPPONENT_HOARDING_DETECTED = "OPPONENT_HOARDING_DETECTED"
+HOARDING_PROB_THRESHOLD = 0.85
+LIQUIDATION_ITEMS = ("MILK", "WOOL")
+LIQUIDATION_PENALTY_MULT = 2.0  # per-unit holding penalty = mult x base price
+
+
+def _gauss_logpdf(x: float, mean: float, var: float) -> float:
+    """Log of the Normal pdf (math-only, no scipy.stats dependency)."""
+    var = max(1e-9, float(var))
+    return -0.5 * (math.log(2.0 * math.pi * var) + (float(x) - mean) ** 2 / var)
+
+
+def parse_opponent_state(
+    obs: Dict[str, Any],
+    *,
+    seat: int = 0,
+    prev_market_inventory: Optional[Dict[str, float]] = None,
+    our_executed_sells: Optional[Dict[str, float]] = None,
+) -> Dict[str, Any]:
+    """Parse the opponent's PUBLIC state from a live observation.
+
+    Returns a dict with:
+      - "opponent_cash_reserves": opponent liquid cash (public farm field).
+      - "opponent_fertilizer_sold": opponent's executed FERTILIZER sells since
+        the previous observation, inferred from public market accounting
+        (None when no previous inventory snapshot is available).
+      - "opponent_net_flow": per-item inferred opponent net outflow
+        (positive = net selling into the book, negative = net buying).
+      - "turn": current step number.
+
+    Accounting identity per item (FERTILIZER drain is exactly 0):
+        opp_net[t] = (inv[t] - inv[t-1]) - our_executed_sells[t]
+    Callers should pass EXECUTED (post-partial-fill) own quantities; requested
+    SELL amounts overstate when the shed is short. Residual noise (partial
+    fills, opponent buys) is absorbed by the BOCD observation variance.
+    """
+    opp_seat = 1 - int(seat)
+    farms = obs.get("farms") or []
+    opp_farm = farms[opp_seat] if 0 <= opp_seat < len(farms) else {}
+    opp_cash = float(opp_farm.get("money", 0.0) or 0.0)
+
+    market = obs.get("market") or {}
+    cur_inv = market.get("inventory") or {}
+
+    opp_net: Dict[str, float] = {}
+    opp_fert: Optional[float] = None
+    if prev_market_inventory is not None:
+        ours = our_executed_sells or {}
+        keys = set(cur_inv.keys()) | set(prev_market_inventory.keys())
+        for item in keys:
+            try:
+                delta = float(cur_inv.get(item, 0.0) or 0.0) - float(
+                    prev_market_inventory.get(item, 0.0) or 0.0
+                )
+            except (TypeError, ValueError):
+                continue
+            opp_net[item] = delta - float(ours.get(item, 0.0) or 0.0)
+        opp_fert = opp_net.get("FERTILIZER")
+
+    return {
+        "opponent_cash_reserves": opp_cash,
+        "opponent_fertilizer_sold": opp_fert,
+        "opponent_net_flow": opp_net,
+        "turn": int(obs.get("step", 0) or 0),
+    }
+
+
+class OpponentTracker:
+    """Rolling time-series of opponent public-state observables."""
+
+    def __init__(self, maxlen: int = 720) -> None:
+        self.opponent_fertilizer_sold: deque = deque(maxlen=maxlen)
+        self.opponent_cash_reserves: deque = deque(maxlen=maxlen)
+        self.turns: deque = deque(maxlen=maxlen)
+        self._prev_market_inventory: Optional[Dict[str, float]] = None
+
+    def update(
+        self,
+        obs: Dict[str, Any],
+        *,
+        seat: int = 0,
+        our_executed_sells: Optional[Dict[str, float]] = None,
+    ) -> Dict[str, Any]:
+        """Parse one observation and extend the rolling series."""
+        parsed = parse_opponent_state(
+            obs,
+            seat=seat,
+            prev_market_inventory=self._prev_market_inventory,
+            our_executed_sells=our_executed_sells,
+        )
+        market = obs.get("market") or {}
+        try:
+            self._prev_market_inventory = {
+                k: float(v or 0.0) for k, v in (market.get("inventory") or {}).items()
+            }
+        except (TypeError, ValueError):
+            pass
+        if parsed["opponent_fertilizer_sold"] is not None:
+            self.opponent_fertilizer_sold.append(float(parsed["opponent_fertilizer_sold"]))
+        self.opponent_cash_reserves.append(float(parsed["opponent_cash_reserves"]))
+        self.turns.append(parsed["turn"])
+        return parsed
+
+    def window_sum(self, series: deque, window: int) -> Optional[float]:
+        """Sum of the last `window` entries (None when history is short)."""
+        if len(series) < window:
+            return None
+        return float(sum(list(series)[-window:]))
+
+    def __len__(self) -> int:
+        return len(self.turns)
+
+
+class BayesianChangePointDetector:
+    """Gaussian Bayesian Online Change Point Detection (Adams & MacKay 2007).
+
+    Tracks the posterior over run length r_t (windows since the last regime
+    shift) under a conjugate Normal unknown-mean / known-variance model.
+    `update(x)` returns P(regime shift | x_1:t), defined as the posterior
+    mass on short run lengths r_t <= grace -- i.e. the probability that the
+    current regime began within the last `grace` windows. (Note: with a
+    constant hazard, the filtered P(r_t = 0) is identically the hazard rate,
+    so the decision statistic must aggregate short runs rather than read
+    off r = 0.) No policy or action is ever queried -- inference is over the
+    observed public series only.
+    """
+
+    def __init__(
+        self,
+        *,
+        hazard: float = 0.05,
+        mu0: float = 0.0,
+        kappa0: float = 1.0,
+        sigma2: float = 400.0,
+        max_run: int = 40,
+        grace: int = 2,
+    ) -> None:
+        if not 0.0 < hazard < 1.0:
+            raise ValueError("hazard must be in (0, 1)")
+        self.hazard = float(hazard)
+        self.mu0 = float(mu0)
+        self.kappa0 = float(kappa0)
+        self.sigma2 = float(sigma2)
+        self.max_run = int(max_run)
+        self.grace = int(grace)
+        self.run_posterior = np.array([1.0], dtype=np.float64)  # P(r_0 = 0) = 1
+        self.run_sums = np.array([0.0], dtype=np.float64)  # sum of last r obs
+        self.history: List[float] = []
+        self.last_cp_prob: float = 0.0
+
+    def _predictive_logpdf(self, x: float, n: float, s: float) -> float:
+        kappa = self.kappa0 + n
+        mean = (self.kappa0 * self.mu0 + s) / kappa
+        var = self.sigma2 * (1.0 + 1.0 / kappa)
+        return _gauss_logpdf(x, mean, var)
+
+    def update(self, x: float) -> float:
+        """Ingest one observation; return P(changepoint at this step)."""
+        x = float(x)
+        r_prev = self.run_posterior
+        s_prev = self.run_sums
+        n_prev = np.arange(len(r_prev), dtype=np.float64)  # run r holds r obs
+
+        log_pred = np.array(
+            [self._predictive_logpdf(x, n, s) for n, s in zip(n_prev, s_prev)]
+        )
+        # Absolute predictive densities (stable: shift by max, then scale back).
+        # NOTE: do NOT renormalize across run lengths here -- the absolute
+        # scale is what lets changepoint mass compete with growth mass.
+        log_max = float(log_pred.max())
+        pred = np.exp(log_pred - log_max) * math.exp(log_max)
+
+        growth = r_prev * pred * (1.0 - self.hazard)
+        cp_mass = float(np.sum(r_prev * pred * self.hazard))
+
+        new_len = min(len(r_prev) + 1, self.max_run + 1)
+        new_post = np.zeros(new_len, dtype=np.float64)
+        new_post[0] = cp_mass
+        take = min(len(growth), new_len - 1)
+        new_post[1 : 1 + take] = growth[:take]
+        if len(growth) > take:  # fold truncated tail mass onto longest run
+            new_post[-1] += float(np.sum(growth[take:]))
+        total = new_post.sum()
+        if total <= 0.0 or not np.isfinite(total):
+            new_post = np.zeros(new_len, dtype=np.float64)
+            new_post[0] = 1.0
+            total = 1.0
+        self.run_posterior = new_post / total
+
+        new_sums = np.zeros(new_len, dtype=np.float64)
+        take_s = min(len(s_prev), new_len - 1)
+        new_sums[1 : 1 + take_s] = s_prev[:take_s] + x
+        self.run_sums = new_sums
+
+        self.history.append(x)
+        # Posterior probability of a (recent) regime shift: mass on short runs.
+        keep = min(len(self.run_posterior), self.grace + 1)
+        self.last_cp_prob = float(self.run_posterior[:keep].sum())
+        return self.last_cp_prob
+
+    @property
+    def map_run_length(self) -> int:
+        return int(np.argmax(self.run_posterior))
+
+    def regime_means(self, pre_window: int = 6) -> Tuple[float, float]:
+        """(pre_mean, post_mean) around the MAP changepoint.
+
+        post_mean averages the current MAP run; pre_mean averages the
+        `pre_window` points before it. A hoarding signature is
+        post_mean << pre_mean (opponent stopped selling fertilizer).
+        """
+        r = self.map_run_length
+        hist = self.history
+        post = hist[len(hist) - r :] if r > 0 and hist else hist[-1:]
+        start = max(0, len(hist) - r - pre_window)
+        pre = hist[start : len(hist) - r] if len(hist) - r > start else hist[:1]
+        post_mean = float(np.mean(post)) if post else 0.0
+        pre_mean = float(np.mean(pre)) if pre else 0.0
+        return pre_mean, post_mean
+
+
+class HoardingMonitor:
+    """Turn-level monitor: tracker + windowed BOCD + latched event flag.
+
+    Feed live observations via `update()`; when the fertilizer-sale series
+    shows a regime shift with posterior P > 0.85 AND the post-change mean is
+    below the pre-change mean (cessation/hoarding signature), the monitor
+    latches the OPPONENT_HOARDING_DETECTED event. The flag persists until
+    `clear()` so the strategic override cannot flicker mid-liquidation.
+    """
+
+    EVENT = OPPONENT_HOARDING_DETECTED
+
+    def __init__(
+        self,
+        *,
+        window_turns: int = 24,
+        min_windows: int = 4,
+        threshold: float = HOARDING_PROB_THRESHOLD,
+        min_drop: float = 10.0,
+        detector_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        self.tracker = OpponentTracker()
+        self.detector = BayesianChangePointDetector(**(detector_kwargs or {}))
+        self.window_turns = int(window_turns)
+        self.min_windows = int(min_windows)
+        self.threshold = float(threshold)
+        self.min_drop = float(min_drop)
+        self._pending_turns = 0
+        self.n_windows = 0
+        self.last_cp_prob = 0.0
+        self.last_pre_mean = 0.0
+        self.last_post_mean = 0.0
+        self.event_latched = False
+        self.trigger_info: Optional[Dict[str, Any]] = None
+
+    def update(
+        self,
+        obs: Dict[str, Any],
+        *,
+        seat: int = 0,
+        our_executed_sells: Optional[Dict[str, float]] = None,
+    ) -> Dict[str, Any]:
+        parsed = self.tracker.update(obs, seat=seat, our_executed_sells=our_executed_sells)
+        fert = parsed["opponent_fertilizer_sold"]
+        if fert is not None:
+            self._pending_turns += 1
+            if self._pending_turns >= self.window_turns:
+                wsum = self.tracker.window_sum(
+                    self.tracker.opponent_fertilizer_sold, self.window_turns
+                )
+                self._pending_turns = 0
+                if wsum is not None:
+                    self.n_windows += 1
+                    self.last_cp_prob = self.detector.update(wsum)
+                    pre, post = self.detector.regime_means()
+                    self.last_pre_mean, self.last_post_mean = pre, post
+                    if (
+                        not self.event_latched
+                        and self.n_windows >= self.min_windows
+                        and self.last_cp_prob > self.threshold
+                        and (pre - post) >= self.min_drop
+                    ):
+                        self.event_latched = True
+                        self.trigger_info = {
+                            "event": self.EVENT,
+                            "p_changepoint": self.last_cp_prob,
+                            "pre_mean": pre,
+                            "post_mean": post,
+                            "turn": parsed["turn"],
+                            "n_windows": self.n_windows,
+                        }
+        return self.status()
+
+    def status(self) -> Dict[str, Any]:
+        return {
+            "event": self.EVENT if self.event_latched else None,
+            "event_latched": self.event_latched,
+            "p_changepoint": self.last_cp_prob,
+            "pre_mean": self.last_pre_mean,
+            "post_mean": self.last_post_mean,
+            "n_windows": self.n_windows,
+            "trigger_info": self.trigger_info,
+        }
+
+    def clear(self) -> None:
+        self.event_latched = False
+        self.trigger_info = None
+
+
+# ---------------------------------------------------------------------------
+# Strategic override: preemptive Milk/Wool liquidation
+# ---------------------------------------------------------------------------
+def holding_penalty_for_inventory(
+    inventory: Dict[str, float],
+    *,
+    items: Tuple[str, ...] = LIQUIDATION_ITEMS,
+    mult: float = LIQUIDATION_PENALTY_MULT,
+) -> float:
+    """Penalty (in $) for holding liquidation-target inventory.
+
+    Per-unit penalty = mult x base price (MILK $320/u, WOOL $400/u at the
+    default mult=2.0). Any beam candidate that keeps holding these goods
+    scores strictly worse than liquidating them now at realistic prices, so
+    the search is forced into immediate preemptive liquidation.
+    """
+    penalty = 0.0
+    for item in items:
+        qty = float((inventory or {}).get(item, 0.0) or 0.0)
+        base = float(MARKET_PARAMS.get(item, {}).get("base", 0.0) or 0.0)
+        penalty += max(0.0, qty) * mult * base
+    return float(penalty)
+
+
+def adjust_beam_score(
+    score: float,
+    inventory: Dict[str, float],
+    *,
+    hoarding_active: bool,
+) -> float:
+    """Apply the strategic override to one beam-search candidate score."""
+    if not hoarding_active:
+        return float(score)
+    return float(score) - holding_penalty_for_inventory(inventory)
+
+
+def apply_hoarding_override_to_policy(
+    policy: Dict[str, Any],
+    *,
+    items: Tuple[str, ...] = LIQUIDATION_ITEMS,
+) -> Dict[str, Any]:
+    """Rewrite a sell policy into an immediate-liquidation policy.
+
+    start_day=0 (sell NOW), unbounded daily cap, floor=$1 (accept any price),
+    dump from today: forces simulate/beam-search policies to clear Milk/Wool
+    before the opponent's anticipated dump lands. Non-target keys pass
+    through untouched.
+    """
+    _ = items  # target set is documented for beam-search penalty parity
+    overridden = dict(policy)
+    overridden.update(
+        {
+            "start_day": 0,
+            "daily_cap": 10**6,
+            "floor": 1,
+            "stage_caps": [],
+            "stage_floors": [],
+            "endgame_dump_day": 0,
+            "shed_pressure": 0,
+            "hoarding_override": True,
+            "liquidation_items": list(items),
+        }
+    )
+    return overridden
+
+
+def dump_impact_table() -> List[Dict[str, Any]]:
+    """Engine-exact price impact of a simultaneousdump (shared-book surplus)."""
+    rows = []
+    for item in LIQUIDATION_ITEMS:
+        base = MARKET_PARAMS[item]["base"]
+        row = {"item": item, "base": base, "above_func": MARKET_PARAMS[item]["above_func"]}
+        for surplus in [0, 25, 50, 100]:
+            row[f"price_+{surplus}"] = price(item, MARKET_I0 + surplus)
+        rows.append(row)
+    return rows
+
+
+def demo_hoarding_detection(seed: int = 42) -> Dict[str, Any]:
+    """Synthetic selling -> hoarding scenario through the full live path."""
+    rng = np.random.default_rng(seed)
+    # Regime 1 (days 0-9): opponent steadily sells ~60 fertilizer/window.
+    # Regime 2 (days 10+): opponent ceases selling (hoarding) -> ~0/window.
+    truth = [float(rng.normal(60.0, 8.0)) for _ in range(10)] + [0.0] * 6
+    monitor = HoardingMonitor(window_turns=6, min_windows=3)
+    fert_inv = float(MARKET_I0)
+    seat = 0
+    fired_at = None
+    # Prime with an initial snapshot so turn 0 has a previous inventory
+    # (live usage: prime the monitor on the first observation of the episode).
+    prime = {
+        "step": 0,
+        "day": 0,
+        "farms": [{"money": 3000.0}, {"money": 3000.0}],
+        "market": {"inventory": {"FERTILIZER": fert_inv}, "prices": {}},
+        "town": {"unlocked_shops": []},
+    }
+    monitor.update(prime, seat=seat, our_executed_sells={"FERTILIZER": 0.0})
+    for day, opp_sold in enumerate(truth):
+        for _ in range(6):  # 6 turns per window; drip the window total evenly
+            fert_inv += opp_sold / 6.0
+            obs = {
+                "step": day * 6,
+                "day": day,
+                "farms": [
+                    {"money": 3000.0},
+                    {"money": 3000.0 + day * 50.0},
+                ],
+                "market": {"inventory": {"FERTILIZER": fert_inv}, "prices": {}},
+                "town": {"unlocked_shops": []},
+            }
+            status = monitor.update(obs, seat=seat, our_executed_sells={"FERTILIZER": 0.0})
+            if status["event_latched"] and fired_at is None:
+                fired_at = {"day": day, **(status["trigger_info"] or {})}
+    return {
+        "dump_impact": dump_impact_table(),
+        "trigger": fired_at,
+        "final_status": monitor.status(),
+        "n_windows": monitor.n_windows,
+    }
+
+
+def run_hoarding_replay(
+    episode_path: str, *, seat: int = 0, window_turns: int = 24
+) -> Dict[str, Any]:
+    """Run the monitor over a logged episode (validates accounting + detector)."""
+    with gzip.open(episode_path, "rt") as f:
+        ep = json.load(f)
+    steps = ep.get("steps") or []
+    monitor = HoardingMonitor(window_turns=window_turns, min_windows=3)
+
+    def requested_sells(action: Dict[str, Any]) -> Dict[str, float]:
+        out: Dict[str, float] = {}
+        for m in action.get("market") or []:
+            if isinstance(m, list) and len(m) >= 3 and m[0] == "SELL":
+                out[m[1]] = out.get(m[1], 0.0) + float(m[2])
+        return out
+
+    for t in range(len(steps)):
+        entry = steps[t][seat]
+        monitor.update(
+            entry.get("observation") or {},
+            seat=seat,
+            our_executed_sells=requested_sells(entry.get("action") or {}),
+        )
+    fert = list(monitor.tracker.opponent_fertilizer_sold)
+    return {
+        "episode": episode_path,
+        "turns": len(monitor.tracker),
+        "windows": monitor.n_windows,
+        "status": monitor.status(),
+        "inferred_opp_fert_mean": float(np.mean(fert)) if fert else 0.0,
+        "inferred_opp_fert_max": float(np.max(fert)) if fert else 0.0,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Price sensitivity analysis
 # ---------------------------------------------------------------------------
 def price_sensitivity() -> None:
@@ -627,7 +1113,44 @@ def main() -> None:
     parser.add_argument("--drain", type=float, default=12.0, help="Drain rate")
     parser.add_argument("--sensitivity", action="store_true", help="Show price sensitivity")
     parser.add_argument("--save", type=str, help="Save results to JSON file")
+    parser.add_argument("--hoarding-demo", action="store_true",
+                        help="Run synthetic opponent-hoarding BOCD demo")
+    parser.add_argument("--hoarding-replay", type=str, metavar="EPISODE_JSON_GZ",
+                        help="Run the hoarding monitor over a logged episode")
+    parser.add_argument("--replay-seat", type=int, default=0, help="Seat to monitor from")
     args = parser.parse_args()
+
+    if args.hoarding_demo:
+        demo = demo_hoarding_detection()
+        print("=" * 80)
+        print("SIMULTANEOUS-DUMP IMPACT (engine-exact shared-book prices)")
+        print("=" * 80)
+        for row in demo["dump_impact"]:
+            cells = "  ".join(f"+{s}: ${row[f'price_+{s}']}" for s in [0, 25, 50, 100])
+            print(f"  {row['item']:>5} (base ${row['base']}, {row['above_func']}): {cells}")
+        print(f"\n{'=' * 80}")
+        print("BOCD HOARDING DETECTION (selling ~60/window -> 0/window)")
+        print(f"{'=' * 80}")
+        trig = demo["trigger"]
+        if trig:
+            print(f"  {OPPONENT_HOARDING_DETECTED} fired at window-day {trig['day']}")
+            print(f"    P(changepoint)={trig['p_changepoint']:.3f} (> 0.85)")
+            print(f"    pre_mean={trig['pre_mean']:.1f} -> post_mean={trig['post_mean']:.1f}")
+        else:
+            print("  no trigger (unexpected on synthetic shift)")
+        print(f"  windows processed: {demo['n_windows']}")
+        return
+
+    if args.hoarding_replay:
+        rep = run_hoarding_replay(args.hoarding_replay, seat=args.replay_seat)
+        print(f"Replay: {rep['episode']} (seat {args.replay_seat})")
+        print(f"  turns={rep['turns']} windows={rep['windows']}")
+        print(f"  inferred opp fertilizer/turn: mean={rep['inferred_opp_fert_mean']:.2f} "
+              f"max={rep['inferred_opp_fert_max']:.2f}")
+        st = rep["status"]
+        print(f"  event={st['event']} P={st['p_changepoint']:.3f} "
+              f"pre={st['pre_mean']:.1f} post={st['post_mean']:.1f}")
+        return
 
     if args.sensitivity:
         price_sensitivity()
