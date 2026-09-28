@@ -19,6 +19,8 @@ wheels/
 # Evaluation dumps and telemetry
 *.csv
 eval_*.md
+tournaments/
+.agents/
 
 # Fast simulator tape caches
 *.tape
