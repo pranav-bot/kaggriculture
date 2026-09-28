@@ -535,6 +535,28 @@ python scripts/audit_replay_fallbacks.py --dir replays/my_agents/psro_leauge_pic
 
 ---
 
+## Ladder Rating Tracker & Plateau Monitor (`scripts/track_ladder_ratings.py`)
+
+Tracks, logs, and plots our agents' post-match ratings over time, identifying when submissions plateau against the current ladder meta.
+
+```bash
+# Poll active submissions and generate trajectory plot:
+python scripts/track_ladder_ratings.py
+
+# Track specific submissions:
+python scripts/track_ladder_ratings.py --submissions 56647370,56612208 --output-plot rating_trajectory.png
+
+# Run on a scheduled daemon loop (every 6 hours):
+python scripts/track_ladder_ratings.py --loop --interval 21600
+```
+
+Key features:
+- **Persistent SQLite & CSV Logging**: Stores post-match ratings and episode metadata in `data/submission_ratings.db` keyed by `(submission_id, episode_id)`.
+- **Rolling-10 Delta & Plateau Detection**: Tracks the rating delta over the last 10 matches. If the rolling delta becomes negative, triggers the terminal alert: `SUBMISSION <ID> PLATEAU DETECTED. ELO: <SCORE>.`
+- **Visualization (`rating_trajectory.png`)**: Produces comparative multi-submission trajectory plots with highlighted plateau inflection points.
+
+---
+
 ## Other tooling
 
 **`tests/`** — unit tests for the library (`pytest`).

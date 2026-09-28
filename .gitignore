@@ -18,6 +18,8 @@ wheels/
 
 # Evaluation dumps and telemetry
 *.csv
+*.db
+rating_trajectory.png
 eval_*.md
 tournaments/
 .agents/
