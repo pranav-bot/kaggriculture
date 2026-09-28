@@ -344,6 +344,60 @@ def calculate_batch_revenue(product: str, quantity: int, start_market_inv: int) 
     return total
 
 
+def _continuous_market_price(product: str, inventory: float) -> float:
+    """Continuous counterpart of :func:`market_price` for SLSQP objectives."""
+    params = MARKET_PARAMS.get(str(product).upper(), MARKET_PARAMS["WHEAT"])
+    base = float(params["base"])
+    i0 = float(params.get("I0", MARKET_I0))
+    distance = abs(float(inventory) - i0)
+    if inventory < i0:
+        func = params["below_func"]
+        target = float(params["below_target"])
+        shape_at_t = max(1e-9, float(_shape_value(func, float(params["T"]), float(params["T"]))))
+        return max(float(PRICE_FLOOR), base + target * base * _shape_value(func, distance, float(params["T"])) / shape_at_t)
+    func = params["above_func"]
+    target = float(params["above_target"])
+    shape_at_t = max(1e-9, float(_shape_value(func, float(params["T"]), float(params["T"]))))
+    return max(float(PRICE_FLOOR), base - target * base * _shape_value(func, distance, float(params["T"])) / shape_at_t)
+
+
+def _shape_value(func: str, value: float, t_value: float) -> float:
+    """Evaluate a market shape without importing private environment helpers."""
+    value = max(0.0, float(value))
+    if func == "linear":
+        return value
+    if func == "sq":
+        return value * value
+    if func == "sqrt":
+        return math.sqrt(value)
+    if func == "log":
+        return math.log1p(value)
+    if func == "log10":
+        return math.log10(1.0 + value)
+    if func == "hinge":
+        u = value / t_value if t_value > 0 else value
+        return u + 8.0 * max(0.0, u - 1.0) ** 2
+    return value
+
+
+def _continuous_batch_revenue(product: str, quantity: float, start_market_inv: float) -> float:
+    """Approximate sequential revenue for a fractional sale.
+
+    The midpoint quadrature keeps the SLSQP objective smooth while retaining the
+    important property that every unit sold raises market inventory and therefore
+    lowers the price of later units.
+    """
+    quantity = max(0.0, float(quantity))
+    if quantity == 0:
+        return 0.0
+    samples = max(4, min(32, int(math.ceil(quantity))))
+    width = quantity / samples
+    return sum(
+        width * _continuous_market_price(product, start_market_inv + (i + 0.5) * width)
+        for i in range(samples)
+    )
+
+
 def estimate_marginal_price_tiers(product: str) -> Tuple[float, float, float]:
     """Computes marginal price estimates for Tier 1 (within drain), Tier 2, and Tier 3."""
     param = MARKET_PARAMS.get(product, MARKET_PARAMS["WHEAT"])
@@ -565,26 +619,13 @@ class ScipyMinimizeLiquidationSolver:
             total_rev = 0.0
             for idx, p in enumerate(active_products):
                 q = x[idx * T : (idx + 1) * T]
-                param = MARKET_PARAMS.get(p, MARKET_PARAMS["WHEAT"])
-                base = float(param["base"])
-                t_param = float(param["T"])
-                target = float(param["above_target"])
-                func = param["above_func"]
-
                 inv = float(m_inv.get(p, MARKET_I0))
                 for t in range(T):
                     qt = max(0.0, float(q[t]))
-                    excess = max(0.0, inv - MARKET_I0)
-                    if func == "sq":
-                        beta = (target * base) / (t_param ** 2)
-                        r = qt * (base - beta * (excess ** 2)) - beta * excess * (qt ** 2) - (beta / 3.0) * (qt ** 3)
-                    elif func == "linear":
-                        gamma = (target * base) / t_param
-                        r = qt * (base - gamma * excess) - (gamma / 2.0) * (qt ** 2)
-                    else:
-                        r = qt * base
-                    total_rev += r
-                    inv = max(float(MARKET_I0), inv + qt - float(drains[p][t]))
+                    total_rev += _continuous_batch_revenue(p, qt, inv)
+                    # Town demand happens after the sale and pulls inventory
+                    # down, which can restore the base-price region.
+                    inv = inv + qt - float(drains[p][t])
             return -total_rev
 
         cons = []
@@ -621,7 +662,7 @@ class ScipyMinimizeLiquidationSolver:
         res = minimize(objective, x0, method="SLSQP", bounds=bounds, constraints=cons, options={"maxiter": 150})
 
         quotas: Dict[str, List[int]] = {p: [0] * T for p in PRODUCTS_LIST}
-        if res.success or res.fun < 0:
+        if res.success and res.x is not None and np.all(np.isfinite(res.x)):
             for idx, p in enumerate(active_products):
                 continuous = res.x[idx * T : (idx + 1) * T]
                 # Round to integer preserving total sum
@@ -638,6 +679,52 @@ class ScipyMinimizeLiquidationSolver:
                 quotas[p][-1] += tot % T
 
         return quotas
+
+
+class ScipyRetrogradeLiquidationSolver(ScipyMinimizeLiquidationSolver):
+    """SciPy final-horizon scheduler with retrograde (terminal-first) semantics.
+
+    The continuous optimizer is constrained over the whole horizon, while the
+    returned policy is consumed day by day from Day 20.  Keeping this named
+    backend separate makes the Beam Search integration explicit and preserves
+    the older ``ScipyMinimizeLiquidationSolver`` API.
+    """
+
+    def solve(
+        self,
+        initial_shed: Dict[str, int],
+        daily_yields: Dict[str, List[int]],
+        market_inv: Optional[Dict[str, int]] = None,
+        shed_capacity: int = SHED_CAPACITY,
+    ) -> Dict[str, List[int]]:
+        quotas = super().solve(initial_shed, daily_yields, market_inv, shed_capacity)
+        # A terminal policy must liquidate every unit exactly once.  Correct
+        # small numerical/rounding drift from SLSQP by placing residual units
+        # on the latest feasible days (retrograde tie-breaking).
+        for product, schedule in quotas.items():
+            target = int(initial_shed.get(product, 0) + sum(daily_yields.get(product, [])))
+            delta = target - sum(schedule)
+            if delta > 0:
+                for day in range(len(schedule) - 1, -1, -1):
+                    available = int(initial_shed.get(product, 0) + sum(daily_yields.get(product, [])[:day + 1]))
+                    room = max(0, available - sum(schedule[:day + 1]))
+                    add = min(delta, room)
+                    schedule[day] += add
+                    delta -= add
+                    if not delta:
+                        break
+            elif delta < 0:
+                for day in range(len(schedule) - 1, -1, -1):
+                    remove = min(-delta, schedule[day])
+                    schedule[day] -= remove
+                    delta += remove
+                    if not delta:
+                        break
+        return quotas
+
+
+# Short alias used by integrations that refer to the backend by its strategy.
+RetrogradeScipyLiquidationSolver = ScipyRetrogradeLiquidationSolver
 
 
 # =============================================================================
@@ -758,6 +845,7 @@ class TerminalLiquidationSolver:
         self.shop_model = shop_model or TownShopModel()
         self.milp_solver = MILPLiquidationSolver(self.shop_model)
         self.scipy_solver = ScipyMinimizeLiquidationSolver(self.shop_model)
+        self.retrograde_solver = ScipyRetrogradeLiquidationSolver(self.shop_model)
         self.dp_solver = RetrogradeDPSolver(self.shop_model)
 
         self._cached_schedule: Optional[Dict[str, List[int]]] = None
@@ -770,7 +858,13 @@ class TerminalLiquidationSolver:
         self.shop_model.unlocked_shops = state.unlocked_shops
 
         # Solve for 10-day quotas across all commodities
-        if self.backend == "scipy":
+        if self.backend == "retrograde":
+            quotas = self.retrograde_solver.solve(
+                initial_shed=state.shed_inventory,
+                daily_yields=state.daily_projected_yields,
+                market_inv=state.market_inventory,
+            )
+        elif self.backend == "scipy":
             quotas = self.scipy_solver.solve(
                 initial_shed=state.shed_inventory,
                 daily_yields=state.daily_projected_yields,
@@ -908,7 +1002,9 @@ class LiquidationController:
                     orders.append(["SELL", str(item).upper(), str(qty)])
             return orders
 
-        # 2. Consumption Tick Execution (hours 0, 4, 8, 12, 16, 20)
+        # 2. Consumption Tick Execution (hours 0, 4, 8, 12, 16, 20).
+        # Never emit the full per-tick ceiling six times: quotas are daily
+        # totals, and a late-day replan must only sell the remaining amount.
         is_shop_tick = (hour in SHOP_TICK_HOURS)
         if not is_shop_tick:
             return []
@@ -916,7 +1012,10 @@ class LiquidationController:
         # Execute tick quota for items in shed
         for item, tick_qty in intent.tick_sell_quotas.items():
             avail = shed.get(item, 0)
-            target_to_sell = min(avail, tick_qty)
+            remaining = max(0, intent.sell_quotas.get(item, 0) - self._sold_today.get(item, 0))
+            ticks_left = sum(1 for tick in SHOP_TICK_HOURS if tick >= hour)
+            paced_target = math.ceil(remaining / max(1, ticks_left))
+            target_to_sell = min(avail, tick_qty, paced_target, remaining)
             if target_to_sell > 0:
                 orders.append(["SELL", item, str(target_to_sell)])
                 self._sold_today[item] = self._sold_today.get(item, 0) + target_to_sell

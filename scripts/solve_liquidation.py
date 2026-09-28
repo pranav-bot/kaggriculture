@@ -212,7 +212,7 @@ def print_liquidation_schedule(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Retrograde DP & MILP Liquidation Solver for Kaggriculture.")
-    parser.add_argument("--backend", choices=["milp", "scipy", "dp"], default="milp", help="Optimization solver backend")
+    parser.add_argument("--backend", choices=["milp", "scipy", "retrograde", "dp"], default="milp", help="Optimization solver backend")
     parser.add_argument("--demo", action="store_true", help="Run benchmark demonstration on synthetic Day 20 state")
     parser.add_argument("--replay", type=str, default=None, help="Path to replay json/json.gz to extract Day 20 state from")
     args = parser.parse_args()

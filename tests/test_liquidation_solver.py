@@ -360,3 +360,72 @@ def test_opening_book_to_liquidation_integration(mock_day20_obs: Dict[str, Any])
     assert ops_d20.get("_liquidation_active") is True
     assert ops_d20.get("_override_beam_search") is True
     assert "_liquidation_intent" in ops_d20
+
+
+def test_terminal_schedule_covers_exact_days_and_quota_totals(mock_day20_obs: Dict[str, Any]):
+    """Validate the ten-day terminal horizon and exact per-product liquidation totals."""
+    solver = TerminalLiquidationSolver(solver_backend="milp")
+    schedule = solver.plan_liquidation(mock_day20_obs)
+    state = solver._cached_day20_state
+    assert state is not None
+
+    assert list(schedule) == list(range(20, 30))
+    for product in PRODUCTS_LIST:
+        planned = sum(schedule[day].sell_quotas.get(product, 0) for day in range(20, 30))
+        available = state.shed_inventory.get(product, 0) + sum(
+            state.daily_projected_yields.get(product, [])
+        )
+        assert planned == available
+
+
+def test_consumption_tick_hours_and_tick_quotas(mock_day20_obs: Dict[str, Any]):
+    """Validate sell orders occur on all six shop ticks and not between ticks."""
+    controller = LiquidationController()
+    for hour in (0, 4, 8, 12, 16, 20):
+        obs = dict(mock_day20_obs, step=20 * 24 + hour, hour=hour)
+        orders = controller.generate_market_orders(obs)
+        assert all(order[0] == "SELL" for order in orders)
+
+    non_tick = dict(mock_day20_obs, step=20 * 24 + 1, hour=1)
+    assert controller.generate_market_orders(non_tick) == []
+
+
+def test_nonlinear_price_penalty_is_strict_and_batch_revenue_matches():
+    """Validate sequential market inventory causes a nonlinear revenue penalty."""
+    pristine = calculate_batch_revenue("MILK", 1, MARKET_I0)
+    later = calculate_batch_revenue("MILK", 1, MARKET_I0 + 40)
+    bulk = calculate_batch_revenue("MILK", 40, MARKET_I0)
+
+    assert later < pristine
+    assert bulk < pristine * 40
+
+
+def test_step_719_terminal_flush_boundary(mock_day20_obs: Dict[str, Any]):
+    """Validate Day 29 Hour 23 (step 719) flushes, while step 720 is out of phase."""
+    controller = LiquidationController()
+    terminal_obs = dict(mock_day20_obs, day=29, hour=23, step=719)
+    orders = controller.generate_market_orders(terminal_obs)
+    assert controller.is_in_liquidation_phase(terminal_obs) is True
+    assert ["SELL", "MILK", "18"] in orders
+
+    post_game = dict(mock_day20_obs, day=30, hour=0, step=720)
+    assert controller.is_in_liquidation_phase(post_game) is False
+
+
+def test_no_new_seeds_after_day_20_and_beam_override_output(mock_day20_obs: Dict[str, Any]):
+    """Validate late seed planting is blocked and the controller marks Beam as overridden."""
+    controller = LiquidationController()
+    for day in range(20, 30):
+        obs = dict(mock_day20_obs, day=day, step=day * 24, hour=1)
+        raw = {
+            "farmer": ["PLANT", "STRAWBERRY"],
+            "hand_0": ["BUY", "COW"],
+            "market": [["BUY_SEED", "STRAWBERRY", 1]],
+        }
+        filtered = controller.filter_mechanical_actions(raw, obs)
+        assert filtered["farmer"] == ["PASS"]
+        assert filtered["hand_0"] == ["PASS"]
+        assert filtered["_override_beam_search"] is True
+        assert filtered["_liquidation_intent"]["override_beam_search"] is True
+        assert "STRAWBERRY" in filtered["_liquidation_intent"]["prohibit_planting"]
+        assert all(order[0] != "BUY_SEED" for order in filtered["market"])
