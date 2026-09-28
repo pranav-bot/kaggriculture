@@ -20,6 +20,7 @@ wheels/
 *.csv
 *.db
 rating_trajectory.png
+loss_analysis_*.json
 eval_*.md
 tournaments/
 .agents/
@@ -27,6 +28,7 @@ tournaments/
 # Fast simulator tape caches
 *.tape
 replays/tapes/
+replays/live_losses/
 tapes/
 
 datasets/

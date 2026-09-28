@@ -62,6 +62,32 @@ longer above the forecast reservation value, and accepts an optional
 dependencies; without them, source compilation can still be checked with
 `python -m py_compile`.
 
+### Continuous IQL replay fine-tuning
+
+`scripts/continuous_train_iql.py` fine-tunes an existing IQL value checkpoint
+from typed replay tuples found under `replays/live_losses/` and
+`replays/live_wins/`. It uses a `DataLoader`, a default learning rate of
+`1e-5`, and importance-weighted expectile regression. Samples with large
+current-model prediction error, bankruptcy, or non-positive realized return
+receive extra weight to correct live-loss overestimation without changing the
+base checkpoint.
+
+The script evaluates v1 and the fine-tuned model on a holdout split using
+mean squared error and atomically writes `iql_weights_v2.pt` only when the
+candidate improves:
+
+```bash
+python scripts/continuous_train_iql.py \
+  --v1 experiments/iql_value/iql_weights_v1.pt \
+  --v2 experiments/iql_value/iql_weights_v2.pt \
+  --replay replays/live_losses replays/live_wins
+```
+
+Replay rows must contain `spatial` `(23, 10, 10)`, `vec` `(65,)`, and one of
+`return`, `return_to_go`, or `rtg`; `action` is retained for schema
+compatibility. If no valid rows are available, the script reports a blocked
+result and does not create a v2 checkpoint.
+
 ---
 
 ## Scripts Guide & Research Infrastructure
@@ -554,6 +580,30 @@ Key features:
 - **Persistent SQLite & CSV Logging**: Stores post-match ratings and episode metadata in `data/submission_ratings.db` keyed by `(submission_id, episode_id)`.
 - **Rolling-10 Delta & Plateau Detection**: Tracks the rating delta over the last 10 matches. If the rolling delta becomes negative, triggers the terminal alert: `SUBMISSION <ID> PLATEAU DETECTED. ELO: <SCORE>.`
 - **Visualization (`rating_trajectory.png`)**: Produces comparative multi-submission trajectory plots with highlighted plateau inflection points.
+
+---
+
+## Ladder Loss Autopsy & Reverse-Engineering (`scripts/autopsy_ladder_losses.py`)
+
+Automated post-match autopsy tool that identifies ladder losses in `data/submission_ratings.db`, downloads match replays via the Kaggle CLI, and extracts winning opponent macro-strategies and crossover points.
+
+```bash
+# Autopsy all recorded ladder loss episodes:
+python scripts/autopsy_ladder_losses.py --all-losses
+
+# Autopsy a specific match:
+python scripts/autopsy_ladder_losses.py --episode 114793445
+```
+
+Key features:
+- **Database Query Integration**: Automatically queries `data/submission_ratings.db` for matches where our agent's terminal score fell below the opponent's.
+- **Kaggle CLI Replay Fetching**: Downloads raw replays to `replays/live_losses/` via `kaggle competitions replay <EPISODE_ID>`.
+- **Opponent Macro-Milestone Extraction**:
+  - Exact Day/Hour when opponent unlocked the Northeast (`NE`) and Southwest (`SW`) quadrants.
+  - Peak herd size, animal acquisition breakdown (Cows vs Sheep), and timing.
+  - Quadratic Wool market crash detection: identifies whether the wholesale Wool price collapsed to the $1.0 floor and flags if the opponent dumped inventory to trigger it.
+- **Telescoping `return_to_go_t` & Crossover Turn**: Computes turn-by-turn net worth and undiscounted return-to-go, pinpointing the exact turn our agent's trajectory fell permanently behind and detailing the immediate catalyst.
+- **Structured JSON Autopsy**: Outputs `loss_analysis_<EPISODE_ID>.json` with complete opponent build orders and trajectory timelines.
 
 ---
 
