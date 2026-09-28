@@ -1,0 +1,64 @@
+{
+  "timestamp": 1790611865.859475,
+  "seeds": 2,
+  "total_games": 4,
+  "top_agent": "agent_final",
+  "latency_threshold_ms": 0.05,
+  "leaderboard": [
+    {
+      "name": "agent_final",
+      "path": "/Users/pranav/dev/kaggriculture/submissions/agent_final/main.py",
+      "elo": 1876.9941854251506,
+      "games": 4,
+      "wins": 4,
+      "draws": 0,
+      "losses": 0,
+      "win_rate": 1.0,
+      "win_rate_ci95": [
+        1.0,
+        1.0
+      ],
+      "avg_terminal_cash": 77813.25,
+      "mean_margin": 48776.0,
+      "mean_act_ms": 0.06625,
+      "max_act_ms": 0.147,
+      "errors": 0,
+      "forfeits": 0,
+      "latency_violation": true
+    },
+    {
+      "name": "shop_opportunist",
+      "path": "/Users/pranav/dev/kaggriculture/submissions/shop_opportunist/main.py",
+      "elo": 1474.238217718612,
+      "games": 4,
+      "wins": 0,
+      "draws": 0,
+      "losses": 4,
+      "win_rate": 0.0,
+      "win_rate_ci95": [
+        0.0,
+        0.0
+      ],
+      "avg_terminal_cash": 29037.0,
+      "mean_margin": -48776.0,
+      "mean_act_ms": 0.074,
+      "max_act_ms": 0.206,
+      "errors": 0,
+      "forfeits": 0,
+      "latency_violation": true
+    }
+  ],
+  "mcnemar_vs_top": {
+    "shop_opportunist": {
+      "games": 4,
+      "better_a": 4,
+      "better_b": 0,
+      "p_value": 0.125,
+      "mean_diff": 48776.25,
+      "ci95": [
+        43567.54490639948,
+        53984.95509360052
+      ]
+    }
+  }
+}
