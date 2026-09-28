@@ -33,6 +33,35 @@ The project is integrated with **`kaggriculture-simulation`**, a byte-identical 
 
 See **[`docs/kaggriculture_simulation_guide.md`](docs/kaggriculture_simulation_guide.md)** for architecture, benchmarks, and API usage.
 
+### Causal market forecasting
+
+`kaggriculture.models.MarketForecaster` is a lightweight causal GRU for
+counterfactual market data. It consumes exactly 48 hourly feature rows:
+market price and inventory, observed volume and demand, opponent cash
+reserves, opponent-visible cows, cyclical hour features, price/inventory
+changes, and one-hot active-town-shop indicators. The model returns six
+future inventory-delta means and log variances (covering the next 1–6 turns);
+`gaussian_nll_loss` trains the diagonal Gaussian output.
+
+```python
+from kaggriculture.models import MarketForecaster, get_optimal_liquidation_volume
+
+model = MarketForecaster()
+mean, log_variance = model(window_48h)
+safe_volume = get_optimal_liquidation_volume(
+    current_inventory=inventory,
+    predicted_price_curve=mean.detach(),
+    item="WOOL",
+)
+```
+
+The liquidation helper evaluates the repository's nonlinear market curve one
+unit at a time, stops at the `$1` floor or when the marginal quote is no
+longer above the forecast reservation value, and accepts an optional
+`max_volume` cap. Forecaster tests require the project's PyTorch and pytest
+dependencies; without them, source compilation can still be checked with
+`python -m py_compile`.
+
 ---
 
 ## Scripts Guide & Research Infrastructure
@@ -48,9 +77,18 @@ Key tools in workflow order:
 3. **`scripts/trace_replay_match.py`** — Forensic simulation tracer comparing live actions against historical opponent steps turn-by-turn (~0.5s)
 4. **`scripts/eval_cash.py`** — Evaluates terminal cash across 14 benchmark seeds (1, 3, 5, 7, 10, 15, 20) in ~4s
 5. **`standoff/run_standoff.py`** — Fast round-robin tournament across all 62 agents in `submissions/` (~23s total)
-6. **`scripts/quant_full_product.py`** — SciPy-based multi-product pricing and liquidation optimizer
-7. **`scripts/test_submission.py`** — Instant local match simulator (<1ms/turn) and Kaggle validator
-8. **`scripts/build_submission.py`** — Package and validate a Kaggle-ready submission (single-file or tar.gz)
+6. **`scripts/pipeline_offline_rl.py`** — Unified Offline RL pipeline runner: EDA schema validation, feature transformation (spatial tensors, macro-intents, net worth returns), chunked caching, and PyTorch DataLoader benchmarking (>132k trans/sec)
+7. **`scripts/generate_counterfactual_dataset.py`** — Multiprocessing counterfactual data generator: forks replay states in Rust `kaggsim.env.Env`, injects HOLD market actions, executes fast heuristic rollouts, and streams tuples to `.jsonl`
+8. **`scripts/quant_full_product.py`** — SciPy-based multi-product pricing and liquidation optimizer; also hosts the BOCD opponent-hoarding detector (`--hoarding-demo`, `--hoarding-replay`)
+9. **`scripts/train_iql_value.py`** — IQL expectile value network (τ=0.7) → `experiments/iql_value/iql_value_net.pt`
+10. **`scratch_grandmaster.py`** — Apex division-of-labor grandmaster with `MacroOptionManager` (Hour 0/12 Option-Critic gating), 11-hour Kuhn-Munkres bypass, and `PoisonedWellTrap` (deceptive Wheat signaling, 4h shop recovery tracking)
+11. **`src/kaggriculture/meta/`** — PSRO MetaController switching MacroIntent profiles above Beam Search
+12. **`scripts/psro_league.py`** — PSRO Fictitious-Play league: payoff matrix via `kagg tournament`, Nash solve, best-response training, Nash ensemble
+13. **`scripts/opening_book_generator.py`** — Replay consensus parser & runtime `OpeningBookController` for deterministic Days 0–15 expansion books
+14. **`scripts/run_elo_tournament.py`** — Master evaluation script & local Elo ladder engine wrapping `kagg tournament` with McNemar A/B test CIs and 5.0ms/turn latency profiling gate
+15. **`scripts/solve_liquidation.py`** — Retrograde DP & MILP terminal liquidation solver calculating Days 20–29 daily quotas and 6-tick shop synchronizations
+16. **`scripts/test_submission.py`** — Instant local match simulator (<1ms/turn) and Kaggle validator
+17. **`scripts/build_submission.py`** — Package and validate a Kaggle-ready submission (single-file or tar.gz)
 
 ### `scripts/test_submission.py`
 
@@ -128,6 +166,8 @@ python scripts/build_submission.py [options]
 | `--agent`, `-a` | `shop_opportunist` | Template name or path to `main.py` |
 | `--format`, `-f` | `tar` | `tar` (recommended) or `single` |
 | `--no-validate` | off | Skip the dry-run match against `random` |
+| `--weights PATH` | auto-discovered | Include a PyTorch `.pt` file; repeatable, each file must be under 20 MiB |
+| `--rust-binary PATH` | auto-discovered | Static Linux `kagg` executable to include in the archive |
 | `--message`, `-m` | auto-generated | Submission message for the Kaggle CLI |
 | `--submit`, `-s` | off | Submit directly via `kaggle competitions submit` |
 
@@ -141,10 +181,30 @@ Creates `build/submission.tar.gz` containing:
 submission.tar.gz
 ├── main.py          # your agent entrypoint
 ├── *.py             # sibling modules from the same submission folder (if any)
-└── kaggriculture/   # full library copy
+├── kaggriculture/   # full library copy
+├── *.pt              # selected IQL/value weights under 20 MiB each
+└── kagg              # static Linux Rust simulator binary
 ```
 
 Kaggle extracts the archive with `main.py` at the root. This is the preferred format because it keeps agent code separate from the library and mirrors the multi-file layout used during development.
+
+The builder rejects host-native binaries and requires an ELF Linux executable
+that is statically linked (or built with musl). The macOS development binary
+under `kaggriculture-simulation/src-rust/target/release/kagg` cannot be
+packaged for Kaggle; build an `x86_64-unknown-linux-musl` release binary and
+pass it explicitly:
+
+```bash
+python scripts/build_submission.py \
+  -a two_team_grandmaster \
+  --weights experiments/iql_value/iql_value_net.pt \
+  --rust-binary /path/to/x86_64-unknown-linux-musl/release/kagg
+```
+
+Archives exclude `__pycache__`, `.pyc`, and `.pyo` files. Weight discovery
+includes explicitly supplied files, weights next to the selected agent, and
+`.pt` files under `experiments/`; use `--weights` when the intended artifact
+must be unambiguous.
 
 **`single`**
 
@@ -164,6 +224,32 @@ Unless `--no-validate` is passed, the script runs a 720-turn match (`agent` vs `
 - Syntax errors in the bundled code
 - Missing or non-callable `agent(obs)` function in `main.py`
 - Runtime exceptions during a turn
+- Missing static Linux `kagg` binary when building the tar format
+
+### Latency profiling and A/B evaluation
+
+`scripts/test_submission.py` exposes two strict helpers for deployment
+validation:
+
+```python
+from scripts.test_submission import profile_agent_calls, run_ab_evaluation
+
+profile = profile_agent_calls(agent, observations)
+ab = run_ab_evaluation("candidate/main.py", "sovereign_apex/main.py")
+```
+
+`profile_agent_calls` requires exactly 720 observations by default and raises
+`AssertionError` if any `agent(obs)` call exceeds 50 ms or if cumulative agent
+compute exceeds 5 seconds. It returns total, maximum, median, and p95 timing
+statistics. Feed it the real observation stream from a full match rather than
+synthetic observations.
+
+`run_ab_evaluation` requires exactly 100 seeds, configures the Rust `kagg
+tournament` runner with both seat orders, and, when tournament result files are
+available, adds paired McNemar statistics from the completed result rows.
+Install/build the Rust toolkit and make its Python package importable before
+using this integration. If the tournament package is unavailable, provide a
+real `fallback_runner`; the helper will not fabricate match results.
 
 #### Examples
 
@@ -349,6 +435,46 @@ Past benchmark runs are archived in `standoff/*_results.json` for comparison acr
 |------|----------|
 | `test_submission.py` | Fast head-to-head checks, HTML replays, testing built tarballs |
 | `standoff/run_standoff.py` | Ranking a candidate against the full field, latency profiling, regression tracking |
+
+---
+
+## Master Elo Tournament & Profiling Gate (`scripts/run_elo_tournament.py`)
+
+Executes high-throughput, parallel round-robin tournaments across all submissions in `submissions/` using native Rust `kagg tournament`. Computes global Elo ratings, paired McNemar A/B test confidence intervals, and enforces a strict 5.0ms/turn latency profiling gate.
+
+```bash
+# Evaluate key submissions across 100 fixed seeds (with 8 parallel workers)
+python scripts/run_elo_tournament.py --agents agent_final care_mill shop_opportunist melon_rusher --seeds 100 --workers 8
+
+# Run across all submissions with custom 5ms profiling gate and updated Elo storage
+python scripts/run_elo_tournament.py --all --seeds 50 --max-ms 5.0 --output-dir tournaments/full_league
+```
+
+Key features:
+- **Round-Robin Fair Scheduling**: Plays both seat assignments ($0 \text{ vs } 1$ and $1 \text{ vs } 0$) for every submission pair across identical world seeds.
+- **McNemar A/B Testing**: Exact two-sided binomial p-values and 95% cash differential confidence intervals against the top-ranked agent.
+- **Elo Rating Updates**: Iterative logistic rating updates ($K=32$) persisted to `data/elo_leaderboard.json`.
+- **Latency Profiling Gate**: Parses per-turn execution time; highlights any submission exceeding 5.0ms/turn in bold red as a Latency Violation to prevent consuming Kaggle's 60s overage bank.
+
+---
+
+## Retrograde DP & MILP Liquidation Solver (`scripts/solve_liquidation.py`)
+
+Solves the multi-product terminal liquidation problem for Days 20 through 29 using Mixed-Integer Linear Programming (`scipy.optimize.milp`), continuous non-linear optimization (`scipy.optimize.minimize`), and discrete Bellman backward induction (`RetrogradeDPSolver`).
+
+```bash
+# Run benchmark demonstration comparing optimal solver schedule vs Day 29 dump:
+python scripts/solve_liquidation.py --demo
+
+# Evaluate on a historical replay file:
+python scripts/solve_liquidation.py --replay replays/other_agents/rank1/112521191.json.gz
+```
+
+Key features:
+- **Town Shop Drain Synchronization**: Aligns sales with the 6 daily consumption ticks (hours 0, 4, 8, 12, 16, 20), preventing quadratic (Wool) and linear (Milk) price collapses to the $1 floor.
+- **Seed Maturation Enforcement**: Strictly prohibits planting Strawberry/Melon on Days 20+, Tomato on Days 22+, and all crops on Days 28+ whose maturation cycle extends past Day 30.
+- **Shed Capacity Bound**: Guarantees total stored inventory remains $\le 100$ units across all 10 days.
+- **Daily LiquidationIntent**: Overrides standard Beam Search on Days 20–29 with exact per-product quotas and terminal Day 29 asset flushing.
 
 ---
 

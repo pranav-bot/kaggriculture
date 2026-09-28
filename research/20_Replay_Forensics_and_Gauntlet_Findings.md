@@ -89,10 +89,15 @@ Sequence: $1, $2, $3, $5, $8, $13, $21, $34 (Total for 8 hands = $87/day).
 
 Using [`scripts/replay_parser.py`](file:///Users/pranav/dev/kaggriculture/scripts/replay_parser.py), [`scripts/trace_timeline.py`](file:///Users/pranav/dev/kaggriculture/scripts/trace_timeline.py), and [`scripts/trace_replay_match.py`](file:///Users/pranav/dev/kaggriculture/scripts/trace_replay_match.py), we conducted forensic timeline analyses on the strongest agents in the Kaggle leaderboard:
 
-### 1. Boey (Rank 1 — $170,961 in `112542379.json`)
-- **Land Expansion:** Unlocked NE quadrant on **Day 5** ($1,000), SW quadrant on **Day 9** ($2,000). Total farm size: 72 usable tiles.
+### 1. Boey (Rank 1 — $130,115 terminal cash in `112542379.json`)
+
+> Note: the gauntlet tables below list Boey-tape at $170,961 — that is the
+> tape's realized cash when replayed against our candidate agent (different
+> shared-book dynamics), not the replay file's logged $130,115 (Vadim:
+> $115,518; seed 1676200408).
+- **Land Expansion:** Unlocked NE quadrant on **Day 6** (step 146, $1,000), SW quadrant on **Day 9** (step 218, $2,000). Total farm size: 72 usable tiles.
 - **Asset Allocation by Day 15:** 18 Cows, 6 Sheep, 14 Strawberry plots, 8 farmhands.
-- **Cash Flow Transition:** High-volume early fertilizer sales funded Day 5 NE purchase. Transitioned into 14 strawberry plots when wholesale strawberry was at $240.
+- **Cash Flow Transition:** High-volume early fertilizer sales funded the Day 6 NE purchase. Transitioned into 14 strawberry plots when wholesale strawberry was at $240.
 - **Labor Strategy:** 8 hands permanently hired starting Day 6. Perfect segregation: 3 hands dedicated to livestock feeding/caring, 5 hands dedicated to strawberry watering and harvesting.
 
 ### 2. Clement Ling (Rank 1 — $108,637 in `112618133.json`)
@@ -189,4 +194,4 @@ Using [`scripts/eval_against_replays.py`](file:///Users/pranav/dev/kaggriculture
 - **Average Agent Cash:** **$61,820** (Consistent high liquidity across all 20 seeds).
 - **Peak Match Performance:** **$77,943** vs M & M & P & Q.
 - **Decisive Landmark Wins:** BenPalmer59 (+$54.8k margin), M & M & P & Q (+$33.0k and +$27.3k margins), Dohwan Kwak (+$30.5k margin).
-- **Core Remaining Gap:** Top Rank 1 agents (Boey, Kaggledew Valley) reach $150k+ by achieving Day 5 Northeast and Day 9 Southwest expansion with simultaneous 14-strawberry cultivation. Accelerating the land purchase trigger is the key lever to flip the remaining close matches.
+- **Core Remaining Gap:** Top Rank 1 agents (Boey, Kaggledew Valley) reach $150k+ by achieving Day 6 Northeast and Day 9 Southwest expansion with simultaneous 14-strawberry cultivation. Accelerating the land purchase trigger is the key lever to flip the remaining close matches.

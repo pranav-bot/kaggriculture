@@ -308,7 +308,7 @@ We built a local replay simulation engine (`scripts/eval_against_replays.py`) th
 | `112561550.json` | 890727037 | Boey (Rank 1) | $152,531 | $45,714 | -$106,817 | Loss |
 
 ### Key Forensic Discoveries from Rank 1 Agents (Boey & Kaggledew Valley):
-1. **Aggressive 3-Quadrant Expansion:** Boey unlocks NE on **Day 5** ($1,000) and SW on **Day 9** ($2,000). Total usable land = **72 tiles**.
+1. **Aggressive 3-Quadrant Expansion:** Boey unlocks NE on **Day 6** (step 146, $1,000) and SW on **Day 9** (step 218, $2,000). Total usable land = **72 tiles**.
 2. **Dual-Engine Portfolio (18 Cows + 14 Strawberries):**
    - Cows generate $4,500/day in gross milk.
    - 14 Fertilized Strawberry plots generate 28 strawberries every 3 days @ $220/unit = **$6,160 per harvest cycle = ~$2,050/day**, without cannibalizing the milk market.

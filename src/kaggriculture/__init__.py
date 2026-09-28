@@ -46,8 +46,37 @@ from kaggriculture.helpers import (
     PlantState,
     check_max_yield_met,
 )
+from kaggriculture.models import (
+    MarketForecaster,
+    MarketWindowDataset,
+    gaussian_nll_loss,
+    probabilistic_nll_loss,
+    get_optimal_liquidation_volume,
+    encode_market_state,
+    HORIZON_HOURS,
+    OPPONENT_INTENTS,
+    OpponentIntentModel,
+    encode_opponent_observation,
+    get_opponent_intent,
+)
+from kaggriculture.opening_book import (
+    OpeningBookController,
+    OPENING_BOOK_SCHEDULE,
+)
+from kaggriculture.liquidation_solver import (
+    LiquidationIntent,
+    TerminalLiquidationSolver,
+    LiquidationController,
+    MILPLiquidationSolver,
+    RetrogradeDPSolver,
+    ScipyMinimizeLiquidationSolver,
+    is_seed_viable_for_planting,
+    get_forbidden_crops,
+)
 
 __all__ = [
+    "OpeningBookController",
+    "OPENING_BOOK_SCHEDULE",
     "Actions", "ActionController", "ActionContoller",
     "CropConfig", "AnimalConfig", "FertilizerConfig",
     "Wheat", "Carrot", "Tomato", "Strawberry", "Melon",
@@ -89,4 +118,23 @@ __all__ = [
     "OpponentProfile",
     "analyze_opponent_farm",
     "check_max_yield_met",
+    "MarketForecaster",
+    "MarketWindowDataset",
+    "gaussian_nll_loss",
+    "probabilistic_nll_loss",
+    "get_optimal_liquidation_volume",
+    "encode_market_state",
+    "HORIZON_HOURS",
+    "OPPONENT_INTENTS",
+    "OpponentIntentModel",
+    "encode_opponent_observation",
+    "get_opponent_intent",
+    "LiquidationIntent",
+    "TerminalLiquidationSolver",
+    "LiquidationController",
+    "MILPLiquidationSolver",
+    "RetrogradeDPSolver",
+    "ScipyMinimizeLiquidationSolver",
+    "is_seed_viable_for_planting",
+    "get_forbidden_crops",
 ]
