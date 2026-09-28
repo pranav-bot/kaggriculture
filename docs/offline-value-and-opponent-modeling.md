@@ -110,6 +110,23 @@ mixture, trains a Best Response against that mixture, and repeats.
   (smoke: `--seeds 8 --eval-seeds 4 --iters 1`); `--final-only` re-emits the
   ensemble from the last solved Nash.
 
+## Ladder-Ghost Pipeline (`scripts/ladder_ghost.py`)
+
+Turns a parsed ladder loss into a trainable league opponent. `loss_analysis.json`
+(build order: `EXPAND_*`, `HIRE`, `BUY_SEED/ANIMAL`, `PLANT`, `SELL/DUMP` with
+day/count) is validated and day-sorted, then rendered into a deterministic
+`submissions/ladder_ghost_<EPISODE_ID>/main.py`: one-shot market orders via a
+blind per-episode ledger, seed provisioning, shed liquidation, and field work
+through our vendored Kuhn-Munkres routing layer (scipy, greedy fallback).
+The ghost is evaluated with the grandmaster (`agent_final`) plus league context
+through the PSRO meta-solver (round-robin matrix → Fictitious Play Nash). If the
+grandmaster's win rate vs the ghost drops below 0.5, Optuna HPO (default 12
+trials) searches Beam Search weights (3 intent-prior scales, holding-penalty
+multiplier, 2 sell margins, top-k intents) on a tunable MetaController hybrid,
+and ships the winner as `submissions/ladder_counter_<ID>/`. Verified live:
+Boey ghost injected, grandmaster holds 1.000 (no HPO); forced HPO run completed
+3 real trials with counter materialization.
+
 ## 4. Counterfactual Market Data Generator (`kaggriculture.counterfactual.generator`)
 
 Retroactively evaluates alternative market decisions in historical replay episodes to generate `counterfactual_value` regression targets for market sequence forecasting.

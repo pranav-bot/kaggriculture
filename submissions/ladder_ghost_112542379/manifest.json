@@ -1,0 +1,39 @@
+{
+ "episode_id": "112542379",
+ "opponent": "Boey",
+ "build_order": [
+  {
+   "day": 0,
+   "action": "BUY_ANIMAL",
+   "animal": "COW",
+   "count": 3
+  },
+  {
+   "day": 0,
+   "action": "PLANT",
+   "crop": "WHEAT",
+   "count": 8
+  },
+  {
+   "day": 5,
+   "action": "EXPAND_NE"
+  },
+  {
+   "day": 6,
+   "action": "HIRE",
+   "count": 8
+  },
+  {
+   "day": 10,
+   "action": "PLANT",
+   "crop": "STRAWBERRY",
+   "count": 14
+  },
+  {
+   "day": 25,
+   "action": "DUMP",
+   "product": "MILK"
+  }
+ ],
+ "routing": "kuhn-munkres (vendored, scipy/greedy)"
+}
