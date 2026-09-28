@@ -84,6 +84,7 @@ Key tools in workflow order:
 10. **`scratch_grandmaster.py`** — Apex division-of-labor grandmaster with `MacroOptionManager` (Hour 0/12 Option-Critic gating), 11-hour Kuhn-Munkres bypass, and `PoisonedWellTrap` (deceptive Wheat signaling, 4h shop recovery tracking)
 11. **`src/kaggriculture/meta/`** — PSRO MetaController switching MacroIntent profiles above Beam Search
 12. **`scripts/psro_league.py`** — PSRO Fictitious-Play league: payoff matrix via `kagg tournament`, Nash solve, best-response training, Nash ensemble
+13. **`scripts/find_best_agent.py`** — Master evaluation: 500-seed round-robin over all submissions + elite tape gauntlet, Elo/McNemar/latency Markdown leaderboard
 13. **`scripts/opening_book_generator.py`** — Replay consensus parser & runtime `OpeningBookController` for deterministic Days 0–15 expansion books
 14. **`scripts/run_elo_tournament.py`** — Master evaluation script & local Elo ladder engine wrapping `kagg tournament` with McNemar A/B test CIs and 5.0ms/turn latency profiling gate
 15. **`scripts/solve_liquidation.py`** — Retrograde DP & MILP terminal liquidation solver calculating Days 20–29 daily quotas and 6-tick shop synchronizations
@@ -497,6 +498,40 @@ Key features:
 - **Exception Shield**: Catches all `Exception` classes (including `KeyError`, `IndexError`, FFI failures) and seamlessly returns valid fallback moves.
 - **Watchdog & Circuit Breaker**: Uses `time.perf_counter()` to monitor cumulative overage consumption ($>1.0\text{s}$ soft turn limit) and remaining bank. If remaining overage drops below $5.0\text{s}$, it permanently trips the circuit breaker, disabling heavy Beam Search/neural inference for the remainder of the episode.
 - **Autopsy Logging**: Emits structured diagnostics and full stack traces to `sys.stderr` for rapid post-match debugging.
+
+---
+
+## Live Submission Telemetry & Fallback Monitor (`scripts/monitor_live_submissions.py`)
+
+Automated live telemetry monitor that queries the Kaggle CLI to inspect live match execution logs for fallback triggers, RAM breaches, and timing overages.
+
+```bash
+# Monitor the latest 10 matches of our active submission:
+python scripts/monitor_live_submissions.py --max-episodes 10
+
+# Assert submission.tar.gz size strictly < 100 MiB before upload:
+python scripts/monitor_live_submissions.py --check-size build/submission.tar.gz
+
+# Inspect a specific submission:
+python scripts/monitor_live_submissions.py --submission-id 56647370
+```
+
+Key features:
+- **Pre-Flight Archive Validation**: Asserts `submission.tar.gz` is strictly $< 100\text{ MiB}$ (104,857,600 bytes) to prevent silent Kaggle Docker build aborts.
+- **Automated Submission & Episode Resolution**: Queries Kaggle CLI to automatically discover the latest successful submission ID and its recent completed matches.
+- **Seat Resolution**: Leverages Kaggle's 403 Forbidden permission model to deterministically identify whether our agent played as seat 0 or seat 1 without downloading multi-megabyte replay files.
+- **Telemetry Regex Scanner**: Scans live `sys.stderr` logs for `[IMPENETRABLE_AGENT]`, `SafeFallbackController`, `MemoryError`, `numpy ArrayMemoryError` (6.5 GiB RAM threshold), and overage bank depletion.
+- **Diagnostic Report**: Emits a formatted terminal summary (`Analyzed X recent episodes. Fallback triggered in Y episodes. Average overage consumed: Z seconds`) with detailed exception autopsies.
+
+---
+
+## Replay Safety Fallback Auditor (`scripts/audit_replay_fallbacks.py`)
+
+Forensic auditor that inspects offline `.json` or `.json.gz` match replays to verify whether the agent executed its active policy or fell back into `SafeFallbackController` or an all-PASS stagnation loop.
+
+```bash
+python scripts/audit_replay_fallbacks.py --dir replays/my_agents/psro_leauge_pick
+```
 
 ---
 

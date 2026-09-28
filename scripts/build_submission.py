@@ -83,6 +83,7 @@ def build_multifile_tar(
     *,
     weights: Iterable[Path] = (),
     rust_binary: Optional[Path] = None,
+    include_rust_binary: bool = True,
 ) -> Path:
     """
     Bundles the agent's main.py and the kaggriculture library into a submission.tar.gz.
@@ -120,9 +121,12 @@ def build_multifile_tar(
         # 4. Include model weights and the Linux runtime.
         for weight in find_weight_files(agent_path, weights):
             shutil.copy2(weight, tmp_path / weight.name)
-        binary = find_static_rust_binary(rust_binary)
-        shutil.copy2(binary, tmp_path / "kagg")
-        (tmp_path / "kagg").chmod(0o755)
+        if include_rust_binary:
+            binary = find_static_rust_binary(rust_binary)
+            shutil.copy2(binary, tmp_path / "kagg")
+            (tmp_path / "kagg").chmod(0o755)
+        else:
+            print("  (skipping static kagg runtime: pure-Python agent)")
 
         # 5. Create tar.gz archive
         output_tar.parent.mkdir(parents=True, exist_ok=True)
@@ -138,8 +142,15 @@ def build_multifile_tar(
                 )
     finally:
         shutil.rmtree(staging, ignore_errors=True)
-                
-    print(f"✅ Multi-file archive created: {output_tar} ({output_tar.stat().st_size / 1024:.1f} KB)")
+
+    archive_size = output_tar.stat().st_size
+    max_archive_bytes = 100 * 1024 * 1024  # 100 MiB limit
+    if archive_size >= max_archive_bytes:
+        raise ValueError(
+            f"Submission archive {output_tar} size ({archive_size / (1024*1024):.2f} MiB) "
+            f"exceeds Kaggle limit of 100 MiB ({max_archive_bytes:,} bytes)!"
+        )
+    print(f"✅ Multi-file archive created: {output_tar} ({archive_size / 1024:.1f} KB, strictly < 100 MiB)")
     return output_tar
 
 
@@ -314,6 +325,12 @@ def main():
         help="Static Linux kagg binary to include",
     )
     parser.add_argument(
+        "--no-rust-binary", action="store_true",
+        help="Skip bundling the static kagg runtime (only for agents that "
+             "never shell out to kagg; cross-compiling musl from macOS is "
+             "unsupported)",
+    )
+    parser.add_argument(
         "--message", "-m",
         default=None,
         help="Submission message for Kaggle CLI",
@@ -344,7 +361,8 @@ def main():
     if args.format == "tar":
         out_path = BUILD_DIR / "submission.tar.gz"
         built_artifact = build_multifile_tar(
-            agent_path, out_path, weights=args.weights, rust_binary=args.rust_binary
+            agent_path, out_path, weights=args.weights, rust_binary=args.rust_binary,
+            include_rust_binary=not args.no_rust_binary,
         )
     else:
         out_path = BUILD_DIR / "main.py"
