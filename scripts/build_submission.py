@@ -10,17 +10,80 @@ import shutil
 import subprocess
 import sys
 import tarfile
-import tempfile
 from pathlib import Path
+from typing import Iterable, Optional
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 SRC_DIR = ROOT_DIR / "src" / "kaggriculture"
 SUBMISSIONS_DIR = ROOT_DIR / "submissions"
 BUILD_DIR = ROOT_DIR / "build"
+MAX_WEIGHT_BYTES = 20 * 1024 * 1024
 
 
-def build_multifile_tar(agent_path: Path, output_tar: Path) -> Path:
+def _static_linux_binary(candidate: Path) -> bool:
+    if not candidate.is_file() or not os.access(candidate, os.X_OK):
+        return False
+    try:
+        description = subprocess.check_output(
+            ["file", "-b", str(candidate)], text=True, stderr=subprocess.STDOUT
+        ).lower()
+    except (OSError, subprocess.CalledProcessError):
+        return False
+    return "elf" in description and (
+        "statically linked" in description
+        or "static-pie" in description
+        or "musl" in description
+    )
+
+
+def find_static_rust_binary(explicit: Optional[Path] = None) -> Path:
+    """Find a Linux static kagg binary, rejecting host-native executables."""
+    candidates = [explicit] if explicit else []
+    if os.environ.get("KAGG_STATIC_BINARY"):
+        candidates.append(Path(os.environ["KAGG_STATIC_BINARY"]))
+    candidates.extend(
+        ROOT_DIR / p for p in (
+            "kaggriculture-simulation/src-rust/target/x86_64-unknown-linux-musl/release/kagg",
+            "kaggriculture-simulation/src-rust/target/release/kagg",
+            "build/kagg",
+        )
+    )
+    for candidate in candidates:
+        if candidate and _static_linux_binary(candidate):
+            return candidate.resolve()
+    raise FileNotFoundError(
+        "No static Linux Rust binary found. Build kagg for "
+        "x86_64-unknown-linux-musl or pass --rust-binary PATH."
+    )
+
+
+def find_weight_files(agent_path: Path, weights: Iterable[Path] = ()) -> list[Path]:
+    """Collect requested/nearby .pt files and enforce the 20 MiB limit."""
+    candidates = list(weights)
+    candidates.extend(sorted(agent_path.parent.rglob("*.pt")))
+    candidates.extend(sorted((ROOT_DIR / "experiments").rglob("*.pt")))
+    result, seen = [], set()
+    for item in candidates:
+        item = Path(item).resolve()
+        if item in seen:
+            continue
+        seen.add(item)
+        if not item.is_file():
+            raise FileNotFoundError(f"Weight file does not exist: {item}")
+        if item.stat().st_size >= MAX_WEIGHT_BYTES:
+            raise ValueError(f"Weight file exceeds 20 MiB submission limit: {item}")
+        result.append(item)
+    return result
+
+
+def build_multifile_tar(
+    agent_path: Path,
+    output_tar: Path,
+    *,
+    weights: Iterable[Path] = (),
+    rust_binary: Optional[Path] = None,
+) -> Path:
     """
     Bundles the agent's main.py and the kaggriculture library into a submission.tar.gz.
     Kaggle extracts this archive with main.py at root.
@@ -28,8 +91,12 @@ def build_multifile_tar(agent_path: Path, output_tar: Path) -> Path:
     print(f"\n📦 Building multi-file tar.gz submission from {agent_path}...")
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
     
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
+    staging = BUILD_DIR / ".submission-staging"
+    if staging.exists():
+        shutil.rmtree(staging)
+    staging.mkdir(parents=True)
+    try:
+        tmp_path = staging
         
         agent_dir = agent_path.parent
 
@@ -43,12 +110,34 @@ def build_multifile_tar(agent_path: Path, output_tar: Path) -> Path:
             shutil.copy2(py_file, tmp_path / py_file.name)
 
         # 3. Copy kaggriculture package into staging dir
-        shutil.copytree(SRC_DIR, tmp_path / "kaggriculture", dirs_exist_ok=True)
+        shutil.copytree(
+            SRC_DIR,
+            tmp_path / "kaggriculture",
+            dirs_exist_ok=True,
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"),
+        )
         
-        # 4. Create tar.gz archive
+        # 4. Include model weights and the Linux runtime.
+        for weight in find_weight_files(agent_path, weights):
+            shutil.copy2(weight, tmp_path / weight.name)
+        binary = find_static_rust_binary(rust_binary)
+        shutil.copy2(binary, tmp_path / "kagg")
+        (tmp_path / "kagg").chmod(0o755)
+
+        # 5. Create tar.gz archive
+        output_tar.parent.mkdir(parents=True, exist_ok=True)
         with tarfile.open(output_tar, "w:gz") as tar:
             for item in tmp_path.iterdir():
-                tar.add(item, arcname=item.name)
+                tar.add(
+                    item,
+                    arcname=item.name,
+                    filter=lambda info: None
+                    if "__pycache__" in Path(info.name).parts
+                    or info.name.endswith((".pyc", ".pyo"))
+                    else info,
+                )
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
                 
     print(f"✅ Multi-file archive created: {output_tar} ({output_tar.stat().st_size / 1024:.1f} KB)")
     return output_tar
@@ -158,16 +247,19 @@ def validate_submission(target_file: Path, episode_steps: int = 720) -> bool:
     print(f"\n🔍 Validating submission against Kaggle Environments ({episode_steps} steps)...")
     try:
         import tarfile
-        import tempfile
         from kaggle_environments import make
 
         agent_entry = str(target_file)
         temp_dir = None
         if target_file.name.endswith(".tar.gz") or target_file.suffix == ".tar":
-            temp_dir = tempfile.TemporaryDirectory()
+            validation_dir = BUILD_DIR / ".submission-validation"
+            if validation_dir.exists():
+                shutil.rmtree(validation_dir)
+            validation_dir.mkdir(parents=True)
+            temp_dir = validation_dir
             with tarfile.open(target_file, "r:*") as tar:
-                tar.extractall(path=temp_dir.name)
-            agent_entry = str(Path(temp_dir.name) / "main.py")
+                tar.extractall(path=temp_dir)
+            agent_entry = str(temp_dir / "main.py")
 
         env = make("kaggriculture", configuration={"episodeSteps": episode_steps})
         
@@ -175,7 +267,7 @@ def validate_submission(target_file: Path, episode_steps: int = 720) -> bool:
         steps = env.run([agent_entry, "random"])
 
         if temp_dir is not None:
-            temp_dir.cleanup()
+            shutil.rmtree(temp_dir, ignore_errors=True)
         
         if steps and len(steps) > 0:
             final_p1_money = steps[-1][0].observation.farms[0]["money"]
@@ -214,6 +306,14 @@ def main():
         help="Skip dry-run validation",
     )
     parser.add_argument(
+        "--weights", action="append", type=Path, default=[],
+        help="PyTorch .pt weight to include (repeatable; each must be <20 MiB)",
+    )
+    parser.add_argument(
+        "--rust-binary", type=Path, default=None,
+        help="Static Linux kagg binary to include",
+    )
+    parser.add_argument(
         "--message", "-m",
         default=None,
         help="Submission message for Kaggle CLI",
@@ -243,7 +343,9 @@ def main():
     # 2. Build submission artifact
     if args.format == "tar":
         out_path = BUILD_DIR / "submission.tar.gz"
-        built_artifact = build_multifile_tar(agent_path, out_path)
+        built_artifact = build_multifile_tar(
+            agent_path, out_path, weights=args.weights, rust_binary=args.rust_binary
+        )
     else:
         out_path = BUILD_DIR / "main.py"
         built_artifact = build_standalone_single_file(agent_path, out_path)

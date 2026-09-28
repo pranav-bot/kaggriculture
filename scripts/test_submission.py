@@ -9,7 +9,9 @@ from __future__ import annotations
 import argparse
 import sys
 import time
+import statistics
 from pathlib import Path
+from typing import Any, Callable, Iterable, Mapping, Optional
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 SUBMISSIONS_DIR = ROOT_DIR / "submissions"
@@ -18,6 +20,129 @@ sys.path.insert(0, str(ROOT_DIR / "src"))
 sys.path.insert(0, str(ROOT_DIR / "scripts"))
 
 from sim_engine import FastSimulation, is_kagg_available
+
+
+def assert_profile_limits(
+    durations: Iterable[float],
+    *,
+    expected_turns: int = 720,
+    per_turn_limit_s: float = 0.050,
+    cumulative_limit_s: float = 5.0,
+) -> dict[str, Any]:
+    """Assert exact call count and strict per-turn/cumulative latency limits."""
+    values = list(durations)
+    assert len(values) == expected_turns, (
+        f"expected exactly {expected_turns} agent(obs) calls, got {len(values)}"
+    )
+    worst, total = max(values, default=0.0), sum(values)
+    assert all(value <= per_turn_limit_s for value in values), (
+        f"agent(obs) exceeded {per_turn_limit_s * 1000:.0f}ms: "
+        f"{worst * 1000:.3f}ms"
+    )
+    assert total <= cumulative_limit_s, (
+        f"cumulative agent(obs) time {total:.6f}s exceeds {cumulative_limit_s}s"
+    )
+    ordered = sorted(values)
+    return {
+        "turns": len(values),
+        "total_s": total,
+        "max_turn_s": worst,
+        "p50_s": statistics.median(values),
+        "p95_s": ordered[max(0, int(len(values) * 0.95) - 1)],
+    }
+
+
+def profile_agent_calls(
+    agent: Callable[[Any], Any],
+    observations: Iterable[Any],
+    *,
+    expected_turns: int = 720,
+    per_turn_limit_s: float = 0.050,
+    cumulative_limit_s: float = 5.0,
+) -> dict[str, Any]:
+    """Profile a real injected stream of observations (never fabricated here)."""
+    durations = []
+    for observation in observations:
+        started = time.perf_counter()
+        agent(observation)
+        durations.append(time.perf_counter() - started)
+    return assert_profile_limits(
+        durations,
+        expected_turns=expected_turns,
+        per_turn_limit_s=per_turn_limit_s,
+        cumulative_limit_s=cumulative_limit_s,
+    )
+
+
+def run_ab_evaluation(
+    candidate: str,
+    baseline: str,
+    *,
+    seeds: Iterable[int] = range(100),
+    tournament_runner: Optional[Callable[[dict], Mapping[str, Any]]] = None,
+    fallback_runner: Optional[
+        Callable[[str, str, list[int]], tuple[list[float], list[float]]]
+    ] = None,
+) -> Mapping[str, Any]:
+    """Run a paired 100-seed A/B evaluation using tournament/statistical tools."""
+    seed_list = list(seeds)
+    if len(seed_list) != 100:
+        raise ValueError(f"A/B evaluation requires exactly 100 seeds, got {len(seed_list)}")
+    if tournament_runner is None:
+        try:
+            from kaggsim.tournament import run_tournament
+            tournament_runner = run_tournament
+        except ImportError:
+            pass
+    if tournament_runner is not None:
+        summary = dict(tournament_runner({
+            "name": "submission-ab",
+            "candidate": {"name": "candidate", "type": "python", "path": candidate},
+            "panel": [{"name": "baseline", "type": "python", "path": baseline}],
+            "seats": "both",
+            "worlds": {"strategy": "list", "pool": seed_list},
+            "workers": 1,
+        }))
+        out_dir = summary.get("out_dir")
+        if out_dir:
+            try:
+                from kaggsim.tournament import load_results
+                from kaggsim.stats import paired_test, score
+
+                rows = load_results(str(Path(out_dir) / "results.jsonl"))
+                candidate_scores, baseline_scores = [], []
+                for row in rows:
+                    agents = row.get("agents", [])
+                    scores = row.get("scores")
+                    if len(agents) != 2 or not scores or len(scores) != 2:
+                        continue
+                    if set(agents) != {"candidate", "baseline"}:
+                        continue
+                    candidate_scores.append(scores[agents.index("candidate")])
+                    baseline_scores.append(scores[agents.index("baseline")])
+                if candidate_scores:
+                    summary["games"] = len(candidate_scores)
+                    summary["mcnemar"] = paired_test(
+                        candidate_scores, baseline_scores
+                    )
+                    summary["candidate_scores"] = candidate_scores
+                    summary["baseline_scores"] = baseline_scores
+            except (ImportError, OSError, ValueError, KeyError):
+                pass
+        return summary
+    if fallback_runner is None:
+        raise RuntimeError(
+            "kagg tournament is unavailable; inject fallback_runner for a real A/B test"
+        )
+    a, b = fallback_runner(candidate, baseline, seed_list)
+    try:
+        from kaggsim.stats import paired_test, score
+        return paired_test(
+            [score(x, y) for x, y in zip(a, b)],
+            [score(y, x) for x, y in zip(a, b)],
+        )
+    except ImportError:
+        return {"candidate": a, "baseline": b}
 
 
 def resolve_agent_target(name_or_path: str) -> str:

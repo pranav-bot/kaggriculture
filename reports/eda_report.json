@@ -1,0 +1,29 @@
+{
+  "episode_count": 10,
+  "mean_episode_length": 720.0,
+  "tile_frequencies": {
+    "EMPTY": 0.06285,
+    "LOCKED": 0.42375,
+    "WEED": 0.00845,
+    "PASTURE": 0.1096,
+    "PLANT": 0.39445,
+    "COOP": 0.0009
+  },
+  "tile_raw_counts": {
+    "EMPTY": 2514,
+    "LOCKED": 16950,
+    "WEED": 338,
+    "PASTURE": 4384,
+    "PLANT": 15778,
+    "COOP": 36
+  },
+  "reward_summary": {
+    "count": 20,
+    "min": 56663.0,
+    "max": 121034.0,
+    "mean": 91529.05
+  },
+  "engine_versions": {
+    "1.32.7": 10
+  }
+}
