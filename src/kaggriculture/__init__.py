@@ -73,6 +73,11 @@ from kaggriculture.liquidation_solver import (
     is_seed_viable_for_planting,
     get_forbidden_crops,
 )
+from kaggriculture.safety import (
+    SafeFallbackController,
+    impenetrable_agent,
+    ImpenetrableAgentWrapper,
+)
 
 __all__ = [
     "OpeningBookController",
@@ -137,4 +142,7 @@ __all__ = [
     "ScipyMinimizeLiquidationSolver",
     "is_seed_viable_for_planting",
     "get_forbidden_crops",
+    "SafeFallbackController",
+    "impenetrable_agent",
+    "ImpenetrableAgentWrapper",
 ]

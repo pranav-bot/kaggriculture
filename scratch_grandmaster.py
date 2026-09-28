@@ -820,7 +820,15 @@ def _units(
     return actions[0], actions[1:]
 
 
-def agent(obs: Dict[str, Any]) -> Dict[str, Any]:
+try:
+    from kaggriculture.safety import impenetrable_agent
+except ImportError:
+    def impenetrable_agent(fn):
+        return fn
+
+
+@impenetrable_agent
+def agent(obs: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     demand = _demand(obs.get("town", {}).get("unlocked_shops", []) or [])
     scan = _scan(obs)
     farmer, hands = _units(obs, scan, demand)
