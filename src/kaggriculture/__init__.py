@@ -78,6 +78,16 @@ from kaggriculture.safety import (
     impenetrable_agent,
     ImpenetrableAgentWrapper,
 )
+from kaggriculture.terminal_micro_liquidator import (
+    TerminalMicroLiquidator,
+)
+from kaggriculture.shop_drain_estimator import (
+    ShopDrainEstimator,
+    BayesianDrainFilter,
+    DrainRateHMM,
+    HIDDEN_DRAIN_STATES,
+)
+
 
 __all__ = [
     "OpeningBookController",
@@ -145,4 +155,10 @@ __all__ = [
     "SafeFallbackController",
     "impenetrable_agent",
     "ImpenetrableAgentWrapper",
+    "TerminalMicroLiquidator",
+    "ShopDrainEstimator",
+    "BayesianDrainFilter",
+    "DrainRateHMM",
+    "HIDDEN_DRAIN_STATES",
 ]
+
