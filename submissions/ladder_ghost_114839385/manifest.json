@@ -1,0 +1,69 @@
+{
+ "episode_id": "114839385",
+ "opponent": "Vadim Vasilenko",
+ "build_order": [
+  {
+   "day": 0,
+   "action": "BUY_ANIMAL",
+   "animal": "COW",
+   "count": 2
+  },
+  {
+   "day": 0,
+   "action": "BUY_ANIMAL",
+   "animal": "SHEEP",
+   "count": 3
+  },
+  {
+   "day": 0,
+   "action": "PLANT",
+   "crop": "WHEAT",
+   "count": 8
+  },
+  {
+   "day": 0,
+   "action": "HIRE",
+   "count": 5
+  },
+  {
+   "day": 6,
+   "action": "EXPAND_NE"
+  },
+  {
+   "day": 6,
+   "action": "HIRE",
+   "count": 8
+  },
+  {
+   "day": 6,
+   "action": "PLANT",
+   "crop": "STRAWBERRY",
+   "count": 16
+  },
+  {
+   "day": 8,
+   "action": "EXPAND_SW"
+  },
+  {
+   "day": 25,
+   "action": "DUMP",
+   "product": "MILK"
+  },
+  {
+   "day": 25,
+   "action": "DUMP",
+   "product": "WOOL"
+  },
+  {
+   "day": 25,
+   "action": "DUMP",
+   "product": "FERTILIZER"
+  },
+  {
+   "day": 27,
+   "action": "DUMP",
+   "product": "STRAWBERRY"
+  }
+ ],
+ "routing": "kuhn-munkres (vendored, scipy/greedy)"
+}
