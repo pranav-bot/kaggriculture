@@ -35,6 +35,12 @@ import inspect
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from time import perf_counter
+import functools
+import logging
+import math
+import time
+import traceback
+from typing import Union, Callable
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 try:
@@ -42,16 +48,419 @@ try:
 except ImportError:  # pragma: no cover - the fallback keeps the scratch agent portable.
     linear_sum_assignment = None
 
-try:
-    from kaggriculture.routing import (
-        reclamation_jobs as _packing_reclamation_jobs,
-        reclamation_plan as _packing_reclamation_plan,
-        zone_map as _packing_zone_map,
-    )
-except ImportError:  # pragma: no cover - packing layer unavailable standalone.
-    _packing_reclamation_jobs = None
-    _packing_reclamation_plan = None
-    _packing_zone_map = None
+
+_packing_reclamation_jobs = None
+_packing_reclamation_plan = None
+_packing_zone_map = None
+
+# Kaggle Environments timing constraints
+DEFAULT_SOFT_LIMIT_S = 1.0       # Per-turn soft compute limit
+DEFAULT_OVERAGE_BANK_S = 60.0    # Match-level overage time bank
+DEFAULT_SAFETY_THRESHOLD_S = 5.0 # Circuit breaker trip threshold (< 5.0s remaining)
+
+
+# =============================================================================
+# 1. Pure-Python, Zero-Dependency SafeFallbackController (<1ms)
+# =============================================================================
+
+class SafeFallbackController:
+    """Pure-Python, zero-dependency fallback controller executing in <1 millisecond.
+
+    Implements the robust 'Care Mill' strategy:
+    - Feeds existing cows (fetches wheat from shed if needed).
+    - Cares for cows daily to maintain compounding productivity.
+    - Collects produced fertilizer from animal pastures.
+    - Harvests available milk.
+    - Drops harvested goods into the shed.
+    - Sells 100% of stored fertilizer if Day < 8; otherwise holds fertilizer.
+    - Flushes residual shed inventory on Day 29 to maximize terminal score.
+    """
+
+    def __init__(self) -> None:
+        self.call_count: int = 0
+        self.total_act_duration_s: float = 0.0
+
+    def _dist(self, a: Sequence[int], b: Pos) -> int:
+        """Manhattan distance between two points."""
+        return abs(int(a[0]) - b[0]) + abs(int(a[1]) - b[1])
+
+    def _shed_tiles(self, board_size: int = 10) -> List[Pos]:
+        """Central shed access tiles."""
+        h = board_size // 2
+        return [(h - 1, h - 1), (h, h - 1), (h - 1, h), (h, h)]
+
+    def _move(self, src: Sequence[int], target: Pos) -> List[str]:
+        """Fast orthogonal movement toward target."""
+        sx, sy = int(src[0]), int(src[1])
+        tx, ty = int(target[0]), int(target[1])
+        dx, dy = tx - sx, ty - sy
+
+        if abs(dx) >= abs(dy) and dx != 0:
+            return ["EAST" if dx > 0 else "WEST"]
+        if dy != 0:
+            return ["SOUTH" if dy > 0 else "NORTH"]
+        if dx != 0:
+            return ["EAST" if dx > 0 else "WEST"]
+        return ["PASS"]
+
+    def act(self, obs: Mapping[str, Any], config: Optional[Mapping[str, Any]] = None) -> Dict[str, Any]:
+        """Generates valid Kaggle environment action dictionary in <1 millisecond."""
+        t_start = time.perf_counter()
+        self.call_count += 1
+
+        # Safe parsing with defaults
+        player = int(obs.get("player", 0))
+        farms = obs.get("farms", [{}])
+        farm = farms[player] if player < len(farms) else (farms[0] if farms else {})
+        day = int(obs.get("day", 0))
+        hour = int(obs.get("hour", 0))
+        money = float(farm.get("money", 0.0))
+
+        tiles = farm.get("tiles", [])
+        board_size = len(tiles) if tiles else 10
+        shed_access = self._shed_tiles(board_size)
+
+        farmer_pos = farm.get("farmer", [4, 4])
+        hands_pos = farm.get("hands", [])
+        all_workers = [farmer_pos] + list(hands_pos)
+
+        private = obs.get("private", farm.get("private", {}))
+        shed = dict(private.get("shed", farm.get("shed", {})))
+        inventories = list(private.get("inventories", farm.get("inventories", [])))
+
+        # Scan cows on pastures
+        cows: List[Tuple[Pos, Dict[str, Any]]] = []
+        for r, row in enumerate(tiles):
+            for c, tile in enumerate(row):
+                if isinstance(tile, dict):
+                    anim = str(tile.get("animal", "")).upper()
+                    # Primarily cows, but handles sheep/geese if cows aren't present
+                    if anim in ("COW", "SHEEP", "GOOSE") or tile.get("kind") in ("PASTURE", "COOP"):
+                        cows.append(((c, r), tile))
+
+        # Sort cows prioritizing cows
+        cows.sort(key=lambda item: 0 if str(item[1].get("animal", "")).upper() == "COW" else 1)
+
+        # Worker action planning
+        claimed_targets: set[Pos] = set()
+        worker_actions: List[List[str]] = []
+
+        unfed_cows = [pos for pos, t in cows if not bool(t.get("fed_today", False))]
+        uncared_cows = [pos for pos, t in cows if not bool(t.get("cared_today", False))]
+        fert_cows = [pos for pos, t in cows if bool(t.get("fertilizer_available", False))]
+        harvest_cows = [pos for pos, t in cows if int(t.get("yield_units", 0)) > 0]
+
+        cow_at_pos = {pos: t for pos, t in cows}
+
+        def nearest_shed(pos: Pos) -> Pos:
+            return min(shed_access, key=lambda s: (self._dist(pos, s), s))
+
+        def take_nearest(pos: Pos, candidates: List[Pos]) -> Optional[Pos]:
+            available = [c for c in candidates if c not in claimed_targets]
+            if not available:
+                return None
+            best = min(available, key=lambda c: (self._dist(pos, c), c))
+            claimed_targets.add(best)
+            return best
+
+        for idx, worker_pos in enumerate(all_workers):
+            pos: Pos = (int(worker_pos[0]), int(worker_pos[1]))
+            inv = inventories[idx] if idx < len(inventories) and isinstance(inventories[idx], dict) else {}
+            wheat_count = int(inv.get("WHEAT", 0))
+            carried_goods = sum(int(v) for k, v in inv.items() if k != "WHEAT")
+
+            here_tile = cow_at_pos.get(pos)
+
+            # 1. Underfoot cow actions
+            if here_tile is not None:
+                if wheat_count > 0 and not bool(here_tile.get("fed_today", False)):
+                    here_tile["fed_today"] = True
+                    if pos in unfed_cows:
+                        unfed_cows.remove(pos)
+                    worker_actions.append(["FEED"])
+                    continue
+                if not bool(here_tile.get("cared_today", False)):
+                    here_tile["cared_today"] = True
+                    if pos in uncared_cows:
+                        uncared_cows.remove(pos)
+                    worker_actions.append(["CARE"])
+                    continue
+                if int(here_tile.get("yield_units", 0)) > 0:
+                    here_tile["yield_units"] = 0
+                    if pos in harvest_cows:
+                        harvest_cows.remove(pos)
+                    worker_actions.append(["HARVEST"])
+                    continue
+                if bool(here_tile.get("fertilizer_available", False)):
+                    here_tile["fertilizer_available"] = False
+                    if pos in fert_cows:
+                        fert_cows.remove(pos)
+                    worker_actions.append(["COLLECT_FERTILIZER"])
+                    continue
+
+            # 2. Feed hungry cows
+            if unfed_cows:
+                if wheat_count > 0:
+                    target = take_nearest(pos, unfed_cows)
+                    if target is not None:
+                        worker_actions.append(["FEED"] if pos == target else self._move(pos, target))
+                        continue
+                elif int(shed.get("WHEAT", 0)) > 0:
+                    shed_target = nearest_shed(pos)
+                    if pos in shed_access:
+                        take_qty = min(4, int(shed.get("WHEAT", 0)))
+                        shed["WHEAT"] = max(0, int(shed.get("WHEAT", 0)) - take_qty)
+                        worker_actions.append(["PICKUP", "WHEAT", str(take_qty)])
+                    else:
+                        worker_actions.append(self._move(pos, shed_target))
+                    continue
+
+            # 3. Care for cows
+            if uncared_cows:
+                target = take_nearest(pos, uncared_cows)
+                if target is not None:
+                    worker_actions.append(["CARE"] if pos == target else self._move(pos, target))
+                    continue
+
+            # 4. Harvest cow yields
+            if harvest_cows:
+                target = take_nearest(pos, harvest_cows)
+                if target is not None:
+                    worker_actions.append(["HARVEST"] if pos == target else self._move(pos, target))
+                    continue
+
+            # 5. Collect fertilizer
+            if fert_cows:
+                target = take_nearest(pos, fert_cows)
+                if target is not None:
+                    worker_actions.append(["COLLECT_FERTILIZER"] if pos == target else self._move(pos, target))
+                    continue
+
+            # 6. Drop goods at shed
+            if carried_goods > 0:
+                shed_target = nearest_shed(pos)
+                if pos in shed_access:
+                    worker_actions.append(["DROP"])
+                else:
+                    worker_actions.append(self._move(pos, shed_target))
+                continue
+
+            # Default: PASS
+            worker_actions.append(["PASS"])
+
+        # Market Orders
+        market_orders: List[List[str]] = []
+
+        # Fertilizer logic: Sell all fertilizer if Day < 8, otherwise hold
+        fert_in_shed = int(shed.get("FERTILIZER", 0))
+        if day < 8 and fert_in_shed > 0:
+            market_orders.append(["SELL", "FERTILIZER", str(fert_in_shed)])
+
+        # Terminal Day 29 flush (hours 20..23)
+        if day == 29 and hour >= 20:
+            for item, qty in shed.items():
+                if int(qty) > 0 and len(market_orders) < 10:
+                    market_orders.append(["SELL", str(item).upper(), str(qty)])
+        else:
+            # Regularly liquidate milk and wool if buffered
+            milk_qty = int(shed.get("MILK", 0))
+            if milk_qty >= 3 and len(market_orders) < 10:
+                market_orders.append(["SELL", "MILK", str(min(6, milk_qty))])
+            wool_qty = int(shed.get("WOOL", 0))
+            if wool_qty >= 2 and len(market_orders) < 10:
+                market_orders.append(["SELL", "WOOL", str(min(4, wool_qty))])
+
+        # Emergency wheat replenishment if cows are starving
+        wheat_in_shed = int(shed.get("WHEAT", 0))
+        if cows and wheat_in_shed < 4 and money >= 25.0 and len(market_orders) < 10:
+            buy_wheat = min(4, int(money // 25.0))
+            if buy_wheat > 0:
+                market_orders.append(["BUY_PRODUCT", "WHEAT", str(buy_wheat)])
+
+        farmer_cmd = worker_actions[0] if worker_actions else ["PASS"]
+        hands_cmds = worker_actions[1:] if len(worker_actions) > 1 else []
+
+        dur = time.perf_counter() - t_start
+        self.total_act_duration_s += dur
+
+        return {
+            "farmer": farmer_cmd,
+            "hands": hands_cmds,
+            "market": market_orders[:10],
+            "_fallback_active": True,
+            "_fallback_latency_ms": dur * 1000.0,
+        }
+
+
+# =============================================================================
+# 2. @impenetrable_agent Decorator & Watchdog
+# =============================================================================
+
+class ImpenetrableAgentWrapper:
+    """Watchdog and circuit-breaker wrapper around an agent(obs, config) callable."""
+
+    def __init__(
+        self,
+        agent_fn: Callable[..., Any],
+        fallback_controller: Optional[SafeFallbackController] = None,
+        overage_bank_s: float = DEFAULT_OVERAGE_BANK_S,
+        soft_limit_s: float = DEFAULT_SOFT_LIMIT_S,
+        safety_threshold_s: float = DEFAULT_SAFETY_THRESHOLD_S,
+    ) -> None:
+        self.agent_fn = agent_fn
+        self.fallback_controller = fallback_controller or SafeFallbackController()
+        self.overage_bank_s: float = float(overage_bank_s)
+        self.soft_limit_s: float = float(soft_limit_s)
+        self.safety_threshold_s: float = float(safety_threshold_s)
+
+        self.remaining_overage: float = self.overage_bank_s
+        self.cumulative_overage_used: float = 0.0
+        self.circuit_broken: bool = False
+        self.fallback_trigger_count: int = 0
+        self.last_error: Optional[str] = None
+        self.turn_history: List[float] = []
+
+        functools.update_wrapper(self, agent_fn)
+
+    def reset(self) -> None:
+        """Reset watchdog state for new matches or benchmark seeds."""
+        self.remaining_overage = self.overage_bank_s
+        self.cumulative_overage_used = 0.0
+        self.circuit_broken = False
+        self.fallback_trigger_count = 0
+        self.last_error = None
+        self.turn_history.clear()
+
+    def __call__(self, obs: Mapping[str, Any], *args: Any, **kwargs: Any) -> Dict[str, Any]:
+        """Executes agent turn protected by try/except and time.perf_counter() watchdog."""
+        step = int(obs.get("step", 0)) if isinstance(obs, Mapping) else 0
+        day = int(obs.get("day", 0)) if isinstance(obs, Mapping) else 0
+        hour = int(obs.get("hour", 0)) if isinstance(obs, Mapping) else 0
+
+        # Auto-reset watchdog state for new matches
+        if step == 0 and day == 0 and hour == 0:
+            self.reset()
+
+        # Check environment-reported overage if present
+        if isinstance(obs, Mapping):
+            env_overage = obs.get("remainingOverageTime", obs.get("remaining_overage_time"))
+            if env_overage is not None:
+                self.remaining_overage = min(self.remaining_overage, float(env_overage))
+
+        # Check safety threshold before executing primary agent
+        if self.remaining_overage < self.safety_threshold_s and not self.circuit_broken:
+            self.circuit_broken = True
+            sys.stderr.write(
+                f"[IMPENETRABLE_AGENT_WATCHDOG] CRITICAL: Remaining overage bank {self.remaining_overage:.3f}s "
+                f"dropped below safety threshold ({self.safety_threshold_s:.1f}s) at Step {step} (Day {day})! "
+                f"Permanently disabling primary neural network & Beam Search; "
+                f"SafeFallbackController taking over for remainder of match.\n"
+            )
+            sys.stderr.flush()
+
+        # 1. Circuit Breaker Active: Completely bypass primary agent & Beam Search
+        if self.circuit_broken:
+            return self.fallback_controller.act(obs, *args, **kwargs)
+
+        # 2. Execute Primary Agent with Strict Exception Shield
+        t_start = time.perf_counter()
+        action: Optional[Dict[str, Any]] = None
+
+        try:
+            action = self.agent_fn(obs, *args, **kwargs)
+        except Exception as e:
+            tb_str = traceback.format_exc()
+            self.fallback_trigger_count += 1
+            self.last_error = f"{type(e).__name__}: {e}"
+
+            # Log to sys.stderr for post-match diagnosis
+            sys.stderr.write(
+                f"[IMPENETRABLE_AGENT] CRITICAL: Caught {type(e).__name__} at Step {step} "
+                f"(Day {day}, Hour {hour}):\n{e}\n{tb_str}\n"
+                f"Activating SafeFallbackController for this turn.\n"
+            )
+            sys.stderr.flush()
+
+            # Execute SafeFallbackController
+            action = self.fallback_controller.act(obs, *args, **kwargs)
+            action["_exception_shield_triggered"] = True
+            action["_last_error"] = self.last_error
+
+        t_end = time.perf_counter()
+        turn_duration = t_end - t_start
+        self.turn_history.append(turn_duration)
+
+        # 3. Watchdog Accounting
+        if turn_duration > self.soft_limit_s:
+            overage_consumed = turn_duration - self.soft_limit_s
+            self.cumulative_overage_used += overage_consumed
+            self.remaining_overage = max(0.0, self.overage_bank_s - self.cumulative_overage_used)
+
+        # 4. Check Safety Threshold (< 5.0s remaining)
+        if self.remaining_overage < self.safety_threshold_s and not self.circuit_broken:
+            self.circuit_broken = True
+            sys.stderr.write(
+                f"[IMPENETRABLE_AGENT_WATCHDOG] CRITICAL: Remaining overage bank {self.remaining_overage:.3f}s "
+                f"dropped below safety threshold ({self.safety_threshold_s:.1f}s) at Step {step} (Day {day})! "
+                f"Permanently disabling primary neural network & Beam Search; "
+                f"SafeFallbackController taking over for remainder of match.\n"
+            )
+            sys.stderr.flush()
+
+        # Ensure return format is valid dictionary
+        if not isinstance(action, dict):
+            sys.stderr.write(f"[IMPENETRABLE_AGENT] Non-dict action returned: {type(action)}. Falling back.\n")
+            sys.stderr.flush()
+            action = self.fallback_controller.act(obs, *args, **kwargs)
+
+        return action
+
+    def stats(self) -> Dict[str, Any]:
+        """Diagnostic state for monitoring and post-match reports."""
+        return {
+            "circuit_broken": self.circuit_broken,
+            "remaining_overage_s": self.remaining_overage,
+            "cumulative_overage_used_s": self.cumulative_overage_used,
+            "fallback_trigger_count": self.fallback_trigger_count,
+            "last_error": self.last_error,
+            "total_turns": len(self.turn_history),
+            "max_turn_duration_ms": max(self.turn_history, default=0.0) * 1000.0,
+            "avg_turn_duration_ms": (sum(self.turn_history) / max(1, len(self.turn_history))) * 1000.0,
+            "fallback_call_count": self.fallback_controller.call_count,
+        }
+
+
+def impenetrable_agent(
+    fn: Optional[Callable[..., Any]] = None,
+    *,
+    fallback_controller: Optional[SafeFallbackController] = None,
+    overage_bank_s: float = DEFAULT_OVERAGE_BANK_S,
+    soft_limit_s: float = DEFAULT_SOFT_LIMIT_S,
+    safety_threshold_s: float = DEFAULT_SAFETY_THRESHOLD_S,
+) -> Union[ImpenetrableAgentWrapper, Callable[[Callable[..., Any]], ImpenetrableAgentWrapper]]:
+    """Decorator wrapping agent(obs, config) with exception shielding & overage watchdog.
+
+    Can be used with or without arguments:
+        @impenetrable_agent
+        def agent(obs, config=None):
+            ...
+
+        @impenetrable_agent(safety_threshold_s=3.0)
+        def agent(obs, config=None):
+            ...
+    """
+    def decorator(target_fn: Callable[..., Any]) -> ImpenetrableAgentWrapper:
+        return ImpenetrableAgentWrapper(
+            agent_fn=target_fn,
+            fallback_controller=fallback_controller,
+            overage_bank_s=overage_bank_s,
+            soft_limit_s=soft_limit_s,
+            safety_threshold_s=safety_threshold_s,
+        )
+
+    if fn is not None:
+        return decorator(fn)
+    return decorator
 
 Pos = Tuple[int, int]
 
@@ -368,27 +777,52 @@ def _market(obs: Mapping[str, Any], scan: Mapping[str, Any], demand: Mapping[str
         money -= 2000
         quadrants.append("SW")
 
-    # === PRIORITY 5: Strawberry Cash Crop (Top Compounding Engine) ===
+    # === PRIORITY 5: Melon + Strawberry Diversified Cash Crop Strategy ===
+    # Elite insight: Melon ($250 base, stable) + Strawberry ($120-240, volatile)
+    # Mixing both reduces price-variance risk that causes $30-40k outcome swings.
     cur_straw = int(seeds.get("STRAWBERRY", 0)) + int(scan["crops"].get("STRAWBERRY", 0))
+    cur_melon = int(seeds.get("MELON", 0)) + int(scan["crops"].get("MELON", 0))
+
+    # Target counts: Melon provides stable income anchor, Straw provides volume
     if len(quadrants) == 1:
-        target_straw = 8
+        target_straw = 7
+        target_melon_persistent = 6   # Initial batch, all NW slots
     elif len(quadrants) == 2:
-        target_straw = 22
+        target_straw = 18
+        target_melon_persistent = 8   # Keep Melons growing in NE
     else:
-        target_straw = 44
+        target_straw = 28             # Down from 44 — leave room for 12 Melons
+        target_melon_persistent = 12  # Persistent Melon plots in 3-quad phase
 
     need_straw = max(0, target_straw - cur_straw)
-    if 0 <= day <= 20 and len(orders) < 9:
-        straw_price = 100
+    need_melon = max(0, target_melon_persistent - cur_melon)
+
+    if 0 <= day <= 22 and len(orders) < 9:
+        straw_seed_cost = 100
+        melon_seed_cost = 80
         land_reserve = 1000 if (len(quadrants) == 1 and 3 <= day <= 6 and money >= 800) else (2000 if (len(quadrants) == 2 and 6 <= day <= 12 and money >= 1700) else 0)
         feed_reserve = max(0, 8 - wheat_have) * max(wheat_price, 25.0) + OPERATING_RESERVE
-        afford_straw = max(0, int((money - feed_reserve - land_reserve) // straw_price))
-        buy_straw = min(need_straw, afford_straw, 8)
-        if buy_straw > 0:
-            orders.append(["BUY_SEED", "STRAWBERRY", buy_straw])
-            money -= buy_straw * straw_price
-            cur_straw += buy_straw
-            seeds["STRAWBERRY"] = int(seeds.get("STRAWBERRY", 0)) + buy_straw
+        budget = max(0.0, money - feed_reserve - land_reserve)
+
+        # Replant Melons first if below target (Melon is price-stable anchor)
+        if need_melon > 0 and budget >= melon_seed_cost:
+            buy_melon = min(need_melon, max(0, int(budget // melon_seed_cost)), 6)
+            if buy_melon > 0:
+                orders.append(["BUY_SEED", "MELON", buy_melon])
+                money -= buy_melon * melon_seed_cost
+                cur_melon += buy_melon
+                budget -= buy_melon * melon_seed_cost
+                seeds["MELON"] = int(seeds.get("MELON", 0)) + buy_melon
+
+        # Then fill remaining budget with Strawberry
+        if need_straw > 0 and budget >= straw_seed_cost and len(orders) < 9:
+            afford_straw = max(0, int(budget // straw_seed_cost))
+            buy_straw = min(need_straw, afford_straw, 8)
+            if buy_straw > 0:
+                orders.append(["BUY_SEED", "STRAWBERRY", buy_straw])
+                money -= buy_straw * straw_seed_cost
+                cur_straw += buy_straw
+                seeds["STRAWBERRY"] = int(seeds.get("STRAWBERRY", 0)) + buy_straw
 
     # === PRIORITY 6: Opponent-Aware Livestock Scaling ===
     if 1 <= day <= 22 and len(orders) < 9:
@@ -529,10 +963,16 @@ def _units(
     def _crop_ripe(tile: Mapping[str, Any]) -> bool:
         c = str(tile.get("crop"))
         p_day = int(tile.get("planted_day", 0))
-        if int(tile.get("yield_units", 0)) <= 0:
+        y_units = int(tile.get("yield_units", 0))
+        if y_units <= 0:
             return False
-        m_age = 2 if c == "WHEAT" else (10 if c in ("MELON", "STRAWBERRY") else 8)
-        return (day - p_day) >= m_age
+        if c == "WHEAT":
+            return (day - p_day) >= 2 or y_units >= 3
+        if c == "MELON":
+            return (day - p_day) >= 10 or y_units >= 6
+        if c == "STRAWBERRY":
+            return (day - p_day) >= 10
+        return (day - p_day) >= 8
 
     for index, position in enumerate(positions):
         pos = (int(position[0]), int(position[1]))
@@ -747,22 +1187,44 @@ def _units(
                     actions.append(["HARVEST"] if pos == target else _move(pos, target))
                     continue
 
-            # 6. Plant Strawberry (High margin cash crop — Plant immediately!)
+            # 6. Plant crops by priority: Melon (stable) and Strawberry interleaved
             avail_straw = int(seeds.get("STRAWBERRY", 0)) - planted_straw
-            if avail_straw > 0 and scan["empties"]:
+            avail_melon = int(seeds.get("MELON", 0)) - planted_melon
+            cur_melon_plots = int(scan["crops"].get("MELON", 0))
+            cur_straw_plots = int(scan["crops"].get("STRAWBERRY", 0))
+            # Need thresholds to guide priority
+            melon_needed = cur_melon_plots < (12 if len(quadrants) >= 3 else (8 if len(quadrants) >= 2 else 6))
+            straw_needed = cur_straw_plots < (28 if len(quadrants) >= 3 else (18 if len(quadrants) >= 2 else 7))
+
+            # Plant Melon first if below target (price-stable anchor)
+            if avail_melon > 0 and melon_needed and scan["empties"]:
+                target = take_nearest(pos, list(scan["empties"]))
+                if target is not None:
+                    planted_melon += 1
+                    actions.append(["PLANT", "MELON"] if pos == target else _move(pos, target))
+                    continue
+
+            # Plant Strawberry if below target
+            if avail_straw > 0 and straw_needed and scan["empties"]:
                 target = take_nearest(pos, list(scan["empties"]))
                 if target is not None:
                     planted_straw += 1
                     actions.append(["PLANT", "STRAWBERRY"] if pos == target else _move(pos, target))
                     continue
 
-            # 7. Plant Melon (Day 0-1 compounding cash crop)
-            avail_melon = int(seeds.get("MELON", 0)) - planted_melon
+            # Fill remaining tiles with Melon or Strawberry (whichever is available)
             if avail_melon > 0 and scan["empties"]:
                 target = take_nearest(pos, list(scan["empties"]))
                 if target is not None:
                     planted_melon += 1
                     actions.append(["PLANT", "MELON"] if pos == target else _move(pos, target))
+                    continue
+
+            if avail_straw > 0 and scan["empties"]:
+                target = take_nearest(pos, list(scan["empties"]))
+                if target is not None:
+                    planted_straw += 1
+                    actions.append(["PLANT", "STRAWBERRY"] if pos == target else _move(pos, target))
                     continue
 
             # 8. Plant Wheat (Feed sustainability)
@@ -834,20 +1296,12 @@ def _units(
     return actions[0], actions[1:]
 
 
-try:
-    from kaggriculture.safety import impenetrable_agent
-except ImportError:
-    def impenetrable_agent(fn):
-        return fn
 
-
-@impenetrable_agent
-def agent(obs: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def _base_agent(obs: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     demand = _demand(obs.get("town", {}).get("unlocked_shops", []) or [])
     scan = _scan(obs)
     farmer, hands = _units(obs, scan, demand)
     return {"farmer": farmer, "hands": hands, "market": _market(obs, scan, demand)}
-
 
 @dataclass
 class BeamCandidate:
@@ -1519,7 +1973,7 @@ class MacroOptionManager:
 
             # --- No simulator available: direct mechanical fallback ---
             self.lock_intent(("MAINTAIN_HERD",), (), 0.0, obs)
-            ops = agent(obs)
+            ops = _base_agent(obs)
             ops["_macro_intent"] = ("MAINTAIN_HERD",)
             ops["_search_triggered"] = True
             ops["_emergency"] = self._predictor.hoarding_detected
@@ -1536,7 +1990,7 @@ class MacroOptionManager:
             return ops
 
         # Absolute fallback — should not normally reach here
-        return agent(obs)
+        return _base_agent(obs)
 
     # ------------------------------------------------------------------
     # Diagnostics
@@ -1848,11 +2302,265 @@ class PoisonedWellTrap:
 # Integrated Grand Strategy Controller with Rank 1 Opening Book
 # =============================================================================
 
-from kaggriculture.opening_book import (
-    OpeningBookController,
-    OPENING_BOOK_SCHEDULE,
-)
 
+# =============================================================================
+# Integrated Rank 1 Opening Book Controller & Schedule
+# =============================================================================
+
+OPENING_BOOK_SCHEDULE: Dict[int, Dict[str, Any]] = {
+    0: {
+        "macro_intent": "DAY0_TURBO_HERD",
+        "description": "Launch Day 0 compounding engine: 3 Cows + 2 Sheep + 10 Wheat seeds + 8 Melon seeds.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_cows": 3,
+        "target_sheep": 2,
+    },
+    1: {
+        "macro_intent": "FEED_CARE_COMPOUND",
+        "description": "Feed and care for herd; zero animal buys; compound cash.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+    },
+    2: {
+        "macro_intent": "FEED_CARE_COMPOUND",
+        "description": "Harvest initial Milk and Wool; compound cash.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+    },
+    3: {
+        "macro_intent": "SCALE_HERD_COWS",
+        "description": "Scale herd to 7 Cows + 2 Sheep as compound cash flows in.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_cows": 7,
+    },
+    4: {
+        "macro_intent": "BUFFER_FERTILIZER",
+        "description": "Buffer 100% of Fertilizer in shed; preserve cash for Day 5/6 NE expansion.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+    },
+    5: {
+        "macro_intent": "LIQUIDATE_FOR_EXPANSION",
+        "description": "Sell buffered Fertilizer and excess Wheat; reach $1,000+ cash threshold for NE expansion.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_cash": 1000,
+    },
+    6: {
+        "macro_intent": "EXPAND_NE_QUADRANT",
+        "description": "Unlock NE Quadrant ($1,000); construct pastures; plant initial Strawberries.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_strawberries": 12,
+    },
+    7: {
+        "macro_intent": "SCALE_STRAWBERRIES_NE",
+        "description": "Scale Strawberry plantation on NE quadrant (16 plots); care for herd.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_strawberries": 16,
+    },
+    8: {
+        "macro_intent": "ACCUMULATE_SW_RESERVE",
+        "description": "High-frequency commodity selling; accumulate $2,000 liquid cash reserve for SW expansion.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_cash": 2000,
+    },
+    9: {
+        "macro_intent": "EXPAND_SW_QUADRANT",
+        "description": "Unlock SW Quadrant ($2,000); construct additional pastures; expand Strawberry plots.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_strawberries": 24,
+    },
+    10: {
+        "macro_intent": "TRI_QUADRANT_SCALING",
+        "description": "Operate across all 3 unlocked quadrants (NW, NE, SW); scale herd to 15+; harvest high-margin Strawberries.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_herd": 15,
+        "target_strawberries": 32,
+    },
+    11: {
+        "macro_intent": "TRI_QUADRANT_SCALING",
+        "description": "Maintain tri-quadrant production: watering, weeding, and high-frequency market sales.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_herd": 15,
+        "target_strawberries": 32,
+    },
+    12: {
+        "macro_intent": "TRI_QUADRANT_SCALING",
+        "description": "Midday market evaluation; scale Strawberry plots to 36; steady livestock care.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_herd": 16,
+        "target_strawberries": 36,
+    },
+    13: {
+        "macro_intent": "PRE_HANDOFF_CONSOLIDATION",
+        "description": "Consolidate feed loop; replant Wheat; prepare livestock for midgame scaling.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_herd": 16,
+        "target_strawberries": 40,
+    },
+    14: {
+        "macro_intent": "PRE_HANDOFF_CONSOLIDATION",
+        "description": "High liquidity maintenance; weed clearance; maximize strawberry collections.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_herd": 18,
+        "target_strawberries": 40,
+    },
+    15: {
+        "macro_intent": "PRE_HANDOFF_CONSOLIDATION",
+        "description": "Final opening book phase; verify herd health before handing off to Option-Critic Beam Search on Day 16.",
+        "buffer_fertilizer": False,
+        "sell_fertilizer": True,
+        "target_herd": 18,
+        "target_strawberries": 44,
+    },
+}
+
+
+class OpeningBookController:
+    """Runtime controller executing the deterministic Rank 1 Opening Book
+    for Days 0-15 and cleanly handing off control to MacroOptionManager on Day 16.
+    """
+
+    HANDOFF_DAY: int = 16
+
+    def __init__(
+        self,
+        option_manager: Any = None,
+    ) -> None:
+        self._option_manager = option_manager
+        self.active: bool = True
+        self._last_day: int = -1
+        self._current_intent: Optional[str] = None
+        self._intent_description: Optional[str] = None
+
+    @property
+    def option_manager(self) -> Any:
+        if self._option_manager is None:
+            self._option_manager = MacroOptionManager()
+        return self._option_manager
+
+    def reset(self) -> None:
+        self.active = True
+        self._last_day = -1
+        self._current_intent = None
+        self._intent_description = None
+        if hasattr(self._option_manager, "reset"):
+            self._option_manager.reset()
+
+    def get_day_directive(self, day: int) -> Dict[str, Any]:
+        return OPENING_BOOK_SCHEDULE.get(day, {
+            "macro_intent": "MAINTAIN_HERD",
+            "description": f"Standard maintenance for Day {day}",
+            "buffer_fertilizer": False,
+            "sell_fertilizer": True,
+        })
+
+    def is_active(self, obs: Mapping[str, Any]) -> bool:
+        day = int(obs.get("day", 0))
+        return day < self.HANDOFF_DAY
+
+    def act(
+        self,
+        obs: Dict[str, Any],
+        simulator: Any = None,
+        IQL_Value_Net: Any = None,
+        action_to_simulator: Any = None,
+    ) -> Dict[str, Any]:
+        day = int(obs.get("day", 0))
+        hour = int(obs.get("hour", 0))
+
+        # =====================================================================
+        # PHASE 1: OPENING BOOK OVERRIDE (Days 0 - 15)
+        # =====================================================================
+        if day < self.HANDOFF_DAY:
+            self.active = True
+            directive = self.get_day_directive(day)
+            self._current_intent = directive.get("macro_intent")
+            self._intent_description = directive.get("description")
+
+            # Compute standard mechanical operations (Two-Team Division of Labor)
+            ops = _base_agent(obs)
+            market_orders = ops.get("market") or []
+
+            # Quadrant Expansion: Continuous multi-day window checks
+            farm = obs.get("farms", [{}, {}])[int(obs.get("player", 0))]
+            money = float(farm.get("money", 0.0))
+            quadrants = list(farm.get("unlocked_quadrants") or ["NW"])
+
+            # Fertilizer Buffering: only buffer if healthy cash reserve (money >= 500)
+            if directive.get("buffer_fertilizer", False) and money >= 500:
+                market_orders = [
+                    o for o in market_orders
+                    if not (len(o) >= 2 and str(o[0]).upper() == "SELL" and str(o[1]).upper() == "FERTILIZER")
+                ]
+
+            # 3 <= day <= 8 for NE when money >= 1000 + reserve
+            if "NE" not in quadrants and 3 <= day <= 8:
+                if money >= 1000 + OPERATING_RESERVE:
+                    has_expand = any(len(o) >= 2 and str(o[0]).upper() in ("BUY_LAND", "EXPAND") and str(o[1]).upper() == "NE" for o in market_orders)
+                    if not has_expand and len(market_orders) < 10:
+                        market_orders.insert(0, ["BUY_LAND", "NE"])
+                        quadrants.append("NE")
+                        money -= 1000
+
+            # 6 <= day <= 18 for SW when money >= 2000 + reserve
+            if "SW" not in quadrants and "NE" in quadrants and 6 <= day <= 18:
+                if money >= 2000 + OPERATING_RESERVE:
+                    has_expand = any(len(o) >= 2 and str(o[0]).upper() in ("BUY_LAND", "EXPAND") and str(o[1]).upper() == "SW" for o in market_orders)
+                    if not has_expand and len(market_orders) < 10:
+                        market_orders.insert(0, ["BUY_LAND", "SW"])
+                        quadrants.append("SW")
+                        money -= 2000
+
+            ops["market"] = market_orders
+            ops["_opening_book_active"] = True
+            ops["_opening_day"] = day
+            ops["_opening_macro_intent"] = self._current_intent
+            ops["_opening_description"] = self._intent_description
+            ops["_handoff_ready"] = (day == 15 and hour >= 20)
+            return ops
+
+        # =====================================================================
+        # PHASE 2: CLEAN HANDOFF TO MACRO-OPTION-MANAGER (Day 16+)
+        # =====================================================================
+        self.active = False
+        mgr = self.option_manager
+
+        ops = mgr.act(
+            obs,
+            simulator=simulator,
+            IQL_Value_Net=IQL_Value_Net,
+            action_to_simulator=action_to_simulator,
+        )
+
+        ops["_opening_book_active"] = False
+        ops["_handed_off_to_option_critic"] = True
+        return ops
+
+    def stats(self) -> Dict[str, Any]:
+        return {
+            "active": self.active,
+            "handoff_day": self.HANDOFF_DAY,
+            "current_intent": self._current_intent,
+            "description": self._intent_description,
+            "option_manager_stats": self.option_manager.stats() if self._option_manager else None,
+        }
+
+
+# =============================================================================
+# Integrated Grand Strategy Controller
+# =============================================================================
 
 class GrandStrategyController:
     """Unified controller combining OpeningBookController + MacroOptionManager + PoisonedWellTrap.
@@ -1860,13 +2568,6 @@ class GrandStrategyController:
     - Days 0-15: Governed by the deterministic Rank 1 Opening Book (overriding Beam Search).
     - Day 16+: Clean handoff to MacroOptionManager (Hour 0/12 Beam Search + Kuhn-Munkres bypass).
     - Adversarial Layer: PoisonedWellTrap deceptive signaling and 4h price recovery liquidation.
-
-    Usage::
-
-        controller = GrandStrategyController()
-
-        def agent(obs):
-            return controller.act(obs)
     """
 
     def __init__(
@@ -1883,13 +2584,17 @@ class GrandStrategyController:
         self._value_net = IQL_Value_Net
         self._action_to_simulator = action_to_simulator
 
-    def act(self, obs: Dict[str, Any]) -> Dict[str, Any]:
-        """Produce the final action dict for this turn.
+    def reset(self) -> None:
+        self.opening_book.reset()
+        self.market_trap = PoisonedWellTrap()
 
-        1. Days 0-15: OpeningBookController overrides Beam Search with Rank 1 build order.
-        2. Day 16+: Smooth handoff to MacroOptionManager (Option-Critic Beam Search).
-        3. PoisonedWellTrap post-processes market orders.
-        """
+    def act(self, obs: Dict[str, Any]) -> Dict[str, Any]:
+        step = int(obs.get("step", 0))
+        day = int(obs.get("day", 0))
+        hour = int(obs.get("hour", 0))
+        if step == 0 and day == 0 and hour == 0:
+            self.reset()
+
         ops = self.opening_book.act(
             obs,
             simulator=self._simulator,
@@ -1897,16 +2602,12 @@ class GrandStrategyController:
             action_to_simulator=self._action_to_simulator,
         )
 
-        # Post-process market orders through the Poisoned Well trap
         market_orders = ops.get("market", [])
         if isinstance(market_orders, list):
             market_orders = self.market_trap.update(obs, market_orders)
             ops["market"] = market_orders
 
-        # Inject deceptive plant targets for field workers
         ops["_deceptive_plants"] = self.market_trap.get_deceptive_plants(obs)
-
-        # Attach diagnostics
         ops["_opening_book_stats"] = self.opening_book.stats()
         ops["_option_stats"] = self.option_manager.stats()
         ops["_trap_stats"] = self.market_trap.stats()
@@ -1920,3 +2621,14 @@ class GrandStrategyController:
             "market_trap": self.market_trap.stats(),
         }
 
+
+# =============================================================================
+# Execution Entry Point & Strict Watchdog (Strictly at Bottom of File)
+# =============================================================================
+
+_controller = GrandStrategyController()
+
+
+@impenetrable_agent(soft_limit_s=1.0, overage_bank_s=60.0, safety_threshold_s=5.0)
+def agent(obs: Dict[str, Any], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    return _controller.act(obs)
