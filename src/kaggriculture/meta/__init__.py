@@ -459,3 +459,19 @@ class MetaController:
     def meta_distribution(self) -> Dict[str, float]:
         """Current PSRO meta-distribution (pure best response)."""
         return {pid: 1.0 if pid == self.active_policy else 0.0 for pid in self.profiles}
+
+
+# Re-exported here so live agents can do ``from kaggriculture.meta import X``.
+# Imported last: cfr.py takes zero package imports, so no import cycle.
+from kaggriculture.meta.cfr import (  # noqa: E402,F401
+    CFRPolicySelector,
+    DayUpdate,
+    RegretTable,
+    counterfactual_values,
+    evaluate_leaf_value,
+    is_end_of_day,
+    obs_day,
+    obs_hour,
+    project_counterfactual_leaves,
+    regret_matching_strategy,
+)
