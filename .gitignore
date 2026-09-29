@@ -35,3 +35,4 @@ tapes/
 datasets/
 bootstrap_v4/
 .gitattributes
+.optuna-tmp/

@@ -68,8 +68,8 @@ def make_config(
         "panel": [
             {"name": "agent_final", "type": "python", "path": str(baseline_path)}
         ],
-        # `pool` is the Rust tournament schema for deterministic worlds.
-        "worlds": {"strategy": "list", "pool": [int(seed)]},
+        # `seeds` is the Rust tournament schema for list strategy.
+        "worlds": {"strategy": "list", "seeds": [int(seed)]},
         "workers": int(workers),
         "on_error": "forfeit",
         "output": {"dir": str(output_dir), "resume": False},
@@ -210,9 +210,10 @@ def objective(
                 raise RuntimeError(
                     f"kagg tournament failed for seed {seed}: {completed.stderr}"
                 )
-            terminal, day15, baseline15 = parse_seed_result(
-                out_dir / "results.jsonl", out_dir / "samples.jsonl"
-            )
+            sub_dir = out_dir / f"beam-tune-{seed}"
+            res_path = (sub_dir / "results.jsonl") if (sub_dir / "results.jsonl").is_file() else (out_dir / "results.jsonl")
+            sample_path = (sub_dir / "samples.jsonl") if (sub_dir / "samples.jsonl").is_file() else (out_dir / "samples.jsonl")
+            terminal, day15, baseline15 = parse_seed_result(res_path, sample_path)
             scores.append(terminal)
             trial.report(mean(scores), index)
             if trial.should_prune() or should_prune(

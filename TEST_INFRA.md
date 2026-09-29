@@ -1,122 +1,113 @@
-# Kaggriculture Offline Training Pipeline — Test Infrastructure Specification (`TEST_INFRA.md`)
+# Master Integration Gauntlet — Test Infrastructure Specification (`TEST_INFRA.md`)
 
 ## 1. Test Philosophy
 
-The Kaggriculture offline reinforcement learning (RL) and counterfactual rollout pipeline is built for high-stakes competition performance (Top 10 Kaggriculture agent). As such, the test harness is engineered under strict **opaque-box, contract-driven, and mathematically rigorous** principles:
+The Master Integration Gauntlet evaluates, packages, and benchmarks the autonomous quantitative research and policy optimization agent under live Kaggle competition conditions. The end-to-end (E2E) test harness is architected under strict **opaque-box, requirement-driven, and mathematically rigorous** principles:
 
-1. **Opaque-Box Verification**: Tests validate observable behaviors, output data structures, mathematical invariants, and error boundaries against authoritative requirements (`ORIGINAL_REQUEST.md`, `PROJECT.md`), rather than coupling to internal implementation nuances.
-2. **Progressive Testability**: Features are implemented across sequential milestones (M1 through M4). Tests are structured to run cleanly from day one, employing graceful skip notifications (`pytest.skip`) when target implementation modules are pending in worker milestones. Once a worker implements a component, tests activate automatically without modifications.
-3. **Authoritative Oracle Derivation**: Expected behaviors and values are derived from two primary oracles:
-   - *The Official Kaggle Environment Specification (`kaggle-environments 1.32.7`)*: For step frames, observation dictionaries, market mechanics, and inventory limits.
-   - *The Native Rust Simulator (`kaggserve` / `kaggsim`)*: As the ground-truth deterministic reference for game dynamics, state loading (`LOADSTATE`), and counterfactual forward rollouts (`ROLLOUT`).
-4. **Self-Contained Independence**: Every test case sets up its own state, utilizes isolated fixtures or temporary directories, generates synthetic or sampled data, and guarantees no order-dependent side effects or disk pollution.
-5. **Adversarial & Boundary Rigor**: Extreme values (bankruptcy, 100,000-unit market inventory oversupply, division-by-zero risks, null/locked tiles, shed capacity overflow, subprocess pipe breaks) are explicitly tested to ensure zero unhandled exceptions.
+1. **Opaque-Box Contract Verification**: Tests validate observable behaviors, output action dictionaries, system logs, execution latencies, and quantitative acceptance criteria against authoritative requirements (`ORIGINAL_REQUEST.md`, `PROJECT.md`), rather than coupling to internal implementation nuances.
+2. **Progressive Testability & Milestone Decoupling**: Features are implemented across sequential milestones (M1: Candidate Packaging & Watchdog, M2: Replay Scraping & Ghost Fleet, M3: Master Tournament, M4: Diagnostic Autopsy & Optuna HPO). Tests are structured to execute cleanly from day one:
+   - Features already implemented or verified via reference submissions execute and pass immediately.
+   - Downstream milestone artifacts not yet written to disk are detected and reported via structured `pytest.skip` notifications rather than fatal crashes, ensuring continuous CI readiness.
+3. **Authoritative Oracles & References**: Expected behaviors and values are derived directly from authoritative specifications:
+   - *Kaggle Competition Rules*: Max 1.0 second per single turn, 60.0 seconds cumulative overage bank per 720-step episode, action dictionary format (`farmer`, `hands`, `market`), submission file size (<100 MiB), and memory limit (<6.5 GiB).
+   - *Native Rust Simulation Engine (`kagg tournament` / `kagg-sim`)*: Deterministic ground truth for step progression (steps 0..719), dual time limit enforcement (`"time_limits": {"act_s": 1.0, "overage_s": 60.0}`), forfeiture mechanics, and structured summary/result outputs (`results.jsonl`, `summary.json`).
+   - *Quantitative Benchmark Targets*: Aggregate win rate $\ge 60.0\%$, average terminal cash balance $\ge \$130,000$, and candidate mean turn latency $< 5.0\text{ ms}$.
+4. **Self-Contained Isolation**: Every test case sets up its own state, utilizes isolated temporary directories (`tmp_path`), and produces zero side effects or disk pollution.
+5. **Adversarial & Boundary Rigor**: Tests explicitly probe extreme timing conditions (turn duration over 1.0s, overage bank depletion, safety threshold breaches), episode boundary steps (Step 0 cold start, Step 71 pre-unlock, Step 718 penultimate, Step 719 terminal liquidation), memory leaks over 100 turns, and corrupted tournament output rows.
 
 ---
 
 ## 2. Feature Inventory Coverage Matrix
 
-The table below maps all 26 architectural features identified in `PROJECT.md` to their corresponding requirement ID (R1–R4), E2E test tier, verification method, and authoritative test file.
+The table below maps all 11 architectural features defined in `PROJECT.md § Feature Inventory` across their requirement IDs (R1–R5), milestones, E2E test tiers, verification methods, and authoritative test implementations.
 
-| # | Feature | Req ID | Milestone | Tier | Verification Method | Primary Test File |
-|---|---------|--------|-----------|------|---------------------|-------------------|
-| 1 | Raw JSON Step Frame Parsing | R1 | M1 | Tier 1 & 2 | Gzip streaming, 720-step replay parsing, corruption handling | `tests/e2e/tier1_features/test_r1_eda_schema.py`<br>`tests/e2e/tier2_boundaries/test_r1_boundaries.py` |
-| 2 | Observation Schema Validation | R1 | M1 | Tier 1 & 2 | 1.32.7 schema verification, missing key assertions | `tests/e2e/tier1_features/test_r1_eda_schema.py`<br>`tests/e2e/tier2_boundaries/test_r1_boundaries.py` |
-| 3 | Tile State Edge Case Handling | R1 | M1 | Tier 1 & 2 | Parsing `None`, `"LOCKED"`, `WEED`, `PASTURE`, `PLANT` | `tests/e2e/tier1_features/test_r1_eda_schema.py`<br>`tests/e2e/tier2_boundaries/test_r1_boundaries.py` |
-| 4 | Private Inventory & Shed Tracking | R1 | M1 | Tier 1 & 2 | Carried goods, shed cap 100, midnight discard rule | `tests/e2e/tier1_features/test_r1_eda_schema.py`<br>`tests/e2e/tier2_boundaries/test_r1_boundaries.py` |
-| 5 | Automated EDA Report Generation | R1 | M1 | Tier 1 | Metrics summary (length, frequencies, reward distribution) | `tests/e2e/tier1_features/test_r1_eda_schema.py` |
-| 6 | Temporal Alignment (`steps[t+1]`) | R1 | M1 | Tier 1 | Action applied at $t$ mapped from $t+1$ observations | `tests/e2e/tier1_features/test_r1_eda_schema.py` |
-| 7 | Spatial Tensor `state_t` | R2 | M2 | Tier 1 & 2 | Shape `(23, 10, 10)`, normalized channel bounds $[0, 1]$ | `tests/e2e/tier1_features/test_r2_features.py`<br>`tests/e2e/tier2_boundaries/test_r2_boundaries.py` |
-| 8 | Continuous Global Vector | R2 | M2 | Tier 1 & 2 | 30-dim normalized agent vector (cash, time, hands) | `tests/e2e/tier1_features/test_r2_features.py`<br>`tests/e2e/tier2_boundaries/test_r2_boundaries.py` |
-| 9 | Opponent State Tensor `opponent_state_t` | R2 | M2 | Tier 1 | Shape `(20, 10, 10)` public grid + cash scalar | `tests/e2e/tier1_features/test_r2_features.py` |
-| 10 | Continuous Market Vector `market_t` | R2 | M2 | Tier 1 & 2 | 35-dim wholesale prices, ratios, deviations from 10k baseline | `tests/e2e/tier1_features/test_r2_features.py`<br>`tests/e2e/tier2_boundaries/test_r2_boundaries.py` |
-| 11 | Macro-Intent Classifier `action_t` | R2 | M2 | Tier 1 & 2 | 24-class backward mapping with zero fall-through errors | `tests/e2e/tier1_features/test_r2_features.py`<br>`tests/e2e/tier2_boundaries/test_r2_boundaries.py` |
-| 12 | Net Worth Delta Reward `reward_t` | R2 | M2 | Tier 1 & 2 | $\Delta$ Cash + physical asset replacement cost | `tests/e2e/tier1_features/test_r2_features.py`<br>`tests/e2e/tier2_boundaries/test_r2_boundaries.py` |
-| 13 | Undiscounted Return-To-Go `return_to_go_t` | R2 | M2 | Tier 1 & 2 | Telescoping downstream sum converging to 0.0 at turn 720 | `tests/e2e/tier1_features/test_r2_features.py`<br>`tests/e2e/tier2_boundaries/test_r2_boundaries.py` |
-| 14 | Opponent Trajectory K-Means `strategy_cluster` | R2 | M2 | Tier 1 & 2 | Opening turns 0..99 trajectory clustering into cluster ID | `tests/e2e/tier1_features/test_r2_features.py`<br>`tests/e2e/tier2_boundaries/test_r2_boundaries.py` |
-| 15 | Chunked Memory-Mapped Disk Cache | R2 | M2 | Tier 1 & 2 | Sharded binary `.npy` / `.npz` / `.pt` files | `tests/e2e/tier1_features/test_r2_features.py`<br>`tests/e2e/tier2_boundaries/test_r2_boundaries.py` |
-| 16 | Rust Simulator Subprocess Manager | R3 | M3 | Tier 1 & 2 | Subprocess IPC to `kagg serve` with health checks & respawn | `tests/e2e/tier1_features/test_r3_counterfactual.py`<br>`tests/e2e/tier2_boundaries/test_r3_boundaries.py` |
-| 17 | State Serialization & `LOADSTATE` | R3 | M3 | Tier 1 & 2 | Observation dict to Rust engine JSON bidirectional check | `tests/e2e/tier1_features/test_r3_counterfactual.py`<br>`tests/e2e/tier2_boundaries/test_r3_boundaries.py` |
-| 18 | In-Memory State Forking & Injection | R3 | M3 | Tier 1 & 2 | Fork state at step $t \in [0, 719]$, substitute market order | `tests/e2e/tier1_features/test_r3_counterfactual.py`<br>`tests/e2e/tier2_boundaries/test_r3_boundaries.py` |
-| 19 | Heuristic `ROLLOUT` to Turn 720 | R3 | M3 | Tier 1 & 2 | Stateless rollout to terminal step calculating counterfactual value | `tests/e2e/tier1_features/test_r3_counterfactual.py`<br>`tests/e2e/tier2_boundaries/test_r3_boundaries.py` |
-| 20 | Counterfactual Divergence & Unit Tests | R3 | M3 | Tier 1 & 2 | Value difference between factual and counterfactual orders | `tests/e2e/tier1_features/test_r3_counterfactual.py`<br>`tests/e2e/tier2_boundaries/test_r3_boundaries.py` |
-| 21 | PyTorch `Dataset` Implementation | R4 | M4 | Tier 1 & 2 | 8-element transition tuple indexing from disk cache | `tests/e2e/tier1_features/test_r4_dataset_loader.py`<br>`tests/e2e/tier2_boundaries/test_r4_boundaries.py` |
-| 22 | High-Performance Collation & Prefetch | R4 | M4 | Tier 1 & 2 | Multi-worker batch collation, pinned memory, prefetching | `tests/e2e/tier1_features/test_r4_dataset_loader.py`<br>`tests/e2e/tier2_boundaries/test_r4_boundaries.py` |
-| 23 | Throughput Benchmark (>500 trans/sec) | R4 | M4 | Tier 1 & 4 | DataLoader throughput benchmark asserting $>500$ trans/sec | `tests/e2e/tier1_features/test_r4_dataset_loader.py`<br>`tests/e2e/tier4_scenarios/test_benchmark_pipeline.py` |
-| 24 | Memory Leak Verification | R4 | M4 | Tier 1 & 4 | Flat RSS memory consumption over 3+ training epochs | `tests/e2e/tier1_features/test_r4_dataset_loader.py`<br>`tests/e2e/tier4_scenarios/test_benchmark_pipeline.py` |
-| 25 | Full E2E Test Suite (Tiers 1-4) | Acceptance | M5 | Tiers 1-4 | End-to-end integration and system-level suites | `tests/e2e/` |
-| 26 | Adversarial Hardening (Tier 5) | Acceptance | M5 | Tier 5 | Stress perturbation, memory pressure, invariant validation | `tests/e2e/tier2_boundaries/` & Tier 5 suites |
+| # | Feature | Req ID | Milestone | Tier | Verification Method | Primary Test File / Function |
+|---|---------|--------|-----------|------|---------------------|------------------------------|
+| 1 | Candidate Packaging | R1 | M1 | Tier 1 | AST parsing, file existence, size check (<100 MiB), entrypoint `agent(obs, config=None)` at bottom | `tests/test_gauntlet_e2e.py::test_candidate_packaging_compliance` |
+| 2 | Packaging Bug Fixes | R1 | M1 | Tier 1 | AST callable ordering verification (agent is last top-level function) | `tests/test_gauntlet_e2e.py::test_candidate_packaging_compliance` |
+| 3 | Execution Watchdog | R3 | M1 | Tier 1 & 2 | `@impenetrable_agent` wrapping, default parameters (1.0s soft limit, 60.0s overage, 5.0s circuit breaker), drawdown logic | `tests/test_gauntlet_e2e.py::test_watchdog_compliance_attributes`<br>`tests/test_gauntlet_e2e.py::test_watchdog_overage_drawdown` |
+| 4 | Top 10 Replay Scraping | R2 | M2 | Tier 1 | Check downloaded replays in `replays/live_top10/` (20 JSON files) | `tests/test_gauntlet_e2e.py::test_ghost_fleet_compliance` |
+| 5 | Ghost Opponent Generation | R2 | M2 | Tier 1 | Validate `submissions/ladder_ghost_*` directories and verify `main.py` entrypoint | `tests/test_gauntlet_e2e.py::test_ghost_fleet_compliance` |
+| 6 | Ghost Zero-Crash Execution | R2 | M2 | Tier 1 & 3 | Verify ghost callable returns valid action dictionary with zero exceptions over test steps | `tests/test_gauntlet_e2e.py::test_ghost_fleet_compliance`<br>`tests/test_gauntlet_e2e.py::test_candidate_vs_ghost_match_execution` |
+| 7 | Master Tournament Orchestration | R4 | M3 | Tier 1 & 3 | Validate `tournaments/gauntlet_1000/config.json` schema, time limits, Python executable, and runner invocation | `tests/test_gauntlet_e2e.py::test_tournament_config_compliance`<br>`tests/test_gauntlet_e2e.py::test_candidate_vs_ghost_match_execution` |
+| 8 | Tournament Performance Gate | R5 | M3 | Tier 4 | Evaluate `results.jsonl` and `summary.json`: Win Rate $\ge 60.0\%$, Terminal Cash $\ge \$130,000$, Mean Latency $< 5.0\text{ ms}$ | `tests/test_gauntlet_e2e.py::test_tournament_results_parser_and_assertions_passing`<br>`tests/test_gauntlet_e2e.py::test_tournament_results_parser_and_assertions_failing`<br>`tests/test_gauntlet_e2e.py::test_live_tournament_acceptance_gate` |
+| 9 | Diagnostic Autopsy Pipeline | R5 | M4 | Tier 4 | Verify `scripts/autopsy_ladder_losses.py:analyze_loss_match` computes crossover turn, net worth deficit, and catalysts | `tests/test_gauntlet_e2e.py::test_autopsy_pipeline_loss_validation` |
+| 10 | Automated Optuna HPO Loop | R5 | M4 | Tier 4 | Verify `scripts/ladder_ghost.py:sample_beam_weights` (7 weights) and `run_hpo` executes trials and saves `counter_best` | `tests/test_gauntlet_e2e.py::test_optuna_hpo_loop_validation` |
+| 11 | E2E Test Suite | Dual Track | E2E | Tiers 1–4 | Full automated pytest execution covering all 4 tiers with zero unhandled regressions | `tests/test_gauntlet_e2e.py` |
 
 ---
 
-## 3. Test Architecture & Directory Layout
+## 3. 4-Tier Test Architecture & Methodology
 
-### Directory Hierarchy
+The acceptance suite is organized into four complementary tiers, progressing from structural feature validation to system-level tournament gate assertions:
+
 ```
-tests/e2e/
-├── conftest.py                       # Shared fixtures, oracles, synthetic data builders
-├── tier1_features/                   # Happy path feature tests (>=5 test cases per feature)
-│   ├── test_r1_eda_schema.py         # R1: EDA, parsing, schema validation, tile extraction
-│   ├── test_r2_features.py           # R2: Spatial tensors, macro-intents, rewards, clustering
-│   ├── test_r3_counterfactual.py     # R3: Rust simulator IPC, LOADSTATE, ROLLOUT, divergence
-│   └── test_r4_dataset_loader.py     # R4: PyTorch Dataset, DataLoader, prefetching, throughput
-├── tier2_boundaries/                 # Edge cases & stress boundaries (>=5 test cases per feature)
-│   ├── test_r1_boundaries.py         # R1: Null tiles, locked quadrants, shed overflow, corrupt gzip
-│   ├── test_r2_boundaries.py         # R2: Bankruptcy, division by zero, step 0/719, unmapped moves
-│   ├── test_r3_boundaries.py         # R3: Terminal step forks, malformed states, broken pipes, SIGKILL
-│   └── test_r4_boundaries.py         # R4: 1-sample dataset, uneven chunks, worker=0, non-CUDA fallback
-├── tier3_combinations/               # Pairwise module interactions (pipeline integration)
-└── tier4_scenarios/                  # Full offline RL loop & multi-epoch throughput benchmarks
+tests/test_gauntlet_e2e.py
+├── Tier 1: Feature Coverage
+│   ├── test_candidate_packaging_compliance
+│   ├── test_watchdog_compliance_attributes
+│   ├── test_ghost_fleet_compliance
+│   └── test_tournament_config_compliance
+├── Tier 2: Boundary & Corner Cases
+│   ├── test_watchdog_overage_drawdown
+│   ├── test_watchdog_circuit_breaker_and_timeout_forfeiture
+│   ├── test_boundary_step_verification
+│   └── test_memory_and_latency_assertion
+├── Tier 3: Cross-Feature Interactions
+│   └── test_candidate_vs_ghost_match_execution
+└── Tier 4: Master Tournament Acceptance Gate & Fallback Loop
+    ├── test_tournament_results_parser_and_assertions_passing
+    ├── test_tournament_results_parser_and_assertions_failing
+    ├── test_live_tournament_acceptance_gate
+    ├── test_autopsy_pipeline_loss_validation
+    └── test_optuna_hpo_loop_validation
 ```
 
-### Shared Fixtures in `tests/e2e/conftest.py`
-- `sample_episode_path`: Locates an actual gzip replay from `datasets/il/episodes/00/` or synthesizes a valid fallback replay.
-- `sample_episode_data`: Decodes and parses sample replay frames into a Python dict.
-- `sample_raw_observation`: Provides a canonical step-0 player observation conforming to 1.32.7 schema.
-- `synthetic_edge_case_observations`: Supplies an inventory of boundary states (`all_null_tiles`, `all_locked`, `shed_overflow`, `extreme_market`, `bankrupt_farm`).
-- `kagg_binary_path`: Locates compiled `kagg` binary or skips simulator-dependent tests if unavailable.
-- `mock_rust_engine_state`: Provides valid JSON state payloads matching the Rust engine's `LOADSTATE` expectations.
-- `temp_cache_dir`: Isolated temporary directory with automatic teardown for testing chunked dataset caches.
+### Tier 1: Feature Coverage (Packaging, Watchdog, Fleet, Config)
+- **Candidate Packaging**: Asserts that candidate file `submissions/hybrid_grandmaster_v2/main.py` exists, is self-contained (<100 MiB, valid Python AST, no missing module dependencies), and defines `agent(obs, config=None)` as the final top-level callable in the file.
+- **Watchdog Compliance**: Asserts `@impenetrable_agent` enforces `DEFAULT_SOFT_LIMIT_S = 1.0`, `DEFAULT_OVERAGE_BANK_S = 60.0`, and `DEFAULT_SAFETY_THRESHOLD_S = 5.0`, wrapping functions with full diagnostic statistics (`.stats()`).
+- **Ghost Fleet Compliance**: Validates each ghost opponent in `submissions/ladder_ghost_*` exposes a valid `agent(obs)` entrypoint returning the standard action schema (`farmer`, `hands`, `market`). Asserts that all 20 ghost submissions exist upon M2 completion.
+- **Tournament Configuration**: Validates `tournaments/gauntlet_1000/config.json` against the native Rust schema (`"time_limits": {"act_s": 1.0, "overage_s": 60.0}`, `"schedule": "gauntlet"`, `"on_error": "forfeit"`, `"python": {"exe": ...}`).
 
-### Pytest Runner Commands
+### Tier 2: Boundary & Corner Cases (Timing, Limits, Steps, Memory)
+- **Overage Drawdown Mechanics**: Verifies that any turn exceeding 1.0s deducts the excess duration from the 60.0s overage bank, while turns $\le 1.0\text{s}$ leave the overage bank untouched.
+- **Circuit Breaker & Timeout Forfeiture**: Verifies that when remaining overage drops below 5.0s, the circuit breaker permanently trips, routing all subsequent turns through `SafeFallbackController` (<1ms execution) to prevent match timeout forfeiture. Verifies that simulator timeout rules trigger `forfeit: true`.
+- **Boundary Turn Execution**: Evaluates agent behavior on critical edge steps: Step 0 (cold start initialization), Step 71 (pre-unlock day boundary), Step 718 (penultimate turn), and Step 719 (terminal season liquidation). Ensures zero division errors, proper inventory dumping, and valid action formats.
+- **Memory Stability & Latency Profile**: Profiles agent execution across 100 consecutive turns. Asserts mean turn latency $< 5.0\text{ ms}$, max turn latency $< 50.0\text{ ms}$, and verifies flat memory allocation via `tracemalloc` (zero memory leaks).
+
+### Tier 3: Cross-Feature Interactions (Candidate vs Ghost Match)
+- **Head-to-Head Simulation**: Pits candidate agent against representative ghost opponent (`submissions/ladder_ghost_112542379`) across a complete 720-step season using `FastSimulation` / native Rust engine.
+- **Contract Verification**: Asserts simulation runs to completion (`steps == 719`, `done == True`), zero unhandled exceptions occur, `forfeit` is `False`, and all generated action dictionaries conform strictly to the game engine schema.
+
+### Tier 4: Master Tournament Acceptance Gate & Diagnostic Fallback
+- **Acceptance Gate Parser**: Implements authoritative evaluator `evaluate_tournament_acceptance(summary_json, results_jsonl)`:
+  - **Win Rate Assertion**: Candidate win rate $\ge 60.0\%$.
+  - **Terminal Cash Assertion**: Average candidate terminal cash $\ge \$130,000$.
+  - **Latency Profile Assertion**: Candidate mean turn latency $< 5.0\text{ ms}$, max turn latency $< 1000.0\text{ ms}$, and zero simulation errors.
+- **Adversarial / Failure Testing**: Verifies that `evaluate_tournament_acceptance` raises explicit, informative `AssertionError` exceptions when any threshold is breached (low win rate, low cash, latency violation, error/forfeiture).
+- **Live Tournament Gate**: When `tournaments/gauntlet_1000/summary.json` and `results.jsonl` are present on disk, executes the full acceptance gate against live tournament data.
+- **Loss Autopsy Pipeline**: Verifies `scripts/autopsy_ladder_losses.py` extracts loss match metadata, detects permanent crossover turns, and identifies opponent macro catalysts.
+- **Optuna HPO Tuning Loop**: Verifies `scripts/ladder_ghost.py:sample_beam_weights` spans all 7 Beam Search hyperparameters and `run_hpo` executes multi-trial optimization to generate tuned counter-strategies.
+
+---
+
+## 4. Pytest Runner Invocation & Verification Commands
+
+All tests are executable via the project virtual environment `.venv/bin/pytest`:
+
 ```bash
-# Execute entire E2E test harness
-uv run pytest tests/e2e/ -v
+# Execute full Master Integration Gauntlet E2E Acceptance Suite
+.venv/bin/pytest tests/test_gauntlet_e2e.py -v
 
-# Execute Tier 1 Feature Coverage tests only
-uv run pytest tests/e2e/tier1_features/ -v
+# Execute specific tiers
+.venv/bin/pytest tests/test_gauntlet_e2e.py -k "tier1" -v
+.venv/bin/pytest tests/test_gauntlet_e2e.py -k "tier2" -v
+.venv/bin/pytest tests/test_gauntlet_e2e.py -k "tier3" -v
+.venv/bin/pytest tests/test_gauntlet_e2e.py -k "tier4" -v
 
-# Execute Tier 2 Boundary & Stress tests only
-uv run pytest tests/e2e/tier2_boundaries/ -v
-
-# Filter by requirement tag
-uv run pytest tests/e2e/ -k "r1" -v
-uv run pytest tests/e2e/ -k "r2" -v
-uv run pytest tests/e2e/ -k "r3" -v
-uv run pytest tests/e2e/ -k "r4" -v
+# Run with duration profiling to verify latency
+.venv/bin/pytest tests/test_gauntlet_e2e.py --durations=10 -v
 ```
-
----
-
-## 4. Real-World Application Scenarios (Tier 4)
-
-Tier 4 tests model end-to-end user workflows:
-1. **Full Replay Ingestion to DataLoader Stream**:
-   - Ingest raw `.json.gz` episode logs from disk.
-   - Run EDA schema validation and extract aligned transitions `(obs_t, action_{t+1})`.
-   - Compute spatial `state_t (23, 10, 10)`, global `market_t (35)`, and macro `action_t`.
-   - Calculate step net-worth `reward_t` and telescoping `return_to_go_t`.
-   - Fork selected states at $t=100, 200, 300$, query `kagg serve` for counterfactual rollout value.
-   - Save chunked memory-mapped arrays and load via `KaggricultureDataset` and `DataLoader`.
-   - Validate batch shape, tensor type, and gradient-ready float32 tensors.
-2. **Throughput Benchmark ($>500$ transitions/sec)**:
-   - Stream batches of size 64 and 128 through multi-worker DataLoader.
-   - Record transition processing rate across 5,000+ transitions.
-   - Assert throughput strictly exceeds 500 transitions/sec.
-3. **Multi-Epoch Memory Leak Verification**:
-   - Run continuous DataLoader iteration across 3 full epochs.
-   - Monitor Resident Set Size (RSS) memory consumption via `psutil`.
-   - Assert memory growth between Epoch 1 and Epoch 3 remains flat ($< 5\%$ variance).
 
 ---
 
@@ -124,11 +115,13 @@ Tier 4 tests model end-to-end user workflows:
 
 | Dimension | Threshold Specification | Enforcement Mechanism |
 |-----------|-------------------------|-----------------------|
-| Feature Coverage | $\ge 5$ test cases per requirement feature (R1–R4) | Static test count assertion & coverage report |
-| Boundary Coverage | $\ge 5$ boundary/corner test cases per feature (R1–R4) | Boundary test suite structure |
-| Suite Pass Rate | 100% pass on implemented modules; 0 unhandled fatal crashes | Pytest exit code 0 |
-| Graceful Skip Handling | Clean `SKIPPED` status for planned modules (M1–M4 in progress) | `pytest.skip` guarded import checks |
-| Execution Time | Full Tier 1 + Tier 2 execution $< 30$ seconds (CPU) | Pytest `--durations` tracking |
-| DataLoader Throughput | $> 500$ transitions / second at batch size 64 / 128 | Benchmark assertion in R4 suite |
-| Memory Stability | $< 5\%$ RSS growth across 3 training epochs | `psutil` memory tracking fixture |
-| Flakiness Tolerance | Zero flake tolerance (100% deterministic test results) | Fixed RNG seeds across all tests |
+| Candidate Packaging | File size $< 100\text{ MiB}$, self-contained AST, entrypoint `agent` last | `validate_candidate_packaging()` in Tier 1 |
+| Watchdog Timing Limits | Soft limit $1.0\text{ s}$, overage bank $60.0\text{ s}$, safety trip $5.0\text{ s}$ | `ImpenetrableAgentWrapper` assertions in Tier 1 & 2 |
+| Ghost Fleet Size | Exactly 20 Top 10 ghost opponent directories upon M2 completion | `submissions/ladder_ghost_*` inspection in Tier 1 |
+| Tournament Configuration | Schedule `"gauntlet"`, dual time limits, valid Python executable | `validate_gauntlet_tournament_config()` in Tier 1 |
+| Turn Latency | Candidate mean latency $< 5.0\text{ ms}$, max turn $< 50.0\text{ ms}$ (isolated) / $< 1000.0\text{ ms}$ (in-game) | Latency assertion in Tier 2 & Tier 4 |
+| Memory Stability | Memory allocation delta $< 500\text{ KB}$ across 100 turns | `tracemalloc` assertion in Tier 2 |
+| Tournament Win Rate Gate | Candidate overall win rate $\ge 60.0\%$ | `evaluate_tournament_acceptance()` in Tier 4 |
+| Terminal Cash Gate | Candidate average cash $\ge \$130,000$ across all tournament matches | `evaluate_tournament_acceptance()` in Tier 4 |
+| Autopsy & HPO Fallback | Loss autopsy extracts crossover turn; Optuna tunes 7 beam weights | Tier 4 verification fixtures |
+| Flakiness Tolerance | Zero flake tolerance (100% deterministic test execution) | Fixed seeds (`seed=42`) across test cases |

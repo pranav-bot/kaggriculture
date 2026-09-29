@@ -110,6 +110,51 @@ mixture, trains a Best Response against that mixture, and repeats.
   (smoke: `--seeds 8 --eval-seeds 4 --iters 1`); `--final-only` re-emits the
   ensemble from the last solved Nash.
 
+## Midgame Market Guardrail (`src/kaggriculture/market/__init__.py`)
+O(1) algebraic clamp between step-level Beam Search and the shared book.
+`calculate_safe_sale_volume` inverts the surplus pricing curve (Wool:
+quadratic, Milk: linear) to the largest integer n whose last unit still clears
+a margin floor (defaults $150 Wool / $80 Milk; e.g. 30 Wool @ I0 — the 79-unit
+dump that hit the $1 floor is clamped to 30 + 49 deferred as
+`MICRO_BATCH_SELL`). Engine-rounding verified at every boundary. `is_midgame`
+disables the manager at turn ≥ 600, yielding to the terminal solver. Measured
+~1µs/call (budget 100µs).
+
+## High-Density Spatial Packing (`src/kaggriculture/routing/__init__.py`)
+Dynamic zoning for the KM routing layer: NW grazes (pastures), NE/SW grow
+cash crops (fertilized strawberries/melons), SE stays flex — locked quadrants
+excluded automatically. `packing_cost` adds +100 for animal jobs on
+high-yield tiles (and crop jobs on grazing tiles), exceeding any Manhattan
+saving, so assignments never pull livestock work into cash zones and
+`rank_pasture_sites` never sites pastures there. `reclamation_plan` KM-assigns
+workers to high-yield weeds/exhausted tiles first with instant co-located DIG,
+re-plantable next hour. Wired into `mechanical_operations_for_trajectory`
+(additive `_reclamation`/`_packing_zones` keys, `packing=False` fallback).
+
+## Staggered Strawberry Scheduler (`src/kaggriculture/scheduling/__init__.py`)
+Combinatorial planting matrix under the 9-actions/hour bandwidth cap.
+Hardcoded fertilized lifecycle (plant → daily water → harvests +10/+12/+14/+16
+×4 units → DIG clear at +17; a missed watering weeds the tile). `optimize_stagger`
+searches 3-way batch splits × day offsets; the winner minimizes same-day harvest
+concurrency (default optimum ≈ 3-7-4 across days 2/5/8, peak 7 vs 14 simultaneous).
+Every op is hour-slotted around the dawn herd block (18 head → 36 feed+care ops in
+hours 0–3); `verify()` proves no slot exceeds 9 and no harvest lands in feeding
+hours. `jobs_for_slot(day, hour)` feeds the KM routing layer; `to_dict()` serializes
+the Target_Planting_Schedule.
+
+## Monte Carlo Opponent Beam Search (`scratch_grandmaster.py`)
+
+`step_level_beam_search(..., opponent_intent_fn=...)` replaces the optimistic
+no-opponent rollout: one intent query per level, top-3 opponent macros
+(`top_opponent_macros`, 4-intent or 24-macro dists, renormalized), 3 parallel
+opponent-conditioned rollouts per candidate (`step2`/`advance2`, single-seat
+fallback), IQL leaf values combined as a probability-weighted sum minus the
+holding penalty. Representative leaf = most-likely branch (realizable state).
+Past `level_budget_ms` (default 5ms) a level degrades to single-rollout vs the
+most-likely macro; counts surface via `stats`. Verified: expected-value action
+selection beats optimistic, avg level < 5ms on the fast path, slow sims degrade
+without failing, sequential mode matches parallel.
+
 ## Ladder-Ghost Pipeline (`scripts/ladder_ghost.py`)
 
 Turns a parsed ladder loss into a trainable league opponent. `loss_analysis.json`
