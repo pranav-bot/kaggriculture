@@ -633,6 +633,47 @@ Key features:
 
 ---
 
+## Interactive Visual Telemetry Dashboard (`app.py` & `dashboard/`)
+
+High-performance local Streamlit application designed to visually debug and audit the agent's internal decision-making across all 720 match turns.
+
+```bash
+# Launch the dashboard locally:
+streamlit run app.py
+```
+Open **`http://localhost:8501`** in your browser.
+
+Key features:
+- **Sub-Second Latency (<350ms)**: Vectorized PyTorch batch inference on CPU and Streamlit caching index 720 turns in ~0.34s, well below the 3.0s constraint.
+- **Master Turn Scrubber**: Interactive slider (Turns 0–719) with Day/Hour indicators, step increments (`-24h`, `-1h`, `+1h`, `+24h`), and quick-jump milestone event buttons.
+- **10x10 Farm Terrain Grid**: High-fidelity visual renderer displaying crops (🍓 Strawberry, 🍈 Melon, 🌾 Wheat), livestock (🐄 Cow, 🐑 Sheep, 🪿 Goose), 🌿 Weeds, center 🏚️ Shed storage, and worker avatars (🧑‍🌾 Farmer, 👷 Hands).
+- **Value Panel**: Interactive Plotly dual line chart comparing IQL predicted Return-To-Go vs actual replay cash, automatically flagging and diagnosing the exact turn of divergence ($T^*$).
+- **Search Panel**: Displays the 24-step Beam Search candidates considered on that day, complete with mathematical scores, leaf evaluations, holding penalty deductions, and an interactive tree rollout graph.
+- **Labor Panel**: Visualizes the $N \times M$ Kuhn-Munkres cost matrix and Hungarian bipartite assignments, featuring a dedicated **Strawberry vs. Weed Forensic Debugger** explaining distance versus priority trade-offs.
+
+See **[`docs/visual-telemetry-dashboard.md`](docs/visual-telemetry-dashboard.md)** for architecture and full usage guide.
+
+---
+
+## Offline Shadow Telemetry Harvester (`tools/shadow_telemetry.py`)
+
+Non-invasive telemetry interceptor that replays downloaded `.json` Kaggle matches and extracts internal agent subsystem data without altering agent source code.
+
+```bash
+# Intercept and harvest telemetry from replay:
+python tools/shadow_telemetry.py \
+    --replay replays/my_agents/psro_leauge_pick/114793445.json \
+    --agent submissions.hybrid_grandmaster_v2.main \
+    --out data/telemetry
+```
+
+Key features:
+- **Zero Source Modifications**: Uses dynamic `unittest.mock.patch` function and descriptor wrappers to capture internal states without touching standalone submission code.
+- **Full Subsystem Interception**: Harvests CFR regret tables, 24-step Beam Search macro candidates and IQL scores, Bayesian opponent intent distributions, Claude DP safe sale volumes, and Kuhn-Munkres worker routing matrices.
+- **Sanitized JSONL Streaming**: Emits bounded, JSON-safe rows (`telemetry_<EPISODE_ID>.jsonl`) ready for instant ingestion by the Streamlit visual dashboard.
+
+---
+
 ## Other tooling
 
 
